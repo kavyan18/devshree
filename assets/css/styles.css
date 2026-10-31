@@ -3448,7 +3448,11 @@ h1, h2, h3, h4, h5, h6 {
 .user-avatar-circle {
   width: 56px;
   height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
+  flex-shrink: 0;
   background-color: var(--color-accent);
   color: #FFFFFF;
   font-family: var(--font-heading);
@@ -5026,6 +5030,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 6px;
   padding: 0.3rem 0.65rem;
   color: #142B45;
+  white-space: nowrap;
 }
 
 .order-invoice-number {
@@ -5033,6 +5038,8 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+  word-break: keep-all;
 }
 
 .btn-copy-invoice,
