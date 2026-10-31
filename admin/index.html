@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/" />
+  <title>Devshree Admin — Manage Products &amp; Store Operations</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png" />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Google Fonts: Manrope, Inter, Noto Sans Gujarati & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800;900&family=Noto+Sans+Gujarati:wght@600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body class="admin-body">
+
+  <!-- =========================================================================
+       1. Left Sidebar Navigation
+       ========================================================================= -->
+  <div class="admin-sidebar-backdrop" id="admin-sidebar-backdrop"></div>
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <a href="admin.html" class="admin-sidebar-brand" style="display:flex;align-items:center;gap:0.75rem;">
+        <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" style="height:48px;width:auto;max-width:160px;object-fit:contain;" />
+      </a>
+      <button type="button" class="admin-sidebar-close-btn" id="admin-sidebar-close" aria-label="Close menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Items -->
+    <nav class="admin-nav-menu">
+      <button type="button" class="admin-nav-item" id="nav-overview" data-target="overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Overview</span>
+      </button>
+
+      <button type="button" class="admin-nav-item active" id="nav-products" data-target="products">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        <span>Products</span>
+        <span class="admin-nav-badge" id="nav-products-count">248</span>
+      </button>
+
+      <button type="button" class="admin-nav-item" id="nav-categories" data-target="categories">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+        </svg>
+        <span>Categories</span>
+      </button>
+
+      <button type="button" class="admin-nav-item" id="nav-orders" data-target="orders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+          <path d="M9 14l2 2 4-4"></path>
+        </svg>
+        <span>Orders</span>
+        <span class="admin-nav-badge" id="nav-orders-count">0</span>
+      </button>
+
+      <button type="button" class="admin-nav-item" id="nav-customers" data-target="customers">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>Customers</span>
+      </button>
+
+      <button type="button" class="admin-nav-item" id="nav-settings" data-target="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Store Settings</span>
+      </button>
+    </nav>
+
+    <!-- Bottom Help Box -->
+    <div class="admin-sidebar-help">
+      <div class="admin-help-card">
+        <div class="admin-help-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+          </svg>
+        </div>
+        <div class="admin-help-content">
+          <div class="admin-help-title">Need help?</div>
+          <div class="admin-help-sub">Call support</div>
+          <a href="tel:+918866130409" class="admin-help-phone">+91 88661 30409</a>
+          <div class="admin-help-note">We're here to help you!</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       2. Main Content Wrapper
+       ========================================================================= -->
+  <div class="admin-main-wrap">
+    <!-- Topbar -->
+    <header class="admin-topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button type="button" class="btn-admin-outline" id="admin-mobile-toggle" style="display:none;padding:6px 10px;" aria-label="Toggle menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <nav class="admin-breadcrumbs" aria-label="Breadcrumb">
+          <a href="admin.html">Admin</a>
+          <span class="sep">/</span>
+          <span class="current" id="admin-breadcrumb-current">Products</span>
+        </nav>
+      </div>
+
+      <div class="admin-topbar-right">
+        <!-- Real-Time Order Notifications Bell -->
+        <div class="admin-notif-dropdown" id="admin-notif-dropdown">
+          <button type="button" class="admin-notif-trigger-btn" id="admin-notif-btn" aria-label="Order Notifications" title="Live Order Notifications & Alerts">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="admin-notif-badge" id="admin-notif-badge" style="display:none;">0</span>
+          </button>
+
+          <div class="admin-notif-menu" id="admin-notif-menu">
+            <!-- Dynamically populated by order-notifications.js -->
+          </div>
+        </div>
+
+        <!-- Help -->
+        <a href="tel:+918866130409" class="admin-help-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>Help</span>
+        </a>
+
+        <!-- User Profile Dropdown -->
+        <div class="admin-user-dropdown" id="admin-user-dropdown">
+          <button type="button" class="admin-user-menu-trigger" id="admin-user-menu-btn">
+            <div class="admin-user-avatar" id="admin-user-avatar">A</div>
+            <span class="admin-user-label">
+              <span id="admin-user-name">Admin</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </button>
+
+          <div class="admin-dropdown-menu" id="admin-dropdown-menu">
+            <a href="javascript:void(0)" class="admin-dropdown-item" id="admin-quick-sync-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+              </svg>
+              <span>Sync Firestore</span>
+            </a>
+            <a href="index.html" target="_blank" class="admin-dropdown-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              <span>View Storefront</span>
+            </a>
+            <hr style="border:none;border-top:1px solid var(--admin-border);margin:4px 0;" />
+            <button type="button" class="admin-dropdown-item danger" id="admin-signout-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Header -->
+    <div class="admin-page-header">
+      <div>
+        <h1 class="admin-page-title" id="admin-page-title">Manage Products</h1>
+        <p class="admin-page-sub" id="admin-page-sub">Add, update, or remove items from your store &mdash; no technical skills needed.</p>
+      </div>
+
+      <div class="admin-header-actions">
+        <button type="button" class="btn-terracotta" id="btn-header-add-product">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Add New Product</span>
+        </button>
+
+        <a href="index.html" target="_blank" class="btn-admin-outline" title="Open customer storefront in a new tab">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <span>View Store</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content Panels -->
+    <main class="admin-content-body">
+
+      <!-- ===================================================================
+           VIEW 1: PRODUCTS MANAGEMENT (Matches Attached Screenshot)
+           =================================================================== -->
+      <section class="admin-view-panel active" id="view-products">
+
+        <!-- 4 Stat / KPI Summary Cards -->
+        <div class="admin-kpi-row">
+          <!-- 1. Total Products -->
+          <div class="admin-kpi-card">
+            <div class="admin-kpi-icon-circle beige">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+            <div>
+              <div class="admin-kpi-label">Total Products</div>
+              <div class="admin-kpi-value" id="kpi-total-products">248</div>
+            </div>
+          </div>
+
+          <!-- 2. In Stock -->
+          <div class="admin-kpi-card">
+            <div class="admin-kpi-icon-circle green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <path d="M9 12l2 2 4-4"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="admin-kpi-label">In Stock</div>
+              <div class="admin-kpi-value" id="kpi-in-stock">221</div>
+            </div>
+          </div>
+
+          <!-- 3. Low Stock -->
+          <div class="admin-kpi-card">
+            <div class="admin-kpi-icon-circle amber">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div>
+              <div class="admin-kpi-label">Low Stock</div>
+              <div class="admin-kpi-value" id="kpi-low-stock">12</div>
+            </div>
+          </div>
+
+          <!-- 4. Categories -->
+          <div class="admin-kpi-card">
+            <div class="admin-kpi-icon-circle beige">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+              </svg>
+            </div>
+            <div>
+              <div class="admin-kpi-label">Categories</div>
+              <div class="admin-kpi-value" id="kpi-categories">4</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add a Product Form & Price Summary (Embedded) -->
+        <div class="admin-form-card" id="admin-product-form-card" style="margin-top:1.5rem;">
+          <h2 class="admin-section-title" id="form-section-title">Add a Product</h2>
+
+          <form id="admin-product-form" novalidate>
+            <!-- Hidden edit ID and code/SKU -->
+            <input type="hidden" id="prod-edit-id" value="" />
+            <input type="hidden" id="prod-sku" value="" />
+
+            <div class="admin-product-grid-layout">
+              <!-- Left Form Inputs (Numbered 1-8) -->
+              <div class="admin-form-left-col">
+                <!-- Row 1: Product Name, Category, Brand -->
+                <div class="form-row-3">
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="prod-name">
+                      <span class="step-num">1</span>
+                      <span>Product Name *</span>
+                    </label>
+                    <input type="text" id="prod-name" class="admin-input" placeholder="LED Bulb 12W" required />
+                  </div>
+
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="prod-category">
+                      <span class="step-num">2</span>
+                      <span>Category *</span>
+                    </label>
+                    <select id="prod-category" class="admin-select" required>
+                      <option value="cat-electrical">Electrical</option>
+                      <option value="cat-hardware">Hardware</option>
+                      <option value="cat-plumbing">Plumbing</option>
+                      <option value="cat-paints">Paints</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="prod-brand">
+                      <span class="step-num">3</span>
+                      <span>Brand <span class="step-optional">(Optional)</span></span>
+                    </label>
+                    <input type="text" id="prod-brand" class="admin-input" placeholder="Havells" />
+                  </div>
+                </div>
+
+                <!-- Row 2: Selling Price, GST Rate, Stock Quantity -->
+                <div class="form-row-3">
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="prod-price">
+                      <span class="step-num">4</span>
+                      <span>Selling Price (₹) *</span>
+                    </label>
+                    <input type="number" id="prod-price" class="admin-input" placeholder="120" min="0" step="any" required />
+                  </div>
+
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="prod-gst-rate">
+                      <span class="step-num">5</span>
+                      <span>GST Rate *</span>
+                    </label>
+                    <select id="prod-gst-rate" class="admin-select" required>
+                      <option value="0">0%</option>
+                      <option value="5">5%</option>
+                      <option value="12">12%</option>
+                      <option value="18" selected>18%</option>
+                      <option value="28">28%</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="prod-stock">
+                      <span class="step-num">6</span>
+                      <span>Stock Quantity *</span>
+                    </label>
+                    <input type="number" id="prod-stock" class="admin-input" placeholder="25" min="0" required />
+                  </div>
+                </div>
+
+                <!-- Row 3: Product Description -->
+                <div class="form-group">
+                  <label class="admin-numbered-label" for="prod-desc">
+                    <span class="step-num">7</span>
+                    <span>Product Description <span class="step-optional">(Optional)</span></span>
+                  </label>
+                  <textarea id="prod-desc" class="admin-textarea" rows="2" placeholder="Energy efficient LED bulb, long life, best for home and office."></textarea>
+                </div>
+
+                <!-- Row 4: Product Image Upload & Preview -->
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="admin-numbered-label">
+                    <span class="step-num">8</span>
+                    <span>Product Image *</span>
+                  </label>
+
+                  <input type="file" id="prod-image-file" accept="image/png, image/jpeg, image/webp" style="display:none;" />
+                  <input type="hidden" id="prod-image" value="" />
+
+                  <div class="admin-image-upload-row">
+                    <!-- Dropzone -->
+                    <div class="admin-dropzone-box" id="admin-choose-image-btn" role="button" tabindex="0">
+                      <div class="admin-cloud-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="17 8 12 3 7 8"></polyline>
+                          <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                      </div>
+                      <div class="admin-dropzone-text">
+                        <strong>Choose image</strong>
+                        <span>Click to upload or drag and drop</span>
+                        <span class="subtext">Supported formats: JPG, PNG (Max size: 5MB)</span>
+                      </div>
+                    </div>
+
+                    <!-- Image Preview Box with Remove 'X' Button -->
+                    <div class="admin-preview-box" id="admin-image-preview-wrap">
+                      <img id="admin-image-preview" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" alt="Selected product preview" />
+                      <button type="button" class="admin-preview-remove-btn" id="admin-remove-image-btn" title="Remove image">&times;</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Side: Price Summary Card -->
+              <div class="admin-form-right-col">
+                <div class="admin-price-summary-card">
+                  <h3 class="admin-price-summary-title">Price Summary</h3>
+
+                  <div class="admin-price-row">
+                    <span class="label">Base Price</span>
+                    <span class="val" id="summary-base-price">₹ 120.00</span>
+                  </div>
+
+                  <div class="admin-price-row">
+                    <span class="label" id="summary-gst-label">GST (18%)</span>
+                    <span class="val" id="summary-gst-amount">₹ 21.60</span>
+                  </div>
+
+                  <div class="admin-price-divider"></div>
+
+                  <div class="admin-price-row customer-price">
+                    <span class="label">Customer Price</span>
+                    <span class="val" id="summary-customer-price">₹ 141.60</span>
+                  </div>
+
+                  <div class="admin-calc-note">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span>GST is calculated automatically.</span>
+                  </div>
+
+                  <button type="submit" class="btn-save-product" id="btn-save-product">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                      <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    <span id="btn-save-product-text">Save Product</span>
+                  </button>
+
+                  <button type="button" class="btn-clear-form" id="btn-clear-form">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                    </svg>
+                    <span>Clear form</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Your Products Table Section -->
+        <div class="admin-table-card" style="margin-top:1.5rem;">
+          <div class="admin-table-header">
+            <h2 class="admin-section-title" style="margin-bottom:0;">Your Products</h2>
+
+            <div class="admin-table-filters">
+              <!-- Search by Name or Code -->
+              <div class="admin-search-wrapper">
+                <svg class="admin-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="search" class="admin-search-input" id="admin-products-search" placeholder="Search by product name or code" />
+              </div>
+
+              <!-- Category Filter -->
+              <select class="admin-table-cat-select" id="admin-products-cat-filter" aria-label="Filter products by category">
+                <option value="all">All Categories</option>
+                <option value="cat-electrical">Electrical</option>
+                <option value="cat-hardware">Hardware</option>
+                <option value="cat-plumbing">Plumbing</option>
+                <option value="cat-paints">Paints</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Responsive Table -->
+          <div class="admin-table-responsive">
+            <table class="admin-products-table">
+              <thead>
+                <tr>
+                  <th style="width:70px;">Image</th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Price (₹)</th>
+                  <th>Stock</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-products-tbody">
+                <!-- Dynamically populated rows matching screenshot reference -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 2: ORDERS MANAGEMENT
+           =================================================================== -->
+      <section class="admin-view-panel" id="view-orders">
+        <div class="admin-table-card">
+          <div class="admin-table-header">
+            <div>
+              <h2 class="admin-section-title" style="margin-bottom:0.25rem;">Recent Customer Orders</h2>
+              <p style="font-size:0.8rem;color:var(--admin-text-secondary);">Manage fulfillment status, track consignments, and print official GST invoices.</p>
+            </div>
+
+            <div class="admin-table-filters">
+              <input type="search" class="admin-search-input" id="admin-orders-search" placeholder="Search Invoice #, Name, Phone..." />
+              <button type="button" class="btn-admin-outline" id="admin-refresh-orders-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                </svg>
+                <span>Refresh</span>
+              </button>
+              <button type="button" class="btn-admin-outline" id="admin-test-order-notif-btn" title="Simulate a live customer order with sound and alerts">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span>Test Alert 🔔</span>
+              </button>
+              <button type="button" class="btn-admin-outline" id="admin-export-orders-csv-btn" title="Export Orders for GST Accounting &amp; Excel">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Export CSV 📥</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Status Filter Pills -->
+          <div class="admin-quick-filter-pills" id="admin-order-status-pills">
+            <button type="button" class="admin-pill-btn active" data-status="all">All Orders (<span id="pill-orders-all">0</span>)</button>
+            <button type="button" class="admin-pill-btn" data-status="Confirmed">Confirmed (<span id="pill-orders-confirmed">0</span>)</button>
+            <button type="button" class="admin-pill-btn" data-status="Processing">Processing (<span id="pill-orders-processing">0</span>)</button>
+            <button type="button" class="admin-pill-btn" data-status="Dispatched">Dispatched (<span id="pill-orders-dispatched">0</span>)</button>
+            <button type="button" class="admin-pill-btn" data-status="Delivered">Delivered (<span id="pill-orders-delivered">0</span>)</button>
+            <button type="button" class="admin-pill-btn" data-status="Cancelled" style="color:#DC2626;">Cancelled (<span id="pill-orders-cancelled">0</span>)</button>
+          </div>
+
+          <div class="admin-table-responsive">
+            <table class="admin-products-table admin-orders-table">
+              <thead>
+                <tr>
+                  <th>Invoice / Date</th>
+                  <th>Customer &amp; Destination</th>
+                  <th>Items Ordered</th>
+                  <th>Total Bill</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-orders-tbody">
+                <tr>
+                  <td colspan="7" style="text-align:center;padding:2rem;color:var(--admin-text-secondary);">
+                    Loading customer orders from database...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 3: OVERVIEW
+           =================================================================== -->
+      <section class="admin-view-panel" id="view-overview">
+        <div class="admin-form-card">
+          <h2 class="admin-section-title">Store Operations Overview</h2>
+          <p style="color:var(--admin-text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">
+            Real-time synchronization with Cloud Firestore for product inventory, order fulfillments, and GST compliance.
+          </p>
+
+          <div class="admin-kpi-row" style="margin-bottom:1.5rem;">
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon-circle green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="admin-kpi-label">Total Revenue</div>
+                <div class="admin-kpi-value" id="kpi-overview-revenue">₹ 0</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon-circle amber">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                </svg>
+              </div>
+              <div>
+                <div class="admin-kpi-label">Total Orders</div>
+                <div class="admin-kpi-value" id="kpi-overview-orders">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background-color:var(--admin-card-tint);border:1px solid var(--admin-border);border-radius:12px;padding:1.25rem;">
+            <h3 style="font-size:1rem;font-weight:700;color:var(--admin-text-main);margin-bottom:0.4rem;">Quick Navigation</h3>
+            <p style="font-size:0.85rem;color:var(--admin-text-secondary);margin-bottom:1rem;">Manage your store catalog or fulfill customer shipments.</p>
+            <div style="display:flex;gap:10px;">
+              <button type="button" class="btn-terracotta" onclick="document.getElementById('nav-products').click()">Manage Products &rarr;</button>
+              <button type="button" class="btn-admin-outline" onclick="document.getElementById('nav-orders').click()">View Orders &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 4: CATEGORIES
+           =================================================================== -->
+      <section class="admin-view-panel" id="view-categories">
+        <div class="admin-table-card">
+          <h2 class="admin-section-title">Core Product Categories</h2>
+          <p style="color:var(--admin-text-secondary);font-size:0.875rem;margin-bottom:1.5rem;">
+            Devshree Hardware categorizes supplies into 4 specialized trade departments:
+          </p>
+
+          <div class="admin-kpi-row">
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon-circle beige">⚡</div>
+              <div>
+                <div class="admin-kpi-label">Department 1</div>
+                <div style="font-size:1.1rem;font-weight:800;color:var(--admin-text-main);">Electrical</div>
+                <div id="cat-count-electrical" style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading items...</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon-circle beige">🔩</div>
+              <div>
+                <div class="admin-kpi-label">Department 2</div>
+                <div style="font-size:1.1rem;font-weight:800;color:var(--admin-text-main);">Hardware</div>
+                <div id="cat-count-hardware" style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading items...</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon-circle beige">🚰</div>
+              <div>
+                <div class="admin-kpi-label">Department 3</div>
+                <div style="font-size:1.1rem;font-weight:800;color:var(--admin-text-main);">Plumbing</div>
+                <div id="cat-count-plumbing" style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading items...</div>
+              </div>
+            </div>
+
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-icon-circle beige">🎨</div>
+              <div>
+                <div class="admin-kpi-label">Department 4</div>
+                <div style="font-size:1.1rem;font-weight:800;color:var(--admin-text-main);">Paints</div>
+                <div id="cat-count-paints" style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading items...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 5: CUSTOMERS
+           =================================================================== -->
+      <section class="admin-view-panel" id="view-customers">
+        <div class="admin-table-card">
+          <h2 class="admin-section-title">Contractor &amp; Customer Directory</h2>
+          <p style="color:var(--admin-text-secondary);font-size:0.875rem;margin-bottom:1.5rem;">
+            Customers who have registered or placed GST-compliant trade orders.
+          </p>
+
+          <div class="admin-table-responsive">
+            <table class="admin-products-table">
+              <thead>
+                <tr>
+                  <th>Customer Name</th>
+                  <th>Contact Phone</th>
+                  <th>GSTIN (Contractor)</th>
+                  <th>Total Orders</th>
+                  <th>Joined Date</th>
+                </tr>
+              </thead>
+              <tbody id="admin-customers-tbody">
+                <tr>
+                  <td><strong>Ramesh Patel</strong></td>
+                  <td>+91 98765 43210</td>
+                  <td><span class="admin-row-cat-badge">24AAACD1234E1Z5</span></td>
+                  <td>3 Orders</td>
+                  <td>Oct 2026</td>
+                </tr>
+                <tr>
+                  <td><strong>Suresh Bhai</strong></td>
+                  <td>+91 94289 88788</td>
+                  <td><span style="color:var(--admin-text-muted);font-size:0.75rem;">Retail</span></td>
+                  <td>1 Order</td>
+                  <td>Oct 2026</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 6: STORE SETTINGS
+           =================================================================== -->
+      <section class="admin-view-panel" id="view-settings">
+        <div style="display:flex;flex-direction:column;gap:1.5rem;max-width:760px;">
+          
+          <!-- Payment Gateway & SMS Integration Card -->
+          <div class="admin-form-card" style="border-left:4px solid var(--admin-terracotta);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+              <h2 class="admin-section-title" style="margin:0;">💳 Payment Gateway &amp; 📲 SMS Gateway Setup</h2>
+              <span class="badge" style="background:#FEF3C7;color:#92400E;padding:4px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;">Live Configuration</span>
+            </div>
+            <p style="font-size:0.85rem;color:var(--admin-text-secondary);margin-bottom:1.25rem;">
+              Configure Razorpay credentials and cellular SMS gateways. Customers receive SMS order receipts and can pay via UPI, QR, Cards, or NetBanking.
+            </p>
+
+            <form id="admin-settings-form" onsubmit="return false;">
+              <div style="display:flex;flex-direction:column;gap:1.2rem;">
+                
+                <!-- Official UPI Payment QR & VPA Configuration -->
+                <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:1rem;display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap;">
+                  <div style="background:#fff;padding:6px;border-radius:8px;border:1px solid #CBD5E1;box-shadow:0 1px 4px rgba(0,0,0,0.05);flex-shrink:0;">
+                    <img src="assets/images/payment_upi_qr.png" alt="Devshree Store Payment QR" style="width:90px;height:90px;object-fit:contain;display:block;" />
+                  </div>
+                  <div style="flex:1;min-width:240px;">
+                    <div style="font-weight:700;color:var(--admin-text-main);font-size:0.95rem;margin-bottom:2px;">
+                      Active Online Payment QR Code
+                    </div>
+                    <div style="font-size:0.8rem;color:#16A34A;font-weight:700;margin-bottom:6px;">
+                      ✓ Verified Store Account (8866130409@axisbank)
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">
+                      Customers can scan this QR code or pay instantly with GPay, PhonePe, Paytm, or BHIM.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="settings-upi-vpa">Store Receiving UPI ID (VPA)</label>
+                    <input type="text" class="admin-input" id="settings-upi-vpa" placeholder="8866130409@axisbank" value="8866130409@axisbank" />
+                  </div>
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="settings-upi-name">Payee Account Name</label>
+                    <input type="text" class="admin-input" id="settings-upi-name" placeholder="Devshree Hardware" value="Devshree Hardware" />
+                  </div>
+                </div>
+
+                <!-- Razorpay Key ID -->
+                <div class="form-group">
+                  <label class="admin-numbered-label" for="settings-razorpay-key">Razorpay Merchant Key ID (Optional)</label>
+                  <input type="text" class="admin-input" id="settings-razorpay-key" placeholder="rzp_test_... or rzp_live_... (leave empty for built-in gateway)" />
+                  <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                    Found in Razorpay Dashboard &rarr; Settings &rarr; API Keys. If left empty, Devshree's instant direct payment gateway (UPI QR &amp; Cards) is used automatically.
+                  </small>
+                </div>
+
+                <!-- WhatsApp Webhook Dispatcher URL -->
+                <div class="form-group">
+                  <label class="admin-numbered-label" for="settings-wa-webhook">WhatsApp / Automation Webhook URL (Optional)</label>
+                  <input type="url" class="admin-input" id="settings-wa-webhook" placeholder="https://api.yourdomain.com/webhook/whatsapp or Zapier / Pabbly hook" />
+                  <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                    If provided, orders will post JSON payloads to your custom WhatsApp bot or webhook dispatcher automatically.
+                  </small>
+                </div>
+
+                <!-- Store Owner Mobile Number -->
+                <div class="form-group">
+                  <label class="admin-numbered-label" for="settings-owner-phone">Store Owner Mobile Number for WhatsApp Alerts</label>
+                  <input type="tel" class="admin-input" id="settings-owner-phone" placeholder="918866130409" value="918866130409" />
+                  <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                    Receives WhatsApp new order dispatch and customer trade notifications when an order is placed.
+                  </small>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.5rem;">
+                  <button type="button" class="btn-terracotta" id="settings-save-btn" style="padding:0.75rem 1.5rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                      <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    <span>Save Gateway Settings</span>
+                  </button>
+
+                  <button type="button" class="btn-admin-outline" id="settings-test-wa-btn" style="padding:0.75rem 1.25rem;">
+                    <span>💬 Test WhatsApp Alert</span>
+                  </button>
+                </div>
+
+              </div>
+            </form>
+          </div>
+
+          <!-- Store Legal Details Card -->
+          <div class="admin-form-card">
+            <h2 class="admin-section-title">Devshree Store Legal Configuration</h2>
+            <div style="display:flex;flex-direction:column;gap:1rem;">
+              <div class="form-group">
+                <label class="admin-numbered-label">Store Legal Name</label>
+                <input type="text" class="admin-input" value="દેવશ્રી ધ હાર્ડવેર ગેલેરી (Devshree)" readonly />
+              </div>
+              <div class="form-group">
+                <label class="admin-numbered-label">Helpline Number</label>
+                <input type="text" class="admin-input" value="+91 88661 30409" readonly />
+              </div>
+              <div class="form-group">
+                <label class="admin-numbered-label">GSTIN Identification</label>
+                <input type="text" class="admin-input" value="24BRVPB8736M1Z3" readonly />
+              </div>
+              <div class="form-group">
+                <label class="admin-numbered-label">Free Express Shipping Threshold</label>
+                <input type="text" class="admin-input" value="₹ 1,999" readonly />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Reusable Printable GST Tax Invoice Modal -->
+  <div class="modal-backdrop" id="tax-invoice-modal" role="dialog" aria-modal="true">
+    <div class="tax-invoice-modal-box">
+      <button type="button" class="modal-close-btn" id="tax-invoice-close-btn" aria-label="Close dialog">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div id="tax-invoice-content"></div>
+    </div>
+  </div>
+
+  <!-- Admin Cancel Order Confirmation Modal -->
+  <div class="modal-backdrop" id="admin-cancel-modal" role="dialog" aria-modal="true" style="display:none;">
+    <div class="admin-cancel-modal-box">
+      <div class="admin-cancel-modal-header">
+        <div class="admin-cancel-icon-circle">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+        </div>
+        <div>
+          <h3 style="margin:0;font-size:1.15rem;font-weight:700;color:#991B1B;">Cancel Customer Order</h3>
+          <p style="margin:2px 0 0;font-size:0.775rem;color:var(--admin-text-secondary);">Confirm cancellation and notify customer via WhatsApp.</p>
+        </div>
+        <button type="button" class="modal-close-btn" id="admin-cancel-modal-close" aria-label="Close dialog" style="margin-left:auto;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="admin-cancel-modal-body">
+        <!-- Order Summary Box -->
+        <div style="background:#FFF1F2;border:1px solid #FECDD3;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.15rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:800;color:#9F1239;font-size:0.95rem;" id="cancel-modal-inv">INV-DEV</span>
+            <strong style="color:#881337;font-size:1.05rem;" id="cancel-modal-total">₹0</strong>
+          </div>
+          <div style="font-size:0.825rem;color:#4C0519;">
+            Customer: <strong id="cancel-modal-customer">Customer</strong> &bull; <span id="cancel-modal-phone">919876543210</span>
+          </div>
+        </div>
+
+        <!-- Cancellation Reason Dropdown -->
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label style="font-size:0.8rem;font-weight:700;color:var(--admin-text-main);display:block;margin-bottom:5px;">
+            Reason for Cancellation *
+          </label>
+          <select class="admin-input" id="cancel-modal-reason-select" style="font-size:0.875rem;">
+            <option value="Out of Stock / Inventory Shortage">Out of Stock / Inventory Shortage</option>
+            <option value="Customer Requested Cancellation">Customer Requested Cancellation</option>
+            <option value="Unserviceable Delivery Pincode / Address">Unserviceable Delivery Pincode / Address</option>
+            <option value="Pricing / Catalogue Discrepancy">Pricing / Catalogue Discrepancy</option>
+            <option value="Duplicate or Erroneous Order">Duplicate or Erroneous Order</option>
+            <option value="custom">Other (Enter custom reason below)</option>
+          </select>
+        </div>
+
+        <!-- Custom Reason Box -->
+        <div class="form-group" id="cancel-modal-custom-wrap" style="display:none;margin-bottom:1rem;">
+          <label style="font-size:0.8rem;font-weight:700;color:var(--admin-text-main);display:block;margin-bottom:5px;">
+            Custom Cancellation Reason *
+          </label>
+          <input type="text" class="admin-input" id="cancel-modal-custom-reason" placeholder="e.g. Model discontinued or customer modified order" />
+        </div>
+
+        <!-- WhatsApp Notification Checkbox -->
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:0.75rem 1rem;display:flex;align-items:flex-start;gap:0.65rem;">
+          <input type="checkbox" id="cancel-modal-notify-wa" checked style="margin-top:3px;cursor:pointer;accent-color:#16A34A;" />
+          <label for="cancel-modal-notify-wa" style="font-size:0.825rem;color:#14532D;cursor:pointer;user-select:none;line-height:1.4;">
+            <strong>Notify customer via WhatsApp</strong><br/>
+            Opens WhatsApp with an official cancellation alert &amp; refund instructions.
+          </label>
+        </div>
+      </div>
+
+      <div class="admin-cancel-modal-footer">
+        <button type="button" class="btn-admin-outline" id="cancel-modal-abort-btn">
+          Keep Order Active
+        </button>
+        <button type="button" class="btn-danger-confirm" id="cancel-modal-confirm-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <span>Confirm Cancellation</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Stack -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- =========================================================================
+       4. Admin Authentication Gate Overlay
+       ========================================================================= -->
+  <div class="admin-gate-overlay" id="admin-gate-screen">
+    <div class="admin-gate-card">
+      <div class="admin-gate-icon-circle">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          <path d="M9 12l2 2 4-4"></path>
+        </svg>
+      </div>
+
+      <div style="font-size:0.75rem;font-weight:800;letter-spacing:1px;color:var(--admin-terracotta);margin-bottom:0.25rem;">
+        દેવશ્રી ધ હાર્ડવેર ગેલેરી
+      </div>
+      <h1 class="admin-gate-title">Admin Console Security</h1>
+      <p class="admin-gate-subtitle" id="admin-gate-subtext">
+        Restricted to store managers &amp; administrators. Sign in to manage your store catalog and customer orders.
+      </p>
+
+      <!-- Access Denied Alert -->
+      <div id="admin-gate-denied" style="display:none;margin-bottom:1.5rem;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:1rem;text-align:left;">
+        <div style="display:flex;align-items:center;gap:0.5rem;color:#DC2626;font-weight:700;font-size:0.875rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          Access Denied
+        </div>
+        <p style="font-size:0.8rem;color:#7F1D1D;margin:0.5rem 0 0.75rem;" id="admin-gate-denied-msg">
+          Customer accounts cannot view administrative data.
+        </p>
+        <button type="button" class="btn-admin-outline" id="admin-gate-switch-btn" style="width:100%;font-size:0.775rem;">
+          Sign Out &amp; Sign In with Admin Account
+        </button>
+      </div>
+
+      <!-- Admin Gate Tabs -->
+      <div class="admin-gate-tabs" id="admin-gate-tabs">
+        <button type="button" class="admin-gate-tab active" id="admin-tab-login">Admin Sign In</button>
+        <button type="button" class="admin-gate-tab" id="admin-tab-register">New Admin Sign Up</button>
+      </div>
+
+      <!-- Admin Login Form -->
+      <form id="admin-gate-login-form" style="text-align:left;">
+        <div class="form-group">
+          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;">Admin Email *</label>
+          <input type="email" id="admin-login-email" class="admin-input" placeholder="admin@devshree.in" required />
+        </div>
+        <div class="form-group" style="margin-bottom:1.25rem;">
+          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;">Password *</label>
+          <input type="password" id="admin-login-password" class="admin-input" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn-terracotta" id="admin-login-submit-btn" style="width:100%;justify-content:center;padding:10px;">
+          Unlock Admin Console
+        </button>
+      </form>
+
+      <!-- Admin Register Form -->
+      <form id="admin-gate-register-form" style="text-align:left;display:none;">
+        <div class="form-group">
+          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;">Full Name *</label>
+          <input type="text" id="admin-reg-name" class="admin-input" placeholder="Store Manager Name" required />
+        </div>
+        <div class="form-group">
+          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;">Admin Email *</label>
+          <input type="email" id="admin-reg-email" class="admin-input" placeholder="admin@devshree.in" required />
+        </div>
+        <div class="form-group" style="margin-bottom:1.25rem;">
+          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;">Password (Min. 6 characters) *</label>
+          <input type="password" id="admin-reg-password" class="admin-input" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn-terracotta" id="admin-reg-submit-btn" style="width:100%;justify-content:center;padding:10px;">
+          Create Admin Account &amp; Unlock
+        </button>
+      </form>
+
+      <!-- 1-Click Quick Demo Access Button -->
+      <button type="button" class="btn-demo-unlock" id="btn-demo-preview">
+        ⚡ Continue as Demo Admin (Preview Console)
+      </button>
+
+      <div style="margin-top:1.25rem;padding-top:0.85rem;border-top:1px solid var(--admin-border);display:flex;align-items:center;justify-content:space-between;">
+        <a href="index.html" style="font-size:0.8rem;color:var(--admin-text-secondary);text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:600;">
+          &larr; Back to Customer Store
+        </a>
+        <span style="font-size:0.725rem;color:var(--admin-text-muted);font-family:var(--admin-font-mono);">Role-Based Security</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules Entrypoint -->
+  <script type="module" src="assets/js/admin.js"></script>
+</body>
+</html>
