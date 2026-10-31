@@ -1,0 +1,32 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "hosting": {
+    "public": ".",
+    "cleanUrls": true,
+    "ignore": [
+      "firebase.json",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "storage.rules",
+      "backup_pre_redesign/**",
+      "README.md",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      { "source": "/admin", "destination": "/admin.html" },
+      { "source": "/product", "destination": "/product.html" },
+      { "source": "/contact", "destination": "/contact.html" },
+      { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
+      { "source": "/terms-of-service", "destination": "/terms-of-service.html" },
+      { "source": "/shipping-policy", "destination": "/shipping-policy.html" },
+      { "source": "/refund-policy", "destination": "/refund-policy.html" }
+    ]
+  }
+}

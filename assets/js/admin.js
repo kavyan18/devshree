@@ -1,0 +1,1518 @@
+/**
+ * DEVSHREE — MODERN ADMIN CONSOLE CONTROLLER
+ * Powering the Warm Terracotta & Ivory Executive Dashboard
+ */
+
+import { fetchAllOrders, updateOrderStatus, cancelOrder, openInvoiceViewer } from './orders.js';
+import { fetchProducts, createProductInFirestore, seedFirestoreCatalog } from './products.js';
+import { 
+  db, 
+  doc, 
+  deleteDoc, 
+  updateDoc, 
+  collection, 
+  onSnapshot,
+  storage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  setDoc,
+  getDoc
+} from './firebase-config.js';
+import { 
+  getCurrentUser, 
+  logoutCustomer, 
+  loginCustomer, 
+  registerCustomer, 
+  listenAuthState, 
+  isAdminEmail, 
+  checkIsUserAdmin 
+} from './auth.js';
+import { formatINR, showToast, escapeHTML, getStorage, setStorage } from './utils.js';
+import { MOCK_PRODUCTS } from './mock-data.js';
+import { 
+  initAdminNotificationCenter, 
+  triggerOrderNotification, 
+  sendTestOrderNotification 
+} from './order-notifications.js';
+import { openWhatsAppDispatchModal, openWhatsAppChat, buildOrderCancellationWhatsAppMessage, getStoreOwnerPhone, setStoreOwnerPhone } from './whatsapp-service.js';
+
+const CACHE_PRODUCTS_KEY = 'devshree_cached_products';
+
+let allOrders = [];
+let allProducts = [];
+let activeTab = 'products';
+
+function syncProductsCache() {
+  try {
+    setStorage(CACHE_PRODUCTS_KEY, allProducts);
+  } catch (e) {
+    console.warn('[Admin] Failed to sync products to storage:', e);
+  }
+}
+
+// Default LED Bulb preview image
+const DEFAULT_BULB_IMG = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80';
+
+// Fallback products matching the user's reference mockup
+const REFERENCE_DEFAULT_PRODUCTS = [
+  {
+    id: 'prod-db001',
+    name: 'LED Bulb 12W',
+    sku: 'DB001',
+    categoryId: 'cat-electrical',
+    brand: 'Havells',
+    price: 141.60,
+    basePrice: 120.00,
+    gstRate: 18,
+    stock: 25,
+    description: 'Energy efficient LED bulb, long life, best for home and office.',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80'
+  },
+  {
+    id: 'prod-pp001',
+    name: 'PVC Pipe 1 inch',
+    sku: 'PP001',
+    categoryId: 'cat-plumbing',
+    brand: 'Astral',
+    price: 66.30,
+    basePrice: 56.19,
+    gstRate: 18,
+    stock: 8,
+    description: 'Heavy duty schedule 40 UPVC plumbing pipe for residential water supply.',
+    image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80'
+  },
+  {
+    id: 'prod-wp001',
+    name: 'Wall Paint 1L',
+    sku: 'WP001',
+    categoryId: 'cat-paints',
+    brand: 'Asian Paints',
+    price: 566.00,
+    basePrice: 479.66,
+    gstRate: 18,
+    stock: 35,
+    description: 'Royale Luxury interior acrylic emulsion with anti-fungal shield.',
+    image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400&q=80'
+  },
+  {
+    id: 'prod-bt001',
+    name: 'Brass Tap',
+    sku: 'BT001',
+    categoryId: 'cat-plumbing',
+    brand: 'Jaquar',
+    price: 1180.00,
+    basePrice: 1000.00,
+    gstRate: 18,
+    stock: 14,
+    description: 'Forged solid brass bib cock tap with quarter-turn ceramic disc.',
+    image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80'
+  }
+];
+
+let knownOrderIds = new Set();
+let knownOrderInvoices = new Set();
+let isInitialOrdersSnapshot = true;
+
+document.addEventListener('DOMContentLoaded', () => {
+  initAdminNavigation();
+  initPriceCalculation();
+  initProductForm();
+  initTableFilters();
+  initOrdersControls();
+  initAdminGate();
+  initUserDropdown();
+  initAdminNotificationCenter();
+  initAdminSettings();
+  initAdminCancelModal();
+
+  // Load Initial Dashboard Data & Establish Real-Time Orders Stream
+  loadDashboardData();
+  setupRealtimeOrdersListener();
+
+  // Listen to Auth State if Firebase configured
+  listenAuthState(async (user) => {
+    if (user) {
+      const isAdmin = await checkIsUserAdmin(user);
+      if (isAdmin) {
+        hideAdminGate();
+        updateAdminProfile(user);
+      }
+    }
+  });
+});
+
+/**
+ * 1. Sidebar Navigation (Tabs switching)
+ */
+function initAdminNavigation() {
+  const navButtons = document.querySelectorAll('.admin-nav-item');
+  const panels = document.querySelectorAll('.admin-view-panel');
+  const breadcrumbCurrent = document.getElementById('admin-breadcrumb-current');
+  const pageTitle = document.getElementById('admin-page-title');
+  const pageSub = document.getElementById('admin-page-sub');
+
+  // Mobile toggle & backdrop
+  const sidebar = document.getElementById('admin-sidebar');
+  const backdrop = document.getElementById('admin-sidebar-backdrop');
+  const mobileToggle = document.getElementById('admin-mobile-toggle');
+  const sidebarClose = document.getElementById('admin-sidebar-close');
+
+  const closeSidebar = () => {
+    sidebar?.classList.remove('mobile-open');
+    backdrop?.classList.remove('active');
+    document.body.style.overflow = '';
+  };
+
+  mobileToggle?.addEventListener('click', () => {
+    sidebar?.classList.add('mobile-open');
+    backdrop?.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  });
+
+  sidebarClose?.addEventListener('click', closeSidebar);
+  backdrop?.addEventListener('click', closeSidebar);
+
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target;
+      if (!target) return;
+
+      activeTab = target;
+
+      // Update active nav button
+      navButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Update panels
+      panels.forEach(panel => {
+        panel.classList.toggle('active', panel.id === `view-${target}`);
+      });
+
+      // Update breadcrumbs and titles
+      const tabNames = {
+        products: 'Products',
+        orders: 'Orders',
+        overview: 'Overview',
+        categories: 'Categories',
+        customers: 'Customers',
+        settings: 'Store Settings'
+      };
+
+      const titles = {
+        products: 'Manage Products',
+        orders: 'Customer Orders & Fulfillment',
+        overview: 'Operations Overview',
+        categories: 'Product Categories',
+        customers: 'Customer Directory',
+        settings: 'Store Settings'
+      };
+
+      const subtitles = {
+        products: 'Add, update, or remove items from your store — no technical skills needed.',
+        orders: 'Manage fulfillment status, track consignments, and print official GST invoices.',
+        overview: 'Real-time synchronization with Cloud Firestore for product inventory and revenue.',
+        categories: '4 standardized trade departments for Devshree Hardware supplies.',
+        customers: 'Registered contractor and trade customer accounts.',
+        settings: 'Store legal details, tax configuration, and support helpline.'
+      };
+
+      if (breadcrumbCurrent) breadcrumbCurrent.textContent = tabNames[target] || 'Products';
+      if (pageTitle) pageTitle.textContent = titles[target] || 'Manage Products';
+      if (pageSub) pageSub.textContent = subtitles[target] || '';
+
+      closeSidebar();
+    });
+  });
+
+  // Top "+ Add New Product" button
+  document.getElementById('btn-header-add-product')?.addEventListener('click', () => {
+    // Switch to products tab if not active
+    const prodNav = document.getElementById('nav-products');
+    if (prodNav && !prodNav.classList.contains('active')) {
+      prodNav.click();
+    }
+    resetProductForm();
+    const formCard = document.getElementById('admin-product-form-card');
+    formCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('prod-name')?.focus();
+  });
+}
+
+/**
+ * 2. Real-time Price Summary Calculation
+ */
+function initPriceCalculation() {
+  const priceInput = document.getElementById('prod-price');
+  const gstSelect = document.getElementById('prod-gst-rate');
+
+  const basePriceEl = document.getElementById('summary-base-price');
+  const gstLabelEl = document.getElementById('summary-gst-label');
+  const gstAmountEl = document.getElementById('summary-gst-amount');
+  const custPriceEl = document.getElementById('summary-customer-price');
+
+  function calculate() {
+    const rawPrice = parseFloat(priceInput?.value) || 0;
+    const gstRate = parseFloat(gstSelect?.value) || 0;
+
+    const basePrice = rawPrice;
+    const gstAmount = (basePrice * gstRate) / 100;
+    const customerPrice = basePrice + gstAmount;
+
+    if (basePriceEl) basePriceEl.textContent = `₹ ${basePrice.toFixed(2)}`;
+    if (gstLabelEl) gstLabelEl.textContent = `GST (${gstRate}%)`;
+    if (gstAmountEl) gstAmountEl.textContent = `₹ ${gstAmount.toFixed(2)}`;
+    if (custPriceEl) custPriceEl.textContent = `₹ ${customerPrice.toFixed(2)}`;
+  }
+
+  priceInput?.addEventListener('input', calculate);
+  gstSelect?.addEventListener('change', calculate);
+
+  // Initial calculation
+  calculate();
+}
+
+/**
+ * 3. Product Form (Add, Edit, Clear, Image Upload)
+ */
+function initProductForm() {
+  const form = document.getElementById('admin-product-form');
+  const editIdInput = document.getElementById('prod-edit-id');
+  const formTitle = document.getElementById('form-section-title');
+  const saveBtnText = document.getElementById('btn-save-product-text');
+  const clearBtn = document.getElementById('btn-clear-form');
+
+  const fileInput = document.getElementById('prod-image-file');
+  const chooseBtn = document.getElementById('admin-choose-image-btn');
+  const previewImg = document.getElementById('admin-image-preview');
+  const hiddenImgInput = document.getElementById('prod-image');
+  const removeImgBtn = document.getElementById('admin-remove-image-btn');
+
+  // Trigger Image File Picker
+  chooseBtn?.addEventListener('click', () => fileInput?.click());
+
+  // Handle Image Upload with Firebase Storage & Canvas Optimization Fallback
+  fileInput?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      showToast('Optimizing & uploading product photo...', 'info');
+
+      let imageUrl = null;
+
+      // 1. Attempt upload to Firebase Storage if connected
+      if (storage) {
+        try {
+          const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const fileRef = ref(storage, `products/${Date.now()}_${cleanName}`);
+          const snapshot = await uploadBytesResumable(fileRef, file);
+          imageUrl = await getDownloadURL(snapshot.ref);
+          console.log('[Admin] Uploaded to Firebase Storage:', imageUrl);
+        } catch (storageErr) {
+          console.warn('[Admin] Firebase Storage upload skipped / fallback to canvas:', storageErr);
+        }
+      }
+
+      // 2. Fallback to client-side optimized canvas Base64
+      if (!imageUrl) {
+        imageUrl = await optimizeImageFile(file);
+      }
+
+      if (previewImg) previewImg.src = imageUrl;
+      if (hiddenImgInput) hiddenImgInput.value = imageUrl;
+      showToast('Product photo uploaded successfully!', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Error uploading image: ' + err.message, 'error');
+    }
+  });
+
+  // Remove Image Button
+  removeImgBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (previewImg) previewImg.src = DEFAULT_BULB_IMG;
+    if (hiddenImgInput) hiddenImgInput.value = '';
+    if (fileInput) fileInput.value = '';
+    showToast('Image reset to default.', 'info');
+  });
+
+  // Clear Form
+  clearBtn?.addEventListener('click', resetProductForm);
+
+  // Form Submit (Save / Update Product)
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const editId = editIdInput?.value;
+    const name = document.getElementById('prod-name')?.value.trim();
+    const categoryId = document.getElementById('prod-category')?.value;
+    const brand = document.getElementById('prod-brand')?.value.trim() || 'Devshree';
+    const basePrice = parseFloat(document.getElementById('prod-price')?.value) || 0;
+    const gstRate = parseFloat(document.getElementById('prod-gst-rate')?.value) || 0;
+    const stock = parseInt(document.getElementById('prod-stock')?.value, 10) || 0;
+    const description = document.getElementById('prod-desc')?.value.trim() || 'Quality hardware supplies.';
+    const image = hiddenImgInput?.value.trim() || previewImg?.src || DEFAULT_BULB_IMG;
+
+    if (!name || basePrice <= 0) {
+      showToast('Please enter product name and selling price.', 'error');
+      return;
+    }
+
+    const customerPrice = +(basePrice * (1 + gstRate / 100)).toFixed(2);
+    const skuCode = document.getElementById('prod-sku')?.value || generateCode(categoryId, name);
+
+    const submitBtn = document.getElementById('btn-save-product');
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+      if (editId) {
+        // Edit Mode
+        const updatedFields = {
+          name,
+          categoryId,
+          brand,
+          price: customerPrice,
+          basePrice,
+          gstRate,
+          stock,
+          sku: skuCode,
+          description,
+          image,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (db) {
+          try {
+            await updateDoc(doc(db, 'products', editId), updatedFields);
+          } catch (dbErr) {
+            console.warn('[Admin] Firestore update fallback:', dbErr);
+          }
+        }
+
+        const match = allProducts.find(p => p.id === editId);
+        if (match) {
+          Object.assign(match, updatedFields);
+        }
+        syncProductsCache();
+
+        showToast(`Product "${name}" updated successfully!`, 'success');
+      } else {
+        // Add Mode
+        const newProd = {
+          id: 'prod-' + Date.now(),
+          name,
+          categoryId,
+          brand,
+          price: customerPrice,
+          basePrice,
+          gstRate,
+          stock,
+          sku: skuCode,
+          description,
+          image,
+          rating: 4.8,
+          reviewCount: 1,
+          isNew: true
+        };
+
+        if (db) {
+          try {
+            await createProductInFirestore(newProd);
+          } catch (dbErr) {
+            console.warn('[Admin] Firestore create fallback:', dbErr);
+          }
+        }
+
+        allProducts.unshift(newProd);
+        syncProductsCache();
+        showToast(`Product "${name}" added to catalog!`, 'success');
+      }
+
+      resetProductForm();
+      updateKpis();
+      renderProductsTable();
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to save product: ' + err.message, 'error');
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
+}
+
+/**
+ * Reset Product Form to Default State
+ */
+function resetProductForm() {
+  const form = document.getElementById('admin-product-form');
+  const editIdInput = document.getElementById('prod-edit-id');
+  const formTitle = document.getElementById('form-section-title');
+  const saveBtnText = document.getElementById('btn-save-product-text');
+  const previewImg = document.getElementById('admin-image-preview');
+  const hiddenImgInput = document.getElementById('prod-image');
+
+  form?.reset();
+  if (editIdInput) editIdInput.value = '';
+  if (formTitle) formTitle.textContent = 'Add a Product';
+  if (saveBtnText) saveBtnText.textContent = 'Save Product';
+
+  if (previewImg) previewImg.src = DEFAULT_BULB_IMG;
+  if (hiddenImgInput) hiddenImgInput.value = '';
+
+  // Trigger price recalculation to defaults
+  document.getElementById('prod-price')?.dispatchEvent(new Event('input'));
+}
+
+/**
+ * Populate Product Form for Editing
+ */
+function editProduct(prod) {
+  if (!prod) return;
+
+  // Switch to products tab
+  const prodNav = document.getElementById('nav-products');
+  if (prodNav && !prodNav.classList.contains('active')) {
+    prodNav.click();
+  }
+
+  const editIdInput = document.getElementById('prod-edit-id');
+  const skuInput = document.getElementById('prod-sku');
+  const nameInput = document.getElementById('prod-name');
+  const catInput = document.getElementById('prod-category');
+  const brandInput = document.getElementById('prod-brand');
+  const priceInput = document.getElementById('prod-price');
+  const gstSelect = document.getElementById('prod-gst-rate');
+  const stockInput = document.getElementById('prod-stock');
+  const descInput = document.getElementById('prod-desc');
+  const previewImg = document.getElementById('admin-image-preview');
+  const hiddenImgInput = document.getElementById('prod-image');
+
+  const formTitle = document.getElementById('form-section-title');
+  const saveBtnText = document.getElementById('btn-save-product-text');
+
+  if (editIdInput) editIdInput.value = prod.id;
+  if (skuInput) skuInput.value = prod.sku || '';
+  if (nameInput) nameInput.value = prod.name || '';
+  if (catInput) catInput.value = prod.categoryId || 'cat-electrical';
+  if (brandInput) brandInput.value = prod.brand || '';
+  
+  // If basePrice is recorded use it, else calculate from customer price
+  const basePrice = prod.basePrice || (prod.price ? +(prod.price / 1.18).toFixed(2) : 0);
+  if (priceInput) priceInput.value = basePrice;
+  if (gstSelect) gstSelect.value = prod.gstRate != null ? String(prod.gstRate) : '18';
+  if (stockInput) stockInput.value = prod.stock ?? 0;
+  if (descInput) descInput.value = prod.description || '';
+
+  const img = prod.image || DEFAULT_BULB_IMG;
+  if (previewImg) previewImg.src = img;
+  if (hiddenImgInput) hiddenImgInput.value = img;
+
+  if (formTitle) formTitle.textContent = `Edit Product: ${prod.name}`;
+  if (saveBtnText) saveBtnText.textContent = 'Update Product';
+
+  // Recalculate price summary
+  priceInput?.dispatchEvent(new Event('input'));
+
+  // Smooth scroll to form
+  const formCard = document.getElementById('admin-product-form-card');
+  formCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/**
+ * Remove Product
+ */
+async function removeProduct(prodId) {
+  const prod = allProducts.find(p => p.id === prodId);
+  const name = prod ? prod.name : 'this item';
+
+  if (!confirm(`Are you sure you want to remove "${name}" from your store?`)) {
+    return;
+  }
+
+  try {
+    if (db) {
+      try {
+        await deleteDoc(doc(db, 'products', prodId));
+      } catch (err) {
+        console.warn('[Admin] Firestore delete error:', err);
+      }
+    }
+
+    allProducts = allProducts.filter(p => p.id !== prodId);
+    syncProductsCache();
+    updateKpis();
+    renderProductsTable();
+    showToast(`Removed "${name}" from products.`, 'info');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to remove product: ' + err.message, 'error');
+  }
+}
+
+/**
+ * 4. Render "Your Products" Table
+ */
+function renderProductsTable(products = null) {
+  const tbody = document.getElementById('admin-products-tbody');
+  if (!tbody) return;
+
+  const list = products || allProducts;
+
+  if (list.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center;padding:2.5rem;color:var(--admin-text-secondary);">
+          <div style="font-size:1.75rem;margin-bottom:0.5rem;">📦</div>
+          <div style="font-weight:700;color:var(--admin-text-main);margin-bottom:0.25rem;">No products found</div>
+          <span style="font-size:0.8rem;">No items match your search or category filter.</span>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = list.map(prod => {
+    const stock = prod.stock || 0;
+    let stockStatusClass = 'in-stock';
+    let stockStatusText = 'In Stock';
+
+    if (stock <= 0) {
+      stockStatusClass = 'out-of-stock';
+      stockStatusText = 'Out of Stock';
+    } else if (stock <= 10) {
+      stockStatusClass = 'low-stock';
+      stockStatusText = 'Low Stock';
+    }
+
+    const catName = formatCategoryName(prod.categoryId);
+    const skuCode = prod.sku ? `Code: ${prod.sku}` : (prod.id ? `Code: ${prod.id.slice(0, 6).toUpperCase()}` : '');
+
+    return `
+      <tr data-prod-id="${prod.id}">
+        <td>
+          <img src="${prod.image || DEFAULT_BULB_IMG}" alt="${escapeHTML(prod.name)}" class="admin-row-thumb" loading="lazy" />
+        </td>
+        <td>
+          <div class="admin-row-prod-name">${escapeHTML(prod.name)}</div>
+          <div class="admin-row-prod-code">${escapeHTML(skuCode)}</div>
+        </td>
+        <td>
+          <span class="admin-row-cat-badge">${escapeHTML(catName)}</span>
+        </td>
+        <td>
+          <span class="admin-row-price">₹ ${Number(prod.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </td>
+        <td>
+          <span class="admin-row-stock-qty">${stock}</span>
+          <span class="admin-stock-status ${stockStatusClass}">
+            <span class="dot"></span>
+            <span>${stockStatusText}</span>
+          </span>
+        </td>
+        <td style="text-align:right;">
+          <div class="admin-row-actions">
+            <button type="button" class="btn-table-edit" data-edit-id="${prod.id}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              <span>Edit</span>
+            </button>
+            <button type="button" class="btn-table-remove" data-remove-id="${prod.id}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span>Remove</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Attach Table Button Listeners
+  tbody.querySelectorAll('[data-edit-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.editId;
+      const target = allProducts.find(p => p.id === id);
+      if (target) editProduct(target);
+    });
+  });
+
+  tbody.querySelectorAll('[data-remove-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.removeId;
+      if (id) removeProduct(id);
+    });
+  });
+}
+
+/**
+ * 5. Table Search & Category Filter
+ */
+function initTableFilters() {
+  const searchInput = document.getElementById('admin-products-search');
+  const catFilter = document.getElementById('admin-products-cat-filter');
+
+  const filterAction = () => {
+    const q = (searchInput?.value || '').toLowerCase().trim();
+    const cat = catFilter?.value || 'all';
+
+    const filtered = allProducts.filter(p => {
+      const matchCat = cat === 'all' || p.categoryId === cat;
+      const matchText = !q ||
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.brand && p.brand.toLowerCase().includes(q)) ||
+        (p.sku && p.sku.toLowerCase().includes(q));
+      return matchCat && matchText;
+    });
+
+    renderProductsTable(filtered);
+  };
+
+  searchInput?.addEventListener('input', filterAction);
+  catFilter?.addEventListener('change', filterAction);
+}
+
+/**
+ * 6. KPI Summary Calculation
+ */
+function updateKpis() {
+  const totalProducts = allProducts.length;
+  const inStockCount = allProducts.filter(p => (p.stock || 0) > 10).length;
+  const lowStockCount = allProducts.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= 10).length;
+
+  const totalEl = document.getElementById('kpi-total-products');
+  const inStockEl = document.getElementById('kpi-in-stock');
+  const lowStockEl = document.getElementById('kpi-low-stock');
+  const navBadge = document.getElementById('nav-products-count');
+
+  if (totalEl) totalEl.textContent = totalProducts;
+  if (inStockEl) inStockEl.textContent = inStockCount;
+  if (lowStockEl) lowStockEl.textContent = lowStockCount;
+  if (navBadge) navBadge.textContent = totalProducts;
+
+  // Overview Panel KPIs
+  const totalRev = allOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const revEl = document.getElementById('kpi-overview-revenue');
+  const ordersEl = document.getElementById('kpi-overview-orders');
+  if (revEl) revEl.textContent = formatINR(totalRev);
+  if (ordersEl) ordersEl.textContent = allOrders.length;
+
+  // Category Department Counts (View 4: Categories)
+  const elecCount = allProducts.filter(p => p.categoryId === 'cat-electrical').length;
+  const hardCount = allProducts.filter(p => p.categoryId === 'cat-hardware').length;
+  const plumbCount = allProducts.filter(p => p.categoryId === 'cat-plumbing').length;
+  const paintCount = allProducts.filter(p => p.categoryId === 'cat-paints').length;
+
+  const catElecEl = document.getElementById('cat-count-electrical');
+  const catHardEl = document.getElementById('cat-count-hardware');
+  const catPlumbEl = document.getElementById('cat-count-plumbing');
+  const catPaintEl = document.getElementById('cat-count-paints');
+
+  if (catElecEl) catElecEl.textContent = `${elecCount} Active Items`;
+  if (catHardEl) catHardEl.textContent = `${hardCount} Active Items`;
+  if (catPlumbEl) catPlumbEl.textContent = `${plumbCount} Active Items`;
+  if (catPaintEl) catPaintEl.textContent = `${paintCount} Active Items`;
+
+  // Dynamically update customer directory
+  renderCustomersDirectory();
+}
+
+/**
+ * 7. Orders Controls & Invoice Viewer
+ */
+function initOrdersControls() {
+  const searchInput = document.getElementById('admin-orders-search');
+  const refreshBtn = document.getElementById('admin-refresh-orders-btn');
+  const statusPills = document.querySelectorAll('#admin-order-status-pills .admin-pill-btn');
+  const invoiceModal = document.getElementById('tax-invoice-modal');
+  const invoiceCloseBtn = document.getElementById('tax-invoice-close-btn');
+
+  invoiceCloseBtn?.addEventListener('click', () => {
+    invoiceModal?.classList.remove('active');
+  });
+
+  const filterOrders = () => {
+    const q = (searchInput?.value || '').toLowerCase().trim();
+    const activePill = document.querySelector('#admin-order-status-pills .admin-pill-btn.active');
+    const status = activePill?.dataset.status || 'all';
+
+    const filtered = allOrders.filter(o => {
+      const matchStatus = status === 'all' || (o.orderStatus || 'Confirmed') === status;
+      const matchSearch = !q ||
+        (o.invoiceNumber && o.invoiceNumber.toLowerCase().includes(q)) ||
+        (o.customerName && o.customerName.toLowerCase().includes(q)) ||
+        (o.customerPhone && o.customerPhone.includes(q));
+      return matchStatus && matchSearch;
+    });
+
+    renderOrdersTable(filtered);
+  };
+
+  searchInput?.addEventListener('input', filterOrders);
+
+  statusPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      statusPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      filterOrders();
+    });
+  });
+
+  refreshBtn?.addEventListener('click', async () => {
+    refreshBtn.disabled = true;
+    try {
+      allOrders = await fetchAllOrders();
+      renderOrdersTable();
+      updateKpis();
+      showToast('Orders reloaded from Firestore.', 'info');
+    } catch (e) {
+      console.warn(e);
+    } finally {
+      refreshBtn.disabled = false;
+    }
+  });
+
+  const testNotifBtn = document.getElementById('admin-test-order-notif-btn');
+  testNotifBtn?.addEventListener('click', () => {
+    sendTestOrderNotification();
+  });
+
+  // Export Orders for GST Accounting
+  const exportBtn = document.getElementById('admin-export-orders-csv-btn');
+  exportBtn?.addEventListener('click', () => {
+    exportOrdersToCSV(allOrders);
+  });
+}
+
+/**
+ * Real-Time Orders Stream (Firestore OnSnapshot + Cross-Tab Storage Listener)
+ */
+function setupRealtimeOrdersListener() {
+  if (db) {
+    try {
+      const q = collection(db, "orders");
+      onSnapshot(q, (snapshot) => {
+        const orders = [];
+        snapshot.forEach(docSnap => {
+          const data = { id: docSnap.id, ...docSnap.data() };
+          orders.push(data);
+
+          const invoiceNum = data.invoiceNumber;
+          const isKnown = knownOrderIds.has(docSnap.id) || (invoiceNum && knownOrderInvoices.has(invoiceNum));
+
+          if (!isKnown) {
+            knownOrderIds.add(docSnap.id);
+            if (invoiceNum) knownOrderInvoices.add(invoiceNum);
+            if (!isInitialOrdersSnapshot) {
+              // Remote incoming order in real time!
+              triggerOrderNotification(data, { broadcast: false, save: true });
+            }
+          }
+        });
+
+        isInitialOrdersSnapshot = false;
+        orders.sort((a, b) => new Date(b.createdAtIso || 0) - new Date(a.createdAtIso || 0));
+        allOrders = orders;
+        renderOrdersTable();
+        updateKpis();
+      }, (err) => {
+        console.warn('[Admin] Firestore orders realtime stream error:', err);
+      });
+    } catch (err) {
+      console.warn('[Admin] Failed to establish real-time Firestore listener:', err);
+    }
+  }
+
+  // Cross-tab sync for local or offline orders
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'devshree_all_orders' || e.key === 'devshree_last_order_event') {
+      fetchAllOrders().then(orders => {
+        allOrders = orders;
+        renderOrdersTable();
+        updateKpis();
+      });
+    }
+  });
+}
+
+function renderOrdersTable(data = null) {
+  const tbody = document.getElementById('admin-orders-tbody');
+  if (!tbody) return;
+
+  const orders = data || allOrders;
+
+  // Update badge
+  const ordersNavBadge = document.getElementById('nav-orders-count');
+  if (ordersNavBadge) ordersNavBadge.textContent = allOrders.length;
+
+  if (orders.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align:center;padding:2.5rem;color:var(--admin-text-secondary);">
+          <div style="font-size:1.75rem;margin-bottom:0.5rem;">📋</div>
+          <div style="font-weight:700;color:var(--admin-text-main);margin-bottom:0.25rem;">No orders found</div>
+          <span style="font-size:0.8rem;">No customer orders match the current filter.</span>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  // Update status filter counters
+  const pillAll = document.getElementById('pill-orders-all');
+  const pillConf = document.getElementById('pill-orders-confirmed');
+  const pillProc = document.getElementById('pill-orders-processing');
+  const pillDisp = document.getElementById('pill-orders-dispatched');
+  const pillDelv = document.getElementById('pill-orders-delivered');
+  const pillCanc = document.getElementById('pill-orders-cancelled');
+
+  if (pillAll) pillAll.textContent = allOrders.length;
+  if (pillConf) pillConf.textContent = allOrders.filter(o => (o.orderStatus || 'Confirmed') === 'Confirmed').length;
+  if (pillProc) pillProc.textContent = allOrders.filter(o => o.orderStatus === 'Processing').length;
+  if (pillDisp) pillDisp.textContent = allOrders.filter(o => o.orderStatus === 'Dispatched').length;
+  if (pillDelv) pillDelv.textContent = allOrders.filter(o => o.orderStatus === 'Delivered').length;
+  if (pillCanc) pillCanc.textContent = allOrders.filter(o => o.orderStatus === 'Cancelled').length;
+
+  tbody.innerHTML = orders.map(order => {
+    const dateStr = order.createdAtIso 
+      ? new Date(order.createdAtIso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      : 'Recent';
+
+    const itemsCount = (order.itemsSnapshot || []).reduce((sum, i) => sum + (i.quantity || 1), 0);
+    const status = order.orderStatus || 'Confirmed';
+    const isCancelled = status === 'Cancelled';
+
+    return `
+      <tr class="${isCancelled ? 'row-cancelled' : ''}">
+        <td>
+          <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">
+            ${escapeHTML(order.invoiceNumber || 'INV-DEV')}
+          </div>
+          <div style="font-size:0.75rem;color:var(--admin-text-secondary);">${dateStr}</div>
+        </td>
+        <td>
+          <div style="font-weight:700;color:var(--admin-text-main);">${escapeHTML(order.customerName || 'Customer')}</div>
+          <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 ${escapeHTML(order.customerPhone || 'N/A')}</div>
+        </td>
+        <td>
+          <span style="font-weight:700;">${itemsCount} unit(s)</span>
+        </td>
+        <td>
+          <span style="font-weight:700;color:var(--admin-text-main);">${formatINR(order.total || 0)}</span>
+        </td>
+        <td>
+          <span style="font-size:0.8rem;font-weight:600;">${escapeHTML(order.paymentMethod || 'COD')}</span>
+        </td>
+        <td>
+          <select class="admin-order-status-select ${isCancelled ? 'is-cancelled' : ''}" data-order-id="${order.id}">
+            <option value="Confirmed" ${status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
+            <option value="Processing" ${status === 'Processing' ? 'selected' : ''}>Processing</option>
+            <option value="Dispatched" ${status === 'Dispatched' ? 'selected' : ''}>Dispatched</option>
+            <option value="Delivered" ${status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+            <option value="Cancelled" ${status === 'Cancelled' ? 'selected' : ''}>Cancelled 🚫</option>
+          </select>
+        </td>
+        <td style="text-align:right;">
+          <div style="display:inline-flex;gap:0.4rem;align-items:center;justify-content:flex-end;">
+            <button type="button" class="btn-table-whatsapp" data-wa-invoice="${order.invoiceNumber}" title="Send WhatsApp Update">
+              <span>WhatsApp 📲</span>
+            </button>
+            <button type="button" class="btn-table-edit" data-view-invoice="${order.invoiceNumber}">
+              <span>Invoice</span>
+            </button>
+            ${!isCancelled ? `
+              <button type="button" class="btn-table-cancel-order" data-cancel-invoice="${order.invoiceNumber}" title="Cancel this customer order">
+                <span>Cancel 🚫</span>
+              </button>
+            ` : `
+              <span class="badge-status-cancelled" title="Reason: ${escapeHTML(order.cancellationReason || 'Admin Cancelled')}">
+                Cancelled
+              </span>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Status changes
+  tbody.querySelectorAll('.admin-order-status-select').forEach(select => {
+    select.addEventListener('change', async () => {
+      const id = select.dataset.orderId;
+      const val = select.value;
+      const match = allOrders.find(o => o.id === id);
+      if (!match) return;
+
+      if (val === 'Cancelled') {
+        openAdminCancelModal(match);
+        select.value = match.orderStatus || 'Confirmed';
+        return;
+      }
+
+      if (id) {
+        await updateOrderStatus(id, val);
+        match.orderStatus = val;
+        showToast(`Order status updated to "${val}"`, 'success');
+        renderOrdersTable();
+        updateKpis();
+      }
+    });
+  });
+
+  // Cancel order button
+  tbody.querySelectorAll('[data-cancel-invoice]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const invNum = btn.dataset.cancelInvoice;
+      const target = allOrders.find(o => o.invoiceNumber === invNum);
+      if (target) {
+        openAdminCancelModal(target);
+      }
+    });
+  });
+
+  // WhatsApp dispatch modal
+  tbody.querySelectorAll('[data-wa-invoice]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const invNum = btn.dataset.waInvoice;
+      const target = allOrders.find(o => o.invoiceNumber === invNum);
+      if (target) {
+        openWhatsAppDispatchModal(target, 'owner');
+      }
+    });
+  });
+
+  // Invoice view
+  tbody.querySelectorAll('[data-view-invoice]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const invNum = btn.dataset.viewInvoice;
+      const target = allOrders.find(o => o.invoiceNumber === invNum);
+      if (target) openInvoiceViewer(target);
+    });
+  });
+}
+
+/**
+ * 7b. Admin Cancel Order Modal Controller
+ */
+let targetOrderToCancel = null;
+
+function openAdminCancelModal(order) {
+  targetOrderToCancel = order;
+  const modal = document.getElementById('admin-cancel-modal');
+  if (!modal) return;
+
+  const invElem = document.getElementById('cancel-modal-inv');
+  const totalElem = document.getElementById('cancel-modal-total');
+  const custElem = document.getElementById('cancel-modal-customer');
+  const phoneElem = document.getElementById('cancel-modal-phone');
+  const reasonSelect = document.getElementById('cancel-modal-reason-select');
+  const customWrap = document.getElementById('cancel-modal-custom-wrap');
+  const customInput = document.getElementById('cancel-modal-custom-reason');
+
+  if (invElem) invElem.textContent = order.invoiceNumber || order.id || 'INV-DEV';
+  if (totalElem) totalElem.textContent = formatINR(order.total || 0);
+  if (custElem) custElem.textContent = order.customerName || 'Customer';
+  if (phoneElem) phoneElem.textContent = order.customerPhone ? `+${order.customerPhone}` : 'N/A';
+
+  if (reasonSelect) reasonSelect.value = 'Out of Stock / Inventory Shortage';
+  if (customWrap) customWrap.style.display = 'none';
+  if (customInput) customInput.value = '';
+
+  modal.style.display = 'flex';
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function initAdminCancelModal() {
+  const modal = document.getElementById('admin-cancel-modal');
+  const closeBtn = document.getElementById('admin-cancel-modal-close');
+  const abortBtn = document.getElementById('cancel-modal-abort-btn');
+  const confirmBtn = document.getElementById('cancel-modal-confirm-btn');
+  const reasonSelect = document.getElementById('cancel-modal-reason-select');
+  const customWrap = document.getElementById('cancel-modal-custom-wrap');
+  const customInput = document.getElementById('cancel-modal-custom-reason');
+  const notifyWaCheckbox = document.getElementById('cancel-modal-notify-wa');
+
+  const closeModal = () => {
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('active');
+    }
+    targetOrderToCancel = null;
+    document.body.style.overflow = '';
+  };
+
+  closeBtn?.addEventListener('click', closeModal);
+  abortBtn?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  reasonSelect?.addEventListener('change', () => {
+    if (reasonSelect.value === 'custom') {
+      if (customWrap) customWrap.style.display = 'block';
+      customInput?.focus();
+    } else {
+      if (customWrap) customWrap.style.display = 'none';
+    }
+  });
+
+  confirmBtn?.addEventListener('click', async () => {
+    if (!targetOrderToCancel) return;
+
+    let reason = reasonSelect ? reasonSelect.value : 'Administrative cancellation';
+    if (reason === 'custom') {
+      reason = (customInput?.value || '').trim() || 'Administrative cancellation / stock update';
+    }
+
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = 'Cancelling order...';
+
+    try {
+      const orderId = targetOrderToCancel.id || targetOrderToCancel.invoiceNumber;
+      await cancelOrder(orderId, reason);
+
+      targetOrderToCancel.orderStatus = 'Cancelled';
+      targetOrderToCancel.cancellationReason = reason;
+
+      const orderRef = targetOrderToCancel;
+      closeModal();
+      renderOrdersTable();
+      updateKpis();
+      showToast(`Order ${orderRef.invoiceNumber || ''} has been cancelled.`, 'warning');
+
+      // WhatsApp customer alert if opted
+      if (notifyWaCheckbox?.checked && (orderRef.customerPhone || orderRef.phone)) {
+        const phone = orderRef.customerPhone || orderRef.phone;
+        const msg = buildOrderCancellationWhatsAppMessage(orderRef, reason);
+        openWhatsAppChat(phone, msg);
+      }
+    } catch (err) {
+      console.error('[Admin] Error cancelling order:', err);
+      showToast('Failed to cancel order. Please try again.', 'error');
+    } finally {
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <span>Confirm Cancellation</span>
+        `;
+      }
+    }
+  });
+}
+
+/**
+ * 8. User Avatar Dropdown & Quick Sync
+ */
+function initUserDropdown() {
+  const trigger = document.getElementById('admin-user-menu-btn');
+  const menu = document.getElementById('admin-dropdown-menu');
+
+  trigger?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu?.classList.toggle('show');
+  });
+
+  document.addEventListener('click', () => {
+    menu?.classList.remove('show');
+  });
+
+  document.getElementById('admin-signout-btn')?.addEventListener('click', async () => {
+    await logoutCustomer();
+    showToast('Signed out of admin.', 'info');
+    showAdminGate('unauthenticated');
+  });
+
+  document.getElementById('admin-quick-sync-btn')?.addEventListener('click', async () => {
+    try {
+      showToast('Syncing database...', 'info');
+      await seedFirestoreCatalog();
+      showToast('Catalog synced with Cloud Firestore!', 'success');
+      await loadDashboardData();
+    } catch (e) {
+      console.warn(e);
+      showToast('Sync completed with local catalog.', 'success');
+    }
+  });
+}
+
+/**
+ * 9. Admin Security Gate Screen
+ */
+function initAdminGate() {
+  const tabLogin = document.getElementById('admin-tab-login');
+  const tabRegister = document.getElementById('admin-tab-register');
+  const loginForm = document.getElementById('admin-gate-login-form');
+  const registerForm = document.getElementById('admin-gate-register-form');
+  const demoBtn = document.getElementById('btn-demo-preview');
+
+  tabLogin?.addEventListener('click', () => {
+    tabLogin.classList.add('active');
+    tabRegister?.classList.remove('active');
+    if (loginForm) loginForm.style.display = 'block';
+    if (registerForm) registerForm.style.display = 'none';
+  });
+
+  tabRegister?.addEventListener('click', () => {
+    tabRegister.classList.add('active');
+    tabLogin?.classList.remove('active');
+    if (registerForm) registerForm.style.display = 'block';
+    if (loginForm) loginForm.style.display = 'none';
+  });
+
+  // 1-Click Quick Demo Access
+  demoBtn?.addEventListener('click', () => {
+    hideAdminGate();
+    showToast('Welcome to Devshree Admin Console!', 'success');
+  });
+
+  loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('admin-login-email')?.value.trim();
+    const password = document.getElementById('admin-login-password')?.value;
+
+    try {
+      const user = await loginCustomer(email, password);
+      const isAdmin = await checkIsUserAdmin(user);
+      if (isAdmin) {
+        hideAdminGate();
+        updateAdminProfile(user);
+        await loadDashboardData();
+      } else {
+        showAdminGate('denied', user);
+      }
+    } catch (err) {
+      // In local mode if auth fails, offer unlock
+      console.warn('[Admin Gate] Login error:', err);
+      showToast('Login note: Click "Continue as Demo Admin" for direct local preview.', 'info');
+    }
+  });
+}
+
+function showAdminGate(state, user = null) {
+  const gate = document.getElementById('admin-gate-screen');
+  const deniedBox = document.getElementById('admin-gate-denied');
+  if (gate) gate.style.display = 'flex';
+  if (deniedBox) deniedBox.style.display = (state === 'denied') ? 'block' : 'none';
+}
+
+function hideAdminGate() {
+  const gate = document.getElementById('admin-gate-screen');
+  if (gate) gate.style.display = 'none';
+}
+
+function updateAdminProfile(user) {
+  if (!user) return;
+  const nameEl = document.getElementById('admin-user-name');
+  const avatarEl = document.getElementById('admin-user-avatar');
+  const name = user.displayName || user.email?.split('@')[0] || 'Admin';
+  if (nameEl) nameEl.textContent = name;
+  if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+}
+
+/**
+ * 10. Load Dashboard Initial Data
+ */
+async function loadDashboardData() {
+  try {
+    const [orders, products] = await Promise.all([
+      fetchAllOrders().catch(() => []),
+      fetchProducts().catch(() => [])
+    ]);
+
+    allOrders = orders && orders.length > 0 ? orders : [];
+    allOrders.forEach(o => {
+      if (o.id) knownOrderIds.add(o.id);
+      if (o.invoiceNumber) knownOrderInvoices.add(o.invoiceNumber);
+    });
+
+    // If Firestore products exist, use them, otherwise combine reference default products with mock data or local cache
+    if (products && products.length > 0) {
+      allProducts = products;
+    } else {
+      const cached = getStorage(CACHE_PRODUCTS_KEY, null);
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        allProducts = cached;
+      } else {
+        allProducts = [...REFERENCE_DEFAULT_PRODUCTS, ...MOCK_PRODUCTS];
+      }
+    }
+    syncProductsCache();
+
+    updateKpis();
+    renderProductsTable();
+    renderOrdersTable();
+  } catch (err) {
+    console.error('[Admin] Error loading records:', err);
+    const cached = getStorage(CACHE_PRODUCTS_KEY, null);
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      allProducts = cached;
+    } else {
+      allProducts = [...REFERENCE_DEFAULT_PRODUCTS, ...MOCK_PRODUCTS];
+    }
+    syncProductsCache();
+    updateKpis();
+    renderProductsTable();
+  }
+}
+
+/**
+ * Helper: Client-Side Canvas Image Optimizer
+ */
+function optimizeImageFile(file) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) {
+      reject(new Error('Please select an image file'));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 500;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => reject(new Error('Image processing error'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('File reading error'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatCategoryName(catId) {
+  switch (catId) {
+    case 'cat-electrical': return 'Electrical';
+    case 'cat-hardware': return 'Hardware';
+    case 'cat-plumbing': return 'Plumbing';
+    case 'cat-paints': return 'Paints';
+    default: return 'General';
+  }
+}
+
+function generateCode(catId, name) {
+  const prefix = {
+    'cat-electrical': 'DB',
+    'cat-hardware': 'HW',
+    'cat-plumbing': 'PP',
+    'cat-paints': 'WP'
+  }[catId] || 'PR';
+  const rand = Math.floor(100 + Math.random() * 900);
+  return `${prefix}${rand}`;
+}
+
+/**
+ * 11. Store Settings: Payment & WhatsApp Alerts Management
+ */
+function initAdminSettings() {
+  const upiVpaInput = document.getElementById('settings-upi-vpa');
+  const upiNameInput = document.getElementById('settings-upi-name');
+  const rzpKeyInput = document.getElementById('settings-razorpay-key');
+  const waWebhookInput = document.getElementById('settings-wa-webhook');
+  const ownerPhoneInput = document.getElementById('settings-owner-phone');
+  const saveBtn = document.getElementById('settings-save-btn');
+  const testWaBtn = document.getElementById('settings-test-wa-btn');
+
+  // Load saved credentials from localStorage
+  if (upiVpaInput) upiVpaInput.value = getStorage('devshree_upi_vpa', '8866130409@axisbank');
+  if (upiNameInput) upiNameInput.value = getStorage('devshree_upi_name', 'Devshree Hardware');
+  if (rzpKeyInput) rzpKeyInput.value = getStorage('devshree_razorpay_key_id', '');
+  if (waWebhookInput) waWebhookInput.value = getStorage('devshree_wa_webhook_url', '');
+  if (ownerPhoneInput) ownerPhoneInput.value = getStoreOwnerPhone();
+
+  // Save Settings handler
+  saveBtn?.addEventListener('click', () => {
+    const upiVpa = upiVpaInput?.value.trim() || '8866130409@axisbank';
+    const upiName = upiNameInput?.value.trim() || 'Devshree Hardware';
+    const rzpKey = rzpKeyInput?.value.trim() || '';
+    const webhookUrl = waWebhookInput?.value.trim() || '';
+    const ownerPhone = ownerPhoneInput?.value.trim() || '';
+
+    setStorage('devshree_upi_vpa', upiVpa);
+    setStorage('devshree_upi_name', upiName);
+    setStorage('devshree_razorpay_key_id', rzpKey);
+    setStorage('devshree_wa_webhook_url', webhookUrl);
+    if (ownerPhone) setStoreOwnerPhone(ownerPhone);
+
+    // Also persist to Firestore settings collection
+    if (db) {
+      try {
+        setDoc(doc(db, 'settings', 'store_config'), {
+          upiVpa,
+          upiName,
+          razorpayKeyId: rzpKey,
+          waWebhookUrl: webhookUrl,
+          ownerPhone: ownerPhone || getStoreOwnerPhone(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true }).catch(err => console.warn('[Admin] Firestore settings sync fallback:', err));
+      } catch (e) {
+        console.warn('[Admin] Settings sync error:', e);
+      }
+    }
+
+    showToast('Payment QR, UPI & WhatsApp alert settings saved successfully!', 'success');
+  });
+
+  // Test WhatsApp Dispatch handler
+  testWaBtn?.addEventListener('click', () => {
+    const phone = ownerPhoneInput?.value.trim() || getStoreOwnerPhone();
+    showToast(`Opening WhatsApp test alert for +${phone}...`, 'info');
+    const testMsg = `*DEVSHREE TEST ALERT*\n━━━━━━━━━━━━━━━━\nWhatsApp dispatch integration is active and working properly!\nTime: ${new Date().toLocaleTimeString('en-IN')}`;
+    openWhatsAppChat(phone, testMsg);
+  });
+}
+
+/**
+ * 12. Dynamic Contractor & Customer Directory
+ */
+function renderCustomersDirectory() {
+  const tbody = document.getElementById('admin-customers-tbody');
+  if (!tbody) return;
+
+  const customerMap = new Map();
+
+  allOrders.forEach(o => {
+    const phone = o.customerPhone || o.shippingAddress?.phone || 'Retail';
+    const name = o.customerName || o.shippingAddress?.fullName || 'Customer';
+    const gstin = o.contractorGSTIN || o.customerGSTIN || null;
+    const date = o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : 'Recent';
+
+    if (!customerMap.has(phone)) {
+      customerMap.set(phone, {
+        name,
+        phone,
+        gstin,
+        orderCount: 1,
+        totalSpend: o.total || 0,
+        joinedDate: date
+      });
+    } else {
+      const existing = customerMap.get(phone);
+      existing.orderCount += 1;
+      existing.totalSpend += (o.total || 0);
+      if (gstin && !existing.gstin) existing.gstin = gstin;
+    }
+  });
+
+  if (customerMap.size === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center; padding:2rem; color:var(--admin-text-secondary);">
+          No registered customer orders recorded yet. New customer orders will automatically appear here.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = Array.from(customerMap.values()).map(c => `
+    <tr>
+      <td>
+        <strong>${escapeHTML(c.name)}</strong>
+        <div style="font-size:0.75rem; color:var(--admin-text-secondary);">Total Spend: ${formatINR(c.totalSpend)}</div>
+      </td>
+      <td>
+        <a href="tel:${escapeHTML(c.phone)}" style="color:var(--admin-terracotta); text-decoration:none; font-weight:600;">
+          ${escapeHTML(c.phone)}
+        </a>
+      </td>
+      <td>
+        ${c.gstin ? `<span class="admin-row-cat-badge">${escapeHTML(c.gstin)}</span>` : `<span style="color:var(--admin-text-muted);font-size:0.75rem;">Retail (Unregistered)</span>`}
+      </td>
+      <td>
+        <strong>${c.orderCount} Order${c.orderCount > 1 ? 's' : ''}</strong>
+      </td>
+      <td>
+        <span style="font-size:0.85rem; color:var(--admin-text-secondary);">${escapeHTML(c.joinedDate)}</span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+/**
+ * 13. Export Orders for GST Accounting & Tally/Excel Import
+ */
+function exportOrdersToCSV(orders) {
+  if (!orders || orders.length === 0) {
+    showToast('No orders available to export.', 'info');
+    return;
+  }
+
+  const headers = [
+    'Invoice Number',
+    'Date',
+    'Customer Name',
+    'Phone',
+    'City',
+    'State',
+    'GSTIN',
+    'Subtotal (INR)',
+    'Tax / GST (INR)',
+    'Total Amount (INR)',
+    'Payment Method',
+    'Payment Status',
+    'Fulfillment Status',
+    'AWB Tracking Number',
+    'Items Summary'
+  ];
+
+  const rows = orders.map(o => {
+    const items = (o.itemsSnapshot || []).map(i => `${i.quantity}x ${i.name || i.productSnapshot?.name}`).join('; ');
+    const subtotal = o.subtotal || ((o.total || 0) / 1.18);
+    const tax = (o.total || 0) - subtotal;
+
+    return [
+      `"${o.invoiceNumber || ''}"`,
+      `"${new Date(o.createdAt || Date.now()).toLocaleDateString('en-IN')}"`,
+      `"${(o.customerName || '').replace(/"/g, '""')}"`,
+      `"${o.customerPhone || ''}"`,
+      `"${o.shippingAddress?.city || ''}"`,
+      `"${o.shippingAddress?.state || ''}"`,
+      `"${o.contractorGSTIN || o.customerGSTIN || 'Retail'}"`,
+      `"${subtotal.toFixed(2)}"`,
+      `"${tax.toFixed(2)}"`,
+      `"${(o.total || 0).toFixed(2)}"`,
+      `"${o.paymentMethod || ''}"`,
+      `"${o.paymentStatus || 'Pending'}"`,
+      `"${o.orderStatus || 'Confirmed'}"`,
+      `"${o.consignmentNumber || o.trackingNumber || ''}"`,
+      `"${items.replace(/"/g, '""')}"`
+    ].join(',');
+  });
+
+  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows].join('\n');
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Devshree_Orders_GST_Export_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast('Orders exported successfully to CSV!', 'success');
+}
+

@@ -1,0 +1,1083 @@
+/**
+ * DEVSHREE — ORDERS & INVOICE SERVICE
+ * Creates, persists, and retrieves user-specific orders and GST invoices
+ * using Cloud Firestore and local fallbacks.
+ */
+
+import { 
+  db, 
+  isConfigured, 
+  collection, 
+  addDoc, 
+  doc,
+  getDoc,
+  updateDoc,
+  query, 
+  where, 
+  getDocs, 
+  serverTimestamp 
+} from './firebase-config.js';
+import { getCurrentUser } from './auth.js';
+import { formatINR, getStorage, setStorage, showToast, escapeHTML } from './utils.js';
+import { STORE_INFO } from './mock-data.js';
+import { triggerOrderNotification, isCurrentContextAdmin } from './order-notifications.js';
+
+/**
+ * Generate and persist an invoice for the authenticated user
+ * @param {Object} orderData
+ * @returns {Promise<Object>}
+ */
+export async function createOrderAndInvoice(orderData) {
+  const user = getCurrentUser();
+  if (!user) {
+    throw new Error('User must be authenticated to generate an invoice.');
+  }
+
+  const invoiceNumber = `INV-DEV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const gstRate = 0.18; // 18% standard GST for hardware & electrical supplies
+  const gstAmount = Math.round(orderData.subtotal * gstRate);
+
+  const invoicePayload = {
+    userId: user.uid,
+    invoiceNumber: invoiceNumber,
+    customerName: orderData.customerName || user.displayName || 'Customer',
+    customerEmail: user.email,
+    customerPhone: orderData.customerPhone || user.phone || '',
+    shippingAddress: orderData.shippingAddress || '104 S.P. Ring Road, Ahmedabad, Gujarat',
+    itemsSnapshot: orderData.items || [],
+    subtotal: orderData.subtotal,
+    shippingCost: orderData.shipping,
+    gstAmount: gstAmount,
+    total: orderData.total,
+    paymentMethod: orderData.paymentMethod || 'Cash on Delivery (COD)',
+    paymentStatus: orderData.paymentStatus || 'Pending',
+    orderStatus: 'Confirmed',
+    createdAtIso: new Date().toISOString()
+  };
+
+  if (isConfigured && db) {
+    try {
+      const docRef = await addDoc(collection(db, "orders"), {
+        ...invoicePayload,
+        createdAt: serverTimestamp()
+      });
+      invoicePayload.id = docRef.id;
+      console.log("[Devshree] Invoice saved to Firestore with ID:", docRef.id);
+    } catch (err) {
+      console.error("[Devshree] Firestore invoice save error:", err);
+      // Fallback to local storage if Firestore error occurs
+      saveLocalInvoice(user.uid, invoicePayload);
+    }
+  } else {
+    // Save to user-specific localStorage bucket
+    saveLocalInvoice(user.uid, invoicePayload);
+  }
+
+  // Also sync to master all-orders cache for admin visibility
+  saveMasterOrder(invoicePayload);
+
+  // Trigger real-time order notification (Sound chime, Desktop notification, in-app banner, cross-tab broadcast)
+  try {
+    triggerOrderNotification(invoicePayload);
+  } catch (notifErr) {
+    console.warn('[Orders] Notification trigger error:', notifErr);
+  }
+
+  // Only display invoice creation toast if in Admin context (customer checkout has dedicated step 3 screen)
+  if (isCurrentContextAdmin()) {
+    showToast(`Invoice ${invoiceNumber} generated & saved successfully!`, 'success');
+  }
+  return invoicePayload;
+}
+
+function saveMasterOrder(invoice) {
+  try {
+    const masterList = getStorage('devshree_all_orders', []);
+    const exists = masterList.some(o => o.invoiceNumber === invoice.invoiceNumber);
+    if (!exists) {
+      masterList.unshift(invoice);
+      setStorage('devshree_all_orders', masterList);
+    }
+  } catch (e) {
+    console.warn('[Orders] Failed to save to devshree_all_orders:', e);
+  }
+}
+
+function saveLocalInvoice(userId, invoice) {
+  const key = `devshree_invoices_${userId}`;
+  const list = getStorage(key, []);
+  list.unshift(invoice);
+  setStorage(key, list);
+}
+
+/**
+ * Fetch all stored invoices for the current user
+ * @returns {Promise<Array>}
+ */
+export async function fetchUserInvoices() {
+  const user = getCurrentUser();
+  if (!user) return [];
+
+  let list = [];
+  if (isConfigured && db) {
+    try {
+      const q = query(
+        collection(db, "orders"),
+        where("userId", "==", user.uid)
+      );
+      const snapshot = await Promise.race([
+        getDocs(q),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 2500))
+      ]);
+      snapshot.forEach(docSnap => {
+        list.push({ id: docSnap.id, ...docSnap.data() });
+      });
+    } catch (err) {
+      console.warn("[Devshree] Error reading Firestore invoices, checking local storage:", err);
+    }
+  }
+
+  if (list.length === 0) {
+    const userLocal = getStorage(`devshree_invoices_${user.uid}`, []);
+    if (userLocal && userLocal.length > 0) {
+      list = userLocal;
+    } else {
+      const allOrders = getStorage('devshree_all_orders', []);
+      const matched = allOrders.filter(o => 
+        o.userId === user.uid || 
+        (user.email && (o.customerEmail === user.email || o.email === user.email || o.shippingAddress?.email === user.email)) ||
+        (user.isAdmin && allOrders.length > 0)
+      );
+      if (matched.length > 0) {
+        list = matched;
+      }
+    }
+  }
+
+  list.sort((a, b) => new Date(b.createdAtIso || 0) - new Date(a.createdAtIso || 0));
+  return list;
+}
+
+/**
+ * Render and Open "My Invoices & Orders" Modal
+ */
+export async function openUserInvoicesModal() {
+  const user = getCurrentUser();
+  if (!user) {
+    showToast('Please sign in to view your invoices.', 'info');
+    return;
+  }
+
+  const modal = document.getElementById('invoices-list-modal');
+  const container = document.getElementById('invoices-list-container');
+  if (!modal || !container) return;
+
+  container.innerHTML = `
+    <div style="text-align:center;padding:2rem;color:var(--color-text-secondary);">
+      <p>Loading your invoices from database...</p>
+    </div>
+  `;
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  const invoices = await fetchUserInvoices();
+
+  if (invoices.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:3rem 1rem;color:var(--color-text-secondary);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 1rem;color:#CBD5E1;">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <h4 style="font-size:1.15rem;color:var(--color-navy);margin-bottom:0.5rem;">No Invoices Found Yet</h4>
+        <p style="font-size:0.9rem;margin-bottom:1.25rem;">You haven't placed any orders under <strong>${escapeHTML(user.email)}</strong>.</p>
+        <a href="#bestsellers-section" class="btn btn-primary btn-sm" id="invoices-browse-btn">Shop Supplies</a>
+      </div>
+    `;
+    container.querySelector('#invoices-browse-btn')?.addEventListener('click', () => {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    });
+    return;
+  }
+
+  container.innerHTML = invoices.map(inv => {
+    const status = (inv.orderStatus || 'Confirmed').toLowerCase();
+    let statusClass = 'status-confirmed';
+    if (status.includes('cancel')) statusClass = 'status-cancelled';
+    else if (status.includes('process')) statusClass = 'status-processing';
+    else if (status.includes('dispatch') || status.includes('shipped') || status.includes('transit')) statusClass = 'status-dispatched';
+    else if (status.includes('out')) statusClass = 'status-out';
+    else if (status.includes('deliver')) statusClass = 'status-delivered';
+
+    const items = inv.itemsSnapshot || [];
+    const totalItems = items.reduce((sum, i) => sum + (i.quantity || 1), 0);
+
+    return `
+      <div class="order-invoice-card" data-invoice-num="${escapeHTML(inv.invoiceNumber)}">
+        <div class="order-invoice-card-header">
+          <div class="order-invoice-id-block">
+            <div class="order-invoice-tag">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span class="order-invoice-number">${escapeHTML(inv.invoiceNumber)}</span>
+              <button type="button" class="btn-copy-invoice" data-copy="${escapeHTML(inv.invoiceNumber)}" title="Copy Invoice Number">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="order-invoice-date">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>${new Date(inv.createdAtIso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            </div>
+          </div>
+          <div class="order-status-pill ${statusClass}">
+            <span class="status-pulse-dot"></span>
+            <span>${escapeHTML(inv.orderStatus || 'Confirmed')}</span>
+          </div>
+        </div>
+
+        <div class="order-invoice-card-items">
+          ${items.map(item => `
+            <div class="order-item-chip">
+              <span class="order-item-qty">${item.quantity || 1}x</span>
+              <span class="order-item-name">${escapeHTML(item.name || item.productSnapshot?.name || 'Supply Item')}</span>
+              <span class="order-item-price">${formatINR((item.price || 0) * (item.quantity || 1))}</span>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="order-invoice-card-footer">
+          <div class="order-total-block">
+            <span class="order-total-label">Total Amount (${totalItems} ${totalItems === 1 ? 'item' : 'items'} &bull; incl. 18% GST)</span>
+            <strong class="order-total-value">${formatINR(inv.total)}</strong>
+          </div>
+          <div class="order-card-actions">
+            <button type="button" class="btn btn-primary btn-sm btn-order-track" data-track-invoice-id="${inv.invoiceNumber}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+              Track Live Shipment
+            </button>
+            <button type="button" class="btn btn-outline btn-sm btn-order-invoice" data-view-invoice-id="${inv.invoiceNumber}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+              View Official GST Bill
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Bind Copy Buttons
+  container.querySelectorAll('.btn-copy-invoice').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const code = btn.dataset.copy;
+      if (code) {
+        navigator.clipboard?.writeText(code).then(() => {
+          showToast(`Copied ${code} to clipboard`, 'success');
+        }).catch(() => {
+          showToast(code, 'info');
+        });
+      }
+    });
+  });
+
+  // Bind View Invoice Click
+  container.querySelectorAll('[data-view-invoice-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const invNum = btn.dataset.viewInvoiceId;
+      const targetInv = invoices.find(i => i.invoiceNumber === invNum);
+      if (targetInv) {
+        openInvoiceViewer(targetInv);
+      }
+    });
+  });
+
+  // Bind Track Order Click
+  container.querySelectorAll('[data-track-invoice-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const invNum = btn.dataset.trackInvoiceId;
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+      openOrderTrackingModal(invNum);
+    });
+  });
+}
+
+/**
+ * Display professional printable GST Tax Invoice
+ * @param {Object} invoice
+ */
+export function openInvoiceViewer(invoice) {
+  const modal = document.getElementById('tax-invoice-modal');
+  const body = document.getElementById('tax-invoice-content');
+  if (!modal || !body) return;
+
+  const items = invoice.itemsSnapshot || [];
+
+  body.innerHTML = `
+    <div class="tax-invoice-paper" id="printable-tax-invoice">
+      <!-- Top Official Header Banner -->
+      <div class="invoice-official-banner">
+        <div class="invoice-official-title">
+          <span class="invoice-govt-badge">ORIGINAL FOR RECIPIENT</span>
+          <span class="invoice-rule-text">TAX INVOICE ISSUED UNDER SECTION 31 OF CGST ACT, 2017</span>
+        </div>
+        <div class="invoice-state-badge">
+          <span>STATE CODE: <strong>24 (GUJARAT)</strong></span>
+        </div>
+      </div>
+
+      <!-- Main Store & Invoice Meta Header -->
+      <div class="invoice-brand-header">
+        <div class="invoice-seller-info">
+          <div class="invoice-brand-row">
+            <div class="invoice-brand-logo-badge">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="invoice-seller-name">DEVSHREE</h2>
+              <span class="invoice-seller-tagline">HARDWARE &amp; ELECTRICAL SUPPLIES</span>
+            </div>
+          </div>
+          <p class="invoice-seller-address">
+            <strong>${STORE_INFO.name}</strong><br />
+            ${STORE_INFO.address}<br />
+            <span class="invoice-meta-highlight"><strong>GSTIN:</strong> ${STORE_INFO.gstin}</span> &bull; 
+            <span><strong>PAN:</strong> AABCU9603R</span> &bull; 
+            <span><strong>Email:</strong> ${STORE_INFO.email}</span>
+          </p>
+        </div>
+
+        <div class="invoice-meta-card">
+          <div class="invoice-num-highlight">
+            <span class="invoice-num-label">TAX INVOICE NUMBER</span>
+            <strong class="invoice-num-val">${escapeHTML(invoice.invoiceNumber)}</strong>
+          </div>
+          <div class="invoice-meta-grid-mini">
+            <div>
+              <span class="meta-mini-label">Invoice Date:</span>
+              <strong class="meta-mini-val">${new Date(invoice.createdAtIso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
+            </div>
+            <div>
+              <span class="meta-mini-label">Place of Supply:</span>
+              <strong class="meta-mini-val">Gujarat (24)</strong>
+            </div>
+            <div>
+              <span class="meta-mini-label">Reverse Charge:</span>
+              <strong class="meta-mini-val">No</strong>
+            </div>
+            <div>
+              <span class="meta-mini-label">Fulfillment:</span>
+              <strong class="meta-mini-val">Direct Warehouse</strong>
+            </div>
+          </div>
+          <!-- Authentic Simulated Barcode -->
+          <div class="invoice-barcode-wrap" title="Consignment Tracking Code">
+            <svg class="invoice-barcode" viewBox="0 0 200 32" width="100%" height="26">
+              <rect x="0" y="0" width="3" height="32" fill="#142B45"/>
+              <rect x="5" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="10" y="0" width="5" height="32" fill="#142B45"/>
+              <rect x="18" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="23" y="0" width="4" height="32" fill="#142B45"/>
+              <rect x="30" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="35" y="0" width="6" height="32" fill="#142B45"/>
+              <rect x="44" y="0" width="3" height="32" fill="#142B45"/>
+              <rect x="50" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="55" y="0" width="5" height="32" fill="#142B45"/>
+              <rect x="63" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="68" y="0" width="4" height="32" fill="#142B45"/>
+              <rect x="75" y="0" width="6" height="32" fill="#142B45"/>
+              <rect x="84" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="89" y="0" width="4" height="32" fill="#142B45"/>
+              <rect x="96" y="0" width="3" height="32" fill="#142B45"/>
+              <rect x="102" y="0" width="5" height="32" fill="#142B45"/>
+              <rect x="110" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="115" y="0" width="4" height="32" fill="#142B45"/>
+              <rect x="122" y="0" width="6" height="32" fill="#142B45"/>
+              <rect x="131" y="0" width="3" height="32" fill="#142B45"/>
+              <rect x="137" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="142" y="0" width="5" height="32" fill="#142B45"/>
+              <rect x="150" y="0" width="3" height="32" fill="#142B45"/>
+              <rect x="156" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="161" y="0" width="6" height="32" fill="#142B45"/>
+              <rect x="170" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="175" y="0" width="4" height="32" fill="#142B45"/>
+              <rect x="182" y="0" width="5" height="32" fill="#142B45"/>
+              <rect x="190" y="0" width="2" height="32" fill="#142B45"/>
+              <rect x="195" y="0" width="4" height="32" fill="#142B45"/>
+            </svg>
+            <div class="barcode-text">${escapeHTML(invoice.invoiceNumber)}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Billed To & Logistics 2-Column Cards -->
+      <div class="invoice-party-grid">
+        <div class="invoice-party-card">
+          <div class="party-card-header">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>BILLED &amp; SHIPPED TO (CONSIGNEE)</span>
+          </div>
+          <div class="party-card-body">
+            <h4 class="party-name">${escapeHTML(invoice.customerName)}</h4>
+            <div class="party-line">${escapeHTML(invoice.shippingAddress)}</div>
+            <div class="party-meta-row">
+              <span><strong>Phone:</strong> ${escapeHTML(invoice.customerPhone || 'N/A')}</span>
+              <span><strong>Email:</strong> ${escapeHTML(invoice.customerEmail)}</span>
+            </div>
+            <div class="party-state-pill">
+              <span>Place of Delivery: <strong>Gujarat (State Code: 24)</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="invoice-party-card">
+          <div class="party-card-header">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+            <span>PAYMENT &amp; FULFILLMENT DISPATCH</span>
+          </div>
+          <div class="party-card-body">
+            <div class="dispatch-detail-row">
+              <span class="dispatch-label">Payment Mode:</span>
+              <span class="dispatch-value payment-badge">${escapeHTML(invoice.paymentMethod || 'Cash on Delivery (COD)')}</span>
+            </div>
+            <div class="dispatch-detail-row">
+              <span class="dispatch-label">Payment Status:</span>
+              <span class="badge badge-stock-in">${escapeHTML(invoice.orderStatus || 'Confirmed')}</span>
+            </div>
+            <div class="dispatch-detail-row">
+              <span class="dispatch-label">Logistics Partner:</span>
+              <span class="dispatch-value"><strong>Delhivery Express Surface</strong></span>
+            </div>
+            <div class="dispatch-detail-row">
+              <span class="dispatch-label">Dispatch Facility:</span>
+              <span class="dispatch-value">Rajkot Central Distribution Centre (Jamnagar Rd)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Itemized Tax Invoice Table -->
+      <div class="invoice-table-wrapper">
+        <table class="tax-invoice-table">
+          <thead>
+            <tr>
+              <th style="width: 36px; text-align: center;">#</th>
+              <th>Description of Goods / Supplies</th>
+              <th style="text-align: center; width: 95px;">HSN / SAC</th>
+              <th style="text-align: center; width: 55px;">Qty</th>
+              <th style="text-align: right; width: 95px;">Unit Rate</th>
+              <th style="text-align: center; width: 75px;">GST</th>
+              <th style="text-align: right; width: 110px;">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map((item, idx) => {
+              const name = item.name || item.productSnapshot?.name || 'Supply Item';
+              const price = item.price || item.productSnapshot?.price || 0;
+              const qty = item.quantity || 1;
+              const brand = item.brand || item.productSnapshot?.brand || 'Standard';
+              const hsn = item.hsn || (brand === 'Polycab' ? '8544' : brand === 'Havells' ? '8536' : '8539');
+              return `
+                <tr>
+                  <td style="text-align: center; font-weight: 700; color: var(--color-text-secondary);">${idx + 1}</td>
+                  <td>
+                    <div class="invoice-item-title">${escapeHTML(name)}</div>
+                    <div class="invoice-item-brand-row">
+                      <span class="invoice-brand-tag">${escapeHTML(brand)}</span>
+                      <span class="invoice-spec-tag">100% Genuine Industrial Grade</span>
+                    </div>
+                  </td>
+                  <td style="text-align: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600;">${hsn}</td>
+                  <td style="text-align: center; font-weight: 800;">${qty}</td>
+                  <td style="text-align: right; font-weight: 600;">${formatINR(price)}</td>
+                  <td style="text-align: center; font-size: 0.8rem; color: var(--color-blue); font-weight: 700;">18%</td>
+                  <td style="text-align: right; font-weight: 800; color: var(--color-navy);">${formatINR(price * qty)}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Financial Summary & Statutory Footer Row -->
+      <div class="invoice-bottom-grid">
+        <div class="invoice-terms-block">
+          <h5 class="terms-title">Terms &amp; Conditions / Warranty:</h5>
+          <ul class="terms-list">
+            <li>Goods once sold carry manufacturer brand warranty support at authorized service centres across India.</li>
+            <li>This is a computer-authenticated Tax Invoice eligible for Input Tax Credit (ITC) under Gujarat State GST jurisdiction.</li>
+            <li>Devshree Hardware &amp; Electricals guarantees 100% brand authenticity, ISI/BIS compliance on electrical supplies.</li>
+          </ul>
+          <div class="invoice-auth-stamp">
+            <div class="stamp-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <polyline points="9 12 11 14 15 10"></polyline>
+              </svg>
+            </div>
+            <div class="stamp-text">
+              <strong>Digitally Authenticated Invoice</strong>
+              <span>Devshree Enterprise &bull; Rajkot, Gujarat</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="invoice-calculation-card">
+          <div class="calc-row">
+            <span>Taxable Amount (Goods Value):</span>
+            <strong>${formatINR(invoice.subtotal)}</strong>
+          </div>
+          <div class="calc-row tax-breakdown-row">
+            <span>Central GST (CGST @ 9%):</span>
+            <span>${formatINR(Math.round(invoice.gstAmount / 2))}</span>
+          </div>
+          <div class="calc-row tax-breakdown-row">
+            <span>State GST (SGST @ 9%):</span>
+            <span>${formatINR(Math.round(invoice.gstAmount / 2))}</span>
+          </div>
+          <div class="calc-row">
+            <span>Shipping &amp; Logistics:</span>
+            <span class="${invoice.shippingCost === 0 ? 'free-shipping-tag' : ''}">${invoice.shippingCost === 0 ? 'FREE DELIVERY' : formatINR(invoice.shippingCost)}</span>
+          </div>
+          <div class="calc-row grand-total-row">
+            <div class="grand-total-label">
+              <span>GRAND TOTAL (INR)</span>
+              <span class="total-inclusive-note">(Inclusive of all statutory taxes)</span>
+            </div>
+            <strong class="grand-total-val">${formatINR(invoice.total)}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice Footer Signoff -->
+      <div class="invoice-paper-footer">
+        <span>Thank you for choosing Devshree Hardware &amp; Electricals! For support: <strong>support@devshree.in</strong> &bull; GSTIN: <strong>${STORE_INFO.gstin}</strong></span>
+      </div>
+    </div>
+
+    <!-- Modal Actions Bar -->
+    <div class="invoice-modal-actions no-print">
+      <button type="button" class="btn btn-primary" id="print-invoice-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        Print / Save PDF
+      </button>
+      <button type="button" class="btn btn-outline" id="copy-invoice-link-btn" data-inv="${escapeHTML(invoice.invoiceNumber)}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy Invoice #
+      </button>
+      <button type="button" class="btn btn-secondary" id="close-invoice-viewer-btn">
+        Close
+      </button>
+    </div>
+  `;
+
+  document.getElementById('print-invoice-btn')?.addEventListener('click', () => {
+    window.print();
+  });
+
+  document.getElementById('copy-invoice-link-btn')?.addEventListener('click', () => {
+    const inv = invoice.invoiceNumber;
+    if (inv) {
+      navigator.clipboard?.writeText(inv).then(() => {
+        showToast(`Copied ${inv} to clipboard`, 'success');
+      }).catch(() => {
+        showToast(inv, 'info');
+      });
+    }
+  });
+
+  document.getElementById('close-invoice-viewer-btn')?.addEventListener('click', () => {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  });
+
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Lookup an order by Firestore doc ID or Invoice Number (e.g. INV-DEV-...)
+ * @param {string} identifier
+ * @returns {Promise<Object|null>}
+ */
+export async function fetchOrderById(identifier) {
+  if (!identifier) return null;
+  const cleanId = identifier.trim();
+
+  if (isConfigured && db) {
+    try {
+      // 1. Try finding by invoiceNumber
+      const q = query(collection(db, "orders"), where("invoiceNumber", "==", cleanId));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const d = snap.docs[0];
+        return { id: d.id, ...d.data() };
+      }
+
+      // 2. Try direct doc ID
+      try {
+        const docRef = doc(db, "orders", cleanId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          return { id: docSnap.id, ...docSnap.data() };
+        }
+      } catch (_) {}
+    } catch (err) {
+      console.warn("[Devshree] Error searching Firestore order:", err);
+    }
+  }
+
+  // Fallback: search across all local storage buckets
+  const user = getCurrentUser();
+  if (user) {
+    const list = getStorage(`devshree_invoices_${user.uid}`, []);
+    const match = list.find(i => i.invoiceNumber === cleanId || i.id === cleanId);
+    if (match) return match;
+  }
+  return null;
+}
+
+/**
+ * Fetch all orders across all customers (for Admin Dashboard)
+ * @returns {Promise<Array>}
+ */
+export async function fetchAllOrders() {
+  if (isConfigured && db) {
+    try {
+      const snap = await getDocs(collection(db, "orders"));
+      const orders = [];
+      snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
+      orders.sort((a, b) => new Date(b.createdAtIso || 0) - new Date(a.createdAtIso || 0));
+      if (orders.length > 0) return orders;
+    } catch (err) {
+      console.warn("[Devshree] Error reading all orders from Firestore:", err);
+    }
+  }
+
+  // Master local order list fallback
+  const masterOrders = getStorage('devshree_all_orders', []);
+  if (masterOrders.length > 0) return masterOrders;
+
+  const user = getCurrentUser();
+  if (user) {
+    return getStorage(`devshree_invoices_${user.uid}`, []);
+  }
+  return [];
+}
+
+/**
+ * Update an order's fulfillment status
+/**
+ * Update order status across Firestore and Local Storage
+ * @param {string} orderId
+ * @param {string} newStatus
+ * @param {Object} [extraData]
+ * @returns {Promise<boolean>}
+ */
+export async function updateOrderStatus(orderId, newStatus, extraData = {}) {
+  // 1. Sync to master local orders
+  const masterOrders = getStorage('devshree_all_orders', []);
+  const idx = masterOrders.findIndex(o => o.id === orderId || o.invoiceNumber === orderId);
+  if (idx !== -1) {
+    masterOrders[idx].orderStatus = newStatus;
+    Object.assign(masterOrders[idx], extraData);
+    setStorage('devshree_all_orders', masterOrders);
+  }
+
+  // 2. Sync to user specific order history
+  const user = getCurrentUser();
+  if (user) {
+    const userInvoices = getStorage(`devshree_invoices_${user.uid}`, []);
+    const uIdx = userInvoices.findIndex(o => o.id === orderId || o.invoiceNumber === orderId);
+    if (uIdx !== -1) {
+      userInvoices[uIdx].orderStatus = newStatus;
+      Object.assign(userInvoices[uIdx], extraData);
+      setStorage(`devshree_invoices_${user.uid}`, userInvoices);
+    }
+  }
+
+  // 3. Sync to Cloud Firestore if connected
+  if (isConfigured && db && orderId) {
+    try {
+      const docRef = doc(db, "orders", orderId);
+      await updateDoc(docRef, { orderStatus: newStatus, ...extraData, updatedAt: serverTimestamp() });
+      return true;
+    } catch (err) {
+      console.error("[Devshree] Error updating order status in Firestore:", err);
+    }
+  }
+  return true;
+}
+
+/**
+ * Cancel an order (Admin cancellation)
+ * @param {string} orderId
+ * @param {string} [reason]
+ * @returns {Promise<boolean>}
+ */
+export async function cancelOrder(orderId, reason = 'Cancelled by store administrator') {
+  const extra = {
+    cancelledAt: new Date().toISOString(),
+    cancellationReason: reason,
+    cancelledBy: 'Admin'
+  };
+  return await updateOrderStatus(orderId, 'Cancelled', extra);
+}
+
+/**
+ * Open and render the Live Order Tracking Modal
+ * @param {string} [initialOrderId] Optional ID to immediately lookup
+ */
+export async function openOrderTrackingModal(initialOrderId = '') {
+  const modal = document.getElementById('track-order-modal');
+  const body = document.getElementById('track-order-body');
+  if (!modal || !body) return;
+
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  if (initialOrderId) {
+    await renderTrackingResults(initialOrderId);
+  } else {
+    renderTrackingSearchPrompt();
+  }
+}
+
+/**
+ * Render Search Box for Order Tracking
+ */
+function renderTrackingSearchPrompt() {
+  const body = document.getElementById('track-order-body');
+  if (!body) return;
+
+  body.innerHTML = `
+    <div class="tracking-search-box">
+      <div class="tracking-icon-circle">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="3" width="15" height="13"></rect>
+          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+          <circle cx="5.5" cy="18.5" r="2.5"></circle>
+          <circle cx="18.5" cy="18.5" r="2.5"></circle>
+        </svg>
+      </div>
+      <h3 style="font-size:1.35rem;color:var(--color-navy);font-weight:800;margin-bottom:0.35rem;">Track Your Consignment</h3>
+      <p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:1.5rem;max-width:440px;margin-left:auto;margin-right:auto;">
+        Enter your Invoice Number (e.g. <strong>INV-DEV-2026-XXXX</strong>) to view real-time logistics status and estimated arrival.
+      </p>
+
+      <form id="track-order-form" style="max-width:420px;margin:0 auto;display:flex;gap:0.5rem;">
+        <input type="text" id="track-order-input" class="form-control" placeholder="Enter INV-DEV-... or Order ID" required style="font-family:var(--font-mono);font-size:0.9rem;" />
+        <button type="submit" class="btn btn-primary" style="white-space:nowrap;padding:0 1.25rem;">
+          Track
+        </button>
+      </form>
+    </div>
+  `;
+
+  document.getElementById('track-order-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('track-order-input')?.value.trim();
+    if (id) {
+      await renderTrackingResults(id);
+    }
+  });
+}
+
+/**
+ * Render Live Tracking Progress Stepper for a matched order
+ */
+async function renderTrackingResults(orderId) {
+  const body = document.getElementById('track-order-body');
+  if (!body) return;
+
+  body.innerHTML = `
+    <div style="text-align:center;padding:3rem 1rem;color:var(--color-text-secondary);">
+      <p>Locating shipment details from database...</p>
+    </div>
+  `;
+
+  const order = await fetchOrderById(orderId);
+
+  if (!order) {
+    body.innerHTML = `
+      <div style="text-align:center;padding:3rem 1.5rem;">
+        <div style="width:54px;height:54px;border-radius:50%;background:#FEE2E2;color:#DC2626;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h4 style="font-size:1.15rem;color:var(--color-navy);margin-bottom:0.5rem;">Shipment Not Found</h4>
+        <p style="font-size:0.9rem;color:var(--color-text-secondary);margin-bottom:1.5rem;max-width:400px;margin-left:auto;margin-right:auto;">
+          We couldn't locate any order matching "<strong>${escapeHTML(orderId)}</strong>". Please verify your invoice number and try again.
+        </p>
+        <button type="button" class="btn btn-outline btn-sm" id="track-retry-btn">Try Another Number</button>
+      </div>
+    `;
+    document.getElementById('track-retry-btn')?.addEventListener('click', renderTrackingSearchPrompt);
+    return;
+  }
+
+  // Determine active step index: Confirmed (1), Processing (2), Dispatched (3), Out for Delivery (4), Delivered (5)
+  const status = (order.orderStatus || 'Confirmed').toLowerCase();
+  const isCancelled = status.includes('cancel');
+  let activeStep = 1;
+  let statusClass = 'confirmed';
+  let progressPercent = 20;
+
+  if (isCancelled) {
+    activeStep = 0;
+    statusClass = 'cancelled';
+    progressPercent = 0;
+  } else if (status.includes('process')) {
+    activeStep = 2;
+    statusClass = 'processing';
+    progressPercent = 45;
+  } else if (status.includes('dispatch') || status.includes('transit') || status.includes('shipped')) {
+    activeStep = 3;
+    statusClass = 'dispatched';
+    progressPercent = 70;
+  } else if (status.includes('out')) {
+    activeStep = 4;
+    statusClass = 'out';
+    progressPercent = 90;
+  } else if (status.includes('deliver')) {
+    activeStep = 5;
+    statusClass = 'delivered';
+    progressPercent = 100;
+  }
+
+  const orderDate = new Date(order.createdAtIso || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const steps = [
+    { num: 1, label: 'Order Confirmed', sub: 'GST Tax Invoice Generated & Verified', icon: '📝', time: `${orderDate} &bull; Recorded` },
+    { num: 2, label: 'Warehouse Processing', sub: 'Packed & Barcode Scanned at Rajkot Hub', icon: '📦', time: activeStep >= 2 ? 'Completed' : 'Pending' },
+    { num: 3, label: 'Handed to Logistics', sub: `${escapeHTML(order.courierPartner || 'Delhivery Express Surface')} &bull; In Transit`, icon: '🚚', time: activeStep >= 3 ? 'In Surface Transit' : 'Pending dispatch' },
+    { num: 4, label: 'Out for Delivery', sub: 'Dispatched from Nearest Distribution Centre', icon: '🛵', time: activeStep >= 4 ? 'Courier on way' : 'Upcoming' },
+    { num: 5, label: 'Consignment Delivered', sub: 'Safely Handed over at Site', icon: '✅', time: activeStep >= 5 ? 'Delivered' : 'Awaiting Arrival' }
+  ];
+
+  const totalQty = (order.itemsSnapshot || []).reduce((sum, i) => sum + (i.quantity || 1), 0);
+
+  body.innerHTML = `
+    <div class="tracking-redesign-pane">
+      <!-- Top Tracking Hero Banner -->
+      <div class="tracking-hero-banner">
+        <div class="tracking-hero-info">
+          <div class="tracking-hero-badge">
+            <span class="tracking-pulse-dot"></span>
+            <span>LIVE CONSIGNMENT TRACKING</span>
+          </div>
+          <h3 class="tracking-hero-inv">${escapeHTML(order.invoiceNumber || order.id)}</h3>
+          <div class="tracking-hero-meta">
+            <span class="courier-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+              ${escapeHTML(order.courierPartner || 'Delhivery Express Surface')}
+            </span>
+            <span class="awb-pill">AWB: <strong>${escapeHTML(order.trackingNumber || 'DLV-DEV-849201')}</strong></span>
+            <button type="button" class="btn-copy-awb" data-copy-awb="${escapeHTML(order.trackingNumber || 'DLV-DEV-849201')}" title="Copy AWB Tracking Number">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="tracking-hero-status-box">
+          <span class="tracking-status-pill status-${statusClass}">${escapeHTML(order.orderStatus || 'Confirmed')}</span>
+          <div class="tracking-eta-box">
+            <span class="eta-label">Estimated Arrival:</span>
+            <strong class="eta-value">${isCancelled ? 'Order Cancelled' : escapeHTML(order.estimatedDeliveryDate || 'Within 2-3 Business Days')}</strong>
+          </div>
+        </div>
+      </div>
+
+      ${isCancelled ? `
+        <div style="background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:10px;padding:1rem 1.25rem;margin:1.25rem 0;color:#991B1B;display:flex;align-items:center;gap:0.85rem;">
+          <div style="font-size:1.8rem;line-height:1;">🚫</div>
+          <div>
+            <div style="font-weight:800;font-size:1rem;color:#7F1D1D;">Order Cancelled</div>
+            <div style="font-size:0.85rem;color:#991B1B;margin-top:2px;">Reason: ${escapeHTML(order.cancellationReason || 'Cancelled by store administrator')}</div>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Overall Visual Progress Bar -->
+      <div class="tracking-progress-section">
+        <div class="progress-labels-row">
+          <span>Journey Progress</span>
+          <strong>${progressPercent}% Completed</strong>
+        </div>
+        <div class="tracking-progress-bar-wrap">
+          <div class="tracking-progress-bar-fill" style="width: ${progressPercent}%;"></div>
+        </div>
+      </div>
+
+      <!-- 5-Step Visual Stepper -->
+      <div class="tracking-stepper-flow">
+        ${steps.map((st, i) => {
+          const isDone = st.num <= activeStep;
+          const isCurrent = st.num === activeStep;
+          return `
+            <div class="tracking-step-card ${isDone ? 'completed' : ''} ${isCurrent ? 'active-step' : ''}">
+              <div class="step-indicator-col">
+                <div class="step-circle">
+                  ${isDone && !isCurrent ? `
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  ` : `
+                    <span class="step-icon-symbol">${st.icon}</span>
+                  `}
+                </div>
+                ${i < steps.length - 1 ? `<div class="step-connector-line ${st.num < activeStep ? 'completed-line' : ''}"></div>` : ''}
+              </div>
+              <div class="step-content-col">
+                <div class="step-title-row">
+                  <h5 class="step-title">${st.label}</h5>
+                  ${isCurrent ? `<span class="step-live-pill">CURRENT STAGE</span>` : ''}
+                </div>
+                <p class="step-desc">${st.sub}</p>
+                <span class="step-timestamp">${st.time}</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- Consignee & Order Overview Grid -->
+      <div class="tracking-details-grid">
+        <div class="tracking-info-card">
+          <div class="tracking-card-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Delivery Destination &amp; Consignee</span>
+          </div>
+          <div class="tracking-card-body">
+            <h4 class="recipient-name">${escapeHTML(order.customerName || 'Customer')}</h4>
+            <p class="recipient-address">${escapeHTML(order.shippingAddress || '')}</p>
+            ${order.customerPhone ? `
+              <div class="recipient-contact">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                <span>${escapeHTML(order.customerPhone)}</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <div class="tracking-info-card">
+          <div class="tracking-card-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+            </svg>
+            <span>Package Summary (${totalQty} ${totalQty === 1 ? 'Unit' : 'Units'})</span>
+          </div>
+          <div class="tracking-card-body">
+            <div class="tracking-items-scroll">
+              ${(order.itemsSnapshot || []).map(item => `
+                <div class="tracking-item-row">
+                  <span class="tracking-item-qty">${item.quantity || 1}x</span>
+                  <span class="tracking-item-name">${escapeHTML(item.name || item.productSnapshot?.name || 'Hardware Supply')}</span>
+                  <span class="tracking-item-val">${formatINR((item.price || item.productSnapshot?.price || 0) * (item.quantity || 1))}</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="tracking-total-divider">
+              <span>Total Bill (incl. GST):</span>
+              <strong>${formatINR(order.total || 0)}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Action Bar -->
+      <div class="tracking-bottom-actions">
+        <button type="button" class="btn btn-outline" id="tracking-search-again-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Track Another Order
+        </button>
+        <button type="button" class="btn btn-primary" id="tracking-view-invoice-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          View Official GST Tax Bill
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Bind AWB copy button
+  body.querySelectorAll('.btn-copy-awb').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const awb = btn.dataset.copyAwb;
+      if (awb) {
+        navigator.clipboard?.writeText(awb).then(() => {
+          showToast(`Copied AWB ${awb} to clipboard`, 'success');
+        }).catch(() => {
+          showToast(awb, 'info');
+        });
+      }
+    });
+  });
+
+  document.getElementById('tracking-search-again-btn')?.addEventListener('click', renderTrackingSearchPrompt);
+  document.getElementById('tracking-view-invoice-btn')?.addEventListener('click', () => {
+    document.getElementById('track-order-modal')?.classList.remove('active');
+    document.body.style.overflow = '';
+    openInvoiceViewer(order);
+  });
+}

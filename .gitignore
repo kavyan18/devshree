@@ -1,0 +1,27 @@
+# Firebase cache & debug logs
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+
+# Old pre-redesign backup folder
+backup_pre_redesign/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor files
+.vscode/
+.idea/
+
+# Vercel deployment cache
+.vercel/
+
+# Dependencies (if added later)
+node_modules/
+npm-debug.log*
+
+# Export zip & staging folder
+devshree-website-github.zip
+github_ready_folder/

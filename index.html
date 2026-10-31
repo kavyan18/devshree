@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Devshree is a premium home improvement and trade supplies brand. Thoughtfully selected electrical products, hardware, plumbing fittings, and wall paints with instant GST invoices." />
+  <meta name="keywords" content="Devshree, electrical, hardware, plumbing, wall paints, Asian Paints, Polycab, Havells, Godrej, Astral, home improvement" />
+  <meta property="og:title" content="DEVSHREE — Quality Supplies for Every Project" />
+  <meta property="og:description" content="Better Spaces Begin with Better Materials. Thoughtfully curated electrical, hardware, plumbing, and wall paints." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#F7F5F0" />
+
+  <title>DEVSHREE — Quality Supplies for Every Project</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png" />
+
+  <!-- Google Fonts: Manrope, Inter & Noto Sans Gujarati -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=Noto+Sans+Gujarati:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Core & Responsive Styles -->
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/responsive.css" />
+
+  <!-- Razorpay Official Checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+</head>
+<body>
+
+  <!-- =========================================================================
+       1. Top Announcement Bar
+       ========================================================================= -->
+  <aside class="announcement-bar" aria-label="Store Announcement">
+    <div class="container">
+      <div class="announcement-left">
+        <span>Free express dispatch across India on orders above ₹1,999</span>
+        <span style="opacity:0.4;">|</span>
+        <span>100% Genuine Factory Direct Supplies</span>
+      </div>
+
+      <div class="announcement-right">
+        <span>GST Invoices Available for Contractors</span>
+        <span style="opacity:0.4;">|</span>
+        <a href="tel:+918866130409" class="announcement-link">Helpline: +91 88661 30409</a>
+        <a href="javascript:void(0)" class="announcement-link" id="header-track-order-link">Track Order</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       2. Site Header & Minimalist Navigation
+       ========================================================================= -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-main">
+        <!-- Mobile Menu Hamburger Trigger -->
+        <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open Navigation Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <!-- Brand Identity Logo -->
+        <a href="index.html" class="brand-logo" aria-label="Devshree - The Hardware Gallery">
+          <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" class="brand-logo-img" />
+        </a>
+
+        <!-- Desktop Navigation Bar -->
+        <nav class="header-nav" aria-label="Primary Navigation">
+          <a href="index.html" class="nav-link active">Home</a>
+          <a href="#bestsellers-section" class="nav-link has-caret">Shop</a>
+          <a href="#bestsellers-section" class="nav-link" data-category-filter="cat-hardware">Hardware</a>
+          <a href="#bestsellers-section" class="nav-link" data-category-filter="cat-electrical">Electrical</a>
+          <a href="#bestsellers-section" class="nav-link" data-category-filter="cat-plumbing">Plumbing</a>
+          <a href="#bestsellers-section" class="nav-link" data-category-filter="cat-paints">Paints</a>
+          <a href="#story-section" class="nav-link">About</a>
+          <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+
+        <!-- Search Bar (Accessible Popover / Header Filter) -->
+        <form class="search-form sr-only" id="header-search-form" role="search">
+          <select id="header-cat-select" name="category">
+            <option value="">All Categories</option>
+            <option value="cat-hardware">Hardware</option>
+            <option value="cat-electrical">Electrical</option>
+            <option value="cat-plumbing">Plumbing</option>
+            <option value="cat-paints">Paints</option>
+          </select>
+          <input type="search" id="header-search-input" name="q" placeholder="Search Products" />
+          <button type="submit">Search</button>
+        </form>
+
+        <!-- Action Items (Search, Account, Wishlist, Cart) -->
+        <div class="header-actions">
+          <!-- Search Trigger Button -->
+          <button type="button" class="header-icon-btn" id="header-search-toggle-btn" aria-label="Search Products" title="Search catalog (Ctrl+K)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+
+          <!-- Account Button -->
+          <a href="javascript:void(0)" class="header-icon-btn" id="header-account-btn" aria-label="Customer Account" title="My Account / Sign In">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </a>
+
+          <!-- Wishlist Button -->
+          <button type="button" class="header-icon-btn" id="header-wishlist-btn" aria-label="Saved Wishlist" title="Wishlist">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <span class="badge-count" data-wishlist-count style="display:none;">0</span>
+          </button>
+
+          <!-- Cart Button -->
+          <button type="button" class="header-icon-btn" id="header-cart-btn" aria-label="Shopping Cart" title="View Cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span class="badge-count" data-cart-count style="display:none;">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. Master Search & Discovery Hub (Instant Autocomplete & Filter)
+       ========================================================================= -->
+  <section class="site-search-section" id="site-search-section" aria-label="Product Search and Discovery">
+    <div class="container">
+      <div class="search-master-wrapper">
+        <form class="search-master-form" id="master-search-form" role="search" autocomplete="off">
+          
+          <!-- Category Selector Dropdown -->
+          <div class="search-cat-dropdown-wrap">
+            <div class="search-cat-trigger" id="search-cat-trigger">
+              <span class="search-cat-icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+              </span>
+              <span class="search-cat-label" id="search-cat-label">All Categories</span>
+              <svg class="search-cat-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            
+            <select id="search-cat-select" name="category" class="search-cat-native-select" aria-label="Filter Search by Category">
+              <option value="">All Categories</option>
+              <option value="cat-hardware">Hardware</option>
+              <option value="cat-electrical">Electrical</option>
+              <option value="cat-plumbing">Plumbing</option>
+              <option value="cat-paints">Paints</option>
+            </select>
+          </div>
+
+          <div class="search-input-divider" aria-hidden="true"></div>
+
+          <!-- Master Search Input with Icons -->
+          <div class="search-input-wrapper">
+            <span class="search-lens-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+
+            <input 
+              type="search" 
+              name="q" 
+              id="master-search-input"
+              class="search-master-input" 
+              placeholder="Search Products" 
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Search products, brands, or SKU"
+              aria-autocomplete="list"
+              aria-controls="search-dropdown-panel"
+              aria-expanded="false"
+            />
+
+            <!-- Clear text button (✕) -->
+            <button 
+              type="button" 
+              class="search-clear-btn" 
+              id="search-clear-btn" 
+              aria-label="Clear search input" 
+              title="Clear text"
+              style="display:none;"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+
+            <!-- Quick shortcut badge (Ctrl+K) -->
+            <div class="search-shortcut-badge" title="Press Ctrl+K or / to search" aria-hidden="true">
+              <span>⌘K</span>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="search-master-submit-btn" id="master-search-submit-btn" aria-label="Execute search">
+            <span>Search</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </form>
+
+        <!-- Live Instant Suggestions & Discovery Dropdown -->
+        <div class="search-dropdown-panel" id="search-dropdown-panel" role="region" aria-label="Search suggestions" style="display:none;">
+          <!-- Dynamically populated by initSearchUI() in home.js -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile Navigation Drawer -->
+  <div class="mobile-drawer-overlay" id="mobile-drawer-overlay"></div>
+  <aside class="mobile-drawer" id="mobile-drawer" aria-label="Mobile Navigation Drawer">
+    <div class="mobile-drawer-header">
+      <a href="index.html" class="brand-logo" aria-label="Devshree - The Hardware Gallery">
+        <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" class="brand-logo-img" style="height:44px;" />
+      </a>
+      <button type="button" class="mobile-drawer-close" id="mobile-drawer-close" aria-label="Close Navigation Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="mobile-drawer-nav">
+      <a href="index.html" class="mobile-drawer-link active">Home</a>
+      <a href="#categories-section" class="mobile-drawer-link" data-category-filter="cat-hardware">Hardware Products</a>
+      <a href="#categories-section" class="mobile-drawer-link" data-category-filter="cat-electrical">Electrical Products</a>
+      <a href="#categories-section" class="mobile-drawer-link" data-category-filter="cat-plumbing">Plumbing Products</a>
+      <a href="#categories-section" class="mobile-drawer-link" data-category-filter="cat-paints">Paints</a>
+      <a href="#story-section" class="mobile-drawer-link">About Devshree</a>
+      <a href="javascript:void(0)" class="mobile-drawer-link" id="mobile-account-link">My Account / Sign In</a>
+      <a href="contact.html" class="mobile-drawer-link">Contact &amp; Support</a>
+    </nav>
+
+    <div style="padding-top:1.5rem;border-top:1px solid var(--color-border);font-size:0.8rem;color:var(--color-text-secondary);">
+      <p style="font-weight:700;color:var(--color-text-primary);margin-bottom:0.25rem;">Contractor Helpline</p>
+      <p>+91 88661 30409 &bull; GST Input Invoices</p>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       3. Hero Section (Editorial Scandinavian Showcase)
+       ========================================================================= -->
+  <section class="hero-section" aria-label="Hero Showcase">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-content">
+          <span class="eyebrow-tag">NATURAL SPACES. BETTER LIVING.</span>
+
+          <h1 class="hero-title">
+            Better Spaces<br />Begin with<br />Better Materials.
+          </h1>
+
+          <p class="hero-desc">
+            Thoughtfully selected electrical, hardware, plumbing, and paint essentials that bring safety, durability, and refined craftsmanship into your space.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#bestsellers-section" class="btn btn-primary btn-hero">
+              Shop Products &rarr;
+            </a>
+            <a href="#categories-section" class="hero-secondary-link">
+              Explore Categories
+            </a>
+          </div>
+
+          <!-- Social Proof / Metrics Row -->
+          <div class="hero-stats-row">
+            <div class="hero-stat-item">
+              <span class="hero-stat-value">10K+</span>
+              <span class="hero-stat-label">Happy Spaces</span>
+            </div>
+            <div class="hero-stat-divider"></div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-value">4.8★</span>
+              <span class="hero-stat-label">Average Rating</span>
+            </div>
+            <div class="hero-stat-divider"></div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-value">100%</span>
+              <span class="hero-stat-label">Genuine Supplies</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Visual Showcase -->
+        <div class="hero-visual-frame">
+          <img 
+            src="assets/images/devshree_storefront.jpg" 
+            alt="Devshri The Hardware Gallery store front" 
+            loading="eager"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       4. Trust and Service Benefits (Slim 4-Col Row)
+       ========================================================================= -->
+  <section class="benefits-section" aria-label="Service Benefits">
+    <div class="container">
+      <div class="benefits-grid">
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="benefit-title">Quality Products</div>
+            <div class="benefit-desc">100% genuine factory certified</div>
+          </div>
+        </div>
+
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div>
+            <div class="benefit-title">Free Shipping</div>
+            <div class="benefit-desc">On orders over ₹1,999 pan-India</div>
+          </div>
+        </div>
+
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="benefit-title">Reliable Support</div>
+            <div class="benefit-desc">Technical assistance for projects</div>
+          </div>
+        </div>
+
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+          </div>
+          <div>
+            <div class="benefit-title">Secure Checkout</div>
+            <div class="benefit-desc">Encrypted UPI, cards &amp; COD</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       5. Shop by Category (4 Core Categories: Hardware, Electrical, Plumbing, Paints)
+       ========================================================================= -->
+  <section class="categories-section" id="categories-section" aria-label="Main Product Categories">
+    <div class="container">
+      <div class="section-header-row">
+        <div>
+          <span class="eyebrow-tag">SHOP BY CATEGORY</span>
+          <h2 class="section-title">Everything for Your Next Project</h2>
+        </div>
+        <a href="#bestsellers-section" class="view-all-link">
+          View all &rarr;
+        </a>
+      </div>
+
+      <!-- 4 Circular Thumbnails Grid (Rendered dynamically by home.js) -->
+      <div class="category-circles-grid" id="categories-grid">
+        <!-- Rendered by home.js renderCategories() -->
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       6. Featured Collections (Editorial 2-Card Banner)
+       ========================================================================= -->
+  <section class="collections-section" aria-label="Featured Collections">
+    <div class="container">
+      <div class="collections-grid">
+        <!-- Collection 1: Electrical -->
+        <article class="collection-card">
+          <div class="collection-content">
+            <span class="eyebrow-tag">FEATURED COLLECTION</span>
+            <h3 class="collection-title">Power Every Space</h3>
+            <p class="collection-desc">
+              Concealed copper wiring, modular designer switches, and distribution accessories engineered for safety.
+            </p>
+            <a href="#bestsellers-section" class="btn btn-collection" data-category-filter="cat-electrical">
+              Explore &rarr;
+            </a>
+          </div>
+          <div class="collection-img-wrap">
+            <img src="assets/images/collection_elec.jpg" alt="Designer brass toggle switches and architectural lighting" loading="lazy" />
+          </div>
+        </article>
+
+        <!-- Collection 2: Finishing Touches -->
+        <article class="collection-card">
+          <div class="collection-content">
+            <span class="eyebrow-tag">BEDROOM &amp; INTERIOR ESSENTIALS</span>
+            <h3 class="collection-title">Restful. Stylish. Yours.</h3>
+            <p class="collection-desc">
+              Architectural wall paints, luxury lime emulsions, and solid brass hardware for refined living.
+            </p>
+            <a href="#bestsellers-section" class="btn btn-collection" data-category-filter="cat-paints">
+              Shop Collection &rarr;
+            </a>
+          </div>
+          <div class="collection-img-wrap">
+            <img src="assets/images/collection_finish.jpg" alt="Warm lime-washed wall with brushed brass architectural hardware" loading="lazy" />
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       7. Best-Selling Products Section
+       ========================================================================= -->
+  <section class="bestsellers-section" id="bestsellers-section" aria-label="Best Selling Products">
+    <div class="container">
+      <div class="section-header-row">
+        <div>
+          <span class="eyebrow-tag">BESTSELLERS</span>
+          <h2 class="section-title">Products Our Customers Choose</h2>
+        </div>
+        <a href="#categories-section" class="view-all-link">
+          View all &rarr;
+        </a>
+      </div>
+
+      <!-- Interactive Catalog Controls & Filters -->
+      <div class="catalog-toolbar" id="catalog-toolbar">
+        <div class="catalog-filter-tabs" id="catalog-category-tabs">
+          <button type="button" class="catalog-tab-btn active" data-catalog-cat="">All Products</button>
+          <button type="button" class="catalog-tab-btn" data-catalog-cat="cat-hardware">Hardware</button>
+          <button type="button" class="catalog-tab-btn" data-catalog-cat="cat-electrical">Electrical</button>
+          <button type="button" class="catalog-tab-btn" data-catalog-cat="cat-plumbing">Plumbing</button>
+          <button type="button" class="catalog-tab-btn" data-catalog-cat="cat-paints">Paints</button>
+        </div>
+
+        <div class="catalog-sort-wrap">
+          <label for="catalog-sort-select" class="catalog-sort-label">Sort:</label>
+          <select id="catalog-sort-select" class="catalog-sort-select">
+            <option value="featured">Featured First</option>
+            <option value="bestseller">Bestsellers</option>
+            <option value="newest">New Arrivals</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="rating">Highest Customer Rating</option>
+          </select>
+
+          <label class="catalog-stock-switch" title="Show only items currently in stock">
+            <input type="checkbox" id="catalog-stock-checkbox" />
+            <span>In Stock Only</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Main Product Grid -->
+      <div class="product-grid" id="bestsellers-grid">
+        <!-- Rendered dynamically by home.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       8. Editorial Brand Story (3-Box Split Layout)
+       ========================================================================= -->
+  <section class="story-section" id="story-section" aria-label="Brand Story">
+    <div class="container">
+      <div class="story-grid">
+        <!-- Box 1: Lifestyle Photograph -->
+        <div class="story-img-box">
+          <img src="assets/images/story_lifestyle.jpg" alt="Natural oak dining table and warm lime-washed plaster walls" loading="lazy" />
+        </div>
+
+        <!-- Box 2: Center Story Card -->
+        <div class="story-text-box">
+          <span class="eyebrow-tag">A MORE BEAUTIFUL WAY TO BUILD</span>
+          <h2 class="story-title">Timeless Quality for Modern Living</h2>
+          <p class="story-desc">
+            We curate practical, verified home improvement materials using authentic standards and thoughtful craftsmanship. Honest pricing, ISI certified components, and durability for generations.
+          </p>
+          <a href="#trust-section" class="btn-story">
+            Our Story &rarr;
+          </a>
+        </div>
+
+        <!-- Box 3: Dark Earthy Card matching reference image -->
+        <div class="story-dark-card">
+          <h3 class="story-dark-title">Better Homes, A Better Tomorrow</h3>
+          <div class="story-dark-list">
+            <div class="story-dark-item">
+              <div class="story-dark-icon">&check;</div>
+              <span>100% Genuine Factory Direct</span>
+            </div>
+            <div class="story-dark-item">
+              <div class="story-dark-icon">&check;</div>
+              <span>Lower Waste &amp; Long Durability</span>
+            </div>
+            <div class="story-dark-item">
+              <div class="story-dark-icon">&check;</div>
+              <span>Built to Last for Decades</span>
+            </div>
+            <div class="story-dark-item">
+              <div class="story-dark-icon">&check;</div>
+              <span>Transparent GST Contractor Billing</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       9. Brand Values Row (4 Minimal Outline Icons)
+       ========================================================================= -->
+  <section class="values-section" id="trust-section" aria-label="Brand Values">
+    <div class="container">
+      <div class="values-grid">
+        <div class="value-item">
+          <div class="value-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
+            </svg>
+          </div>
+          <h3 class="value-title">Carefully Selected</h3>
+          <p class="value-desc">Tested for durability and ISI/ISO compliance standards</p>
+        </div>
+
+        <div class="value-item">
+          <div class="value-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h3 class="value-title">High Quality</h3>
+          <p class="value-desc">Built to last with verifiable manufacturer warranties</p>
+        </div>
+
+        <div class="value-item">
+          <div class="value-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="9" y1="21" x2="9" y2="9"></line>
+            </svg>
+          </div>
+          <h3 class="value-title">Modern Design</h3>
+          <p class="value-desc">Refined, clean aesthetic for architectural interiors</p>
+        </div>
+
+        <div class="value-item">
+          <div class="value-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </div>
+          <h3 class="value-title">Loved by Builders</h3>
+          <p class="value-desc">10,000+ satisfied contractor &amp; home orders</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       10. Customer Reviews ("What Our Customers Say")
+       ========================================================================= -->
+  <section class="reviews-section" aria-label="Customer Reviews">
+    <div class="container">
+      <div class="section-header-row">
+        <div>
+          <span class="eyebrow-tag">WHAT OUR CUSTOMERS SAY</span>
+          <h2 class="section-title">Loved in Real Homes</h2>
+        </div>
+      </div>
+
+      <div class="reviews-grid" id="reviews-grid">
+        <!-- Rendered dynamically by home.js renderReviews() -->
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       12. Instagram & Project Showcase ("Real Homes. Real Inspiration.")
+       ========================================================================= -->
+  <section class="gallery-section" aria-label="Real Homes Inspiration">
+    <div class="container">
+      <div class="section-header-row">
+        <div>
+          <span class="eyebrow-tag">FOLLOW US @DEVSHREE</span>
+          <h2 class="section-title">Real Homes. Real Inspiration.</h2>
+        </div>
+        <a href="#bestsellers-section" class="view-all-link">
+          View on Instagram &rarr;
+        </a>
+      </div>
+
+      <!-- 6-Photo Project Gallery Strip -->
+      <div class="gallery-grid">
+        <div class="gallery-item">
+          <img src="assets/images/story_lifestyle.jpg" alt="Renovated Scandinavian living room with warm light" loading="lazy" />
+        </div>
+        <div class="gallery-item">
+          <img src="assets/images/collection_elec.jpg" alt="Solid brass toggle switch mounted on textured linen wall" loading="lazy" />
+        </div>
+        <div class="gallery-item">
+          <img src="assets/images/inspire_paint.jpg" alt="Architectural paint swatches on lime-wash wall" loading="lazy" />
+        </div>
+        <div class="gallery-item">
+          <img src="assets/images/cat_hardware.jpg" alt="Brushed satin brass architectural lever handle" loading="lazy" />
+        </div>
+        <div class="gallery-item">
+          <img src="assets/images/inspire_plumb.jpg" alt="Travertine bathroom basin and warm brass faucet" loading="lazy" />
+        </div>
+        <div class="gallery-item">
+          <img src="assets/images/hero_renovation.jpg" alt="Calm sunlit Scandinavian interior with neutral palette" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       13. Newsletter Section ("Join Our Community")
+       ========================================================================= -->
+  <section class="newsletter-section" aria-label="Newsletter Subscription">
+    <div class="container">
+      <div class="newsletter-box">
+        <div class="newsletter-content">
+          <h2 class="newsletter-title">Join Our Community</h2>
+          <p class="newsletter-desc">
+            Get exclusive offers, new arrivals and project inspiration straight to your inbox.
+          </p>
+
+          <form class="newsletter-form" id="newsletter-form" novalidate>
+            <label for="newsletter-email-input" class="sr-only">Your email address</label>
+            <input 
+              type="email" 
+              id="newsletter-email-input" 
+              class="newsletter-input" 
+              placeholder="Your email address" 
+              required 
+            />
+            <button type="submit" class="newsletter-btn">Subscribe</button>
+          </form>
+
+          <p class="newsletter-consent">
+            We respect your privacy. No spam. You can unsubscribe anytime.
+          </p>
+        </div>
+
+        <div class="newsletter-art-visual">
+          <span>Better<br />Spaces<br />Happier<br />People ♡</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       14. Professional Footer
+       ========================================================================= -->
+  <footer class="site-footer" id="footer-section">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Col 1: Wordmark & Brand Mission -->
+        <div>
+          <a href="index.html" style="display:inline-block;margin-bottom:0.75rem;text-decoration:none;">
+            <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" style="height:52px;width:auto;max-width:160px;object-fit:contain;display:block;" />
+          </a>
+          <p class="footer-brand-desc">
+            Thoughtfully selected supplies for a more beautiful, sustainable tomorrow. Serving contractors and homeowners with verified materials.
+          </p>
+          <div style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:1rem;line-height:1.5;">
+            📍 <strong>Store Address:</strong><br/>
+            B-13, Jainam Apartment, Opposite Nageshwar Derasar, Jamnagar Road, Rajkot - 360006<br/>
+            📞 <strong>Direct:</strong> <a href="tel:+918866130409" style="color:var(--color-terracotta);text-decoration:none;font-weight:600;">+91 88661 30409</a>
+          </div>
+          <div class="footer-social-links">
+            <a href="javascript:void(0)" class="social-icon-btn" aria-label="Instagram">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            </a>
+            <a href="javascript:void(0)" class="social-icon-btn" aria-label="Facebook">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+            </a>
+            <a href="javascript:void(0)" class="social-icon-btn" aria-label="Pinterest">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Col 2: Shop Links -->
+        <div>
+          <h4 class="footer-col-title">Shop</h4>
+          <ul class="footer-links">
+            <li><a href="#bestsellers-section" class="footer-link">All Products</a></li>
+            <li><a href="#bestsellers-section" class="footer-link" data-category-filter="cat-hardware">Hardware &amp; Locks</a></li>
+            <li><a href="#bestsellers-section" class="footer-link" data-category-filter="cat-electrical">Electrical Supplies</a></li>
+            <li><a href="#bestsellers-section" class="footer-link" data-category-filter="cat-plumbing">Plumbing Fittings</a></li>
+            <li><a href="#bestsellers-section" class="footer-link" data-category-filter="cat-paints">Paints &amp; Primers</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: About Links -->
+        <div>
+          <h4 class="footer-col-title">About</h4>
+          <ul class="footer-links">
+            <li><a href="#story-section" class="footer-link">Our Story</a></li>
+            <li><a href="#trust-section" class="footer-link">Quality &amp; Standards</a></li>
+            <li><a href="contact.html" class="footer-link">Contractor Trade Desk</a></li>
+            <li><a href="#footer-section" class="footer-link">Trade Accounts</a></li>
+            <li><a href="tel:+918866130409" class="footer-link">Contractor Support (+91 88661 30409)</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Customer Care -->
+        <div>
+          <h4 class="footer-col-title">Customer Care</h4>
+          <ul class="footer-links">
+            <li><a href="javascript:void(0)" class="footer-link" onclick="document.getElementById('header-track-order-link')?.click()">Track Order</a></li>
+            <li><a href="refund-policy.html" class="footer-link">Returns &amp; Exchanges</a></li>
+            <li><a href="shipping-policy.html" class="footer-link">Shipping Information</a></li>
+            <li><a href="contact.html" class="footer-link">Contact &amp; Support</a></li>
+            <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+            <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Footer Bottom -->
+      <div class="footer-bottom">
+        <div>
+          &copy; <span id="copyright-year">2026</span> DEVSHREE Supplies Pvt Ltd. All rights reserved.
+        </div>
+        <div class="footer-bottom-tagline">
+          A more beautiful tomorrow, together. ♡
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+       15. Quick View Accessible Modal
+       ========================================================================= -->
+  <div class="modal-backdrop" id="quick-view-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content quick-view-modal-box">
+      <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close dialog">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="modal-body" id="modal-dynamic-body">
+        <!-- Populated dynamically by home.js openQuickView() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       16. Slide-Over Mini-Cart Drawer
+       ========================================================================= -->
+  <div class="cart-drawer-backdrop" id="cart-drawer-backdrop" role="dialog" aria-modal="true" aria-labelledby="cart-drawer-title">
+    <aside class="cart-drawer" id="cart-drawer">
+      <div class="cart-drawer-header">
+        <h3 class="cart-drawer-title" id="cart-drawer-title">Your Cart (<span id="cart-drawer-count">0</span>)</h3>
+        <button type="button" class="cart-drawer-close" id="cart-drawer-close" aria-label="Close cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Free Shipping Meter -->
+      <div class="shipping-meter" id="shipping-meter">
+        <div id="shipping-meter-text">Add items to qualify for FREE Delivery!</div>
+        <div class="shipping-bar-wrap">
+          <div class="shipping-bar-fill" id="shipping-meter-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Items List -->
+      <div class="cart-drawer-items" id="cart-drawer-items">
+        <!-- Populated dynamically by home.js -->
+      </div>
+
+      <!-- Footer Summary -->
+      <div class="cart-drawer-footer" id="cart-drawer-footer">
+        <div class="cart-subtotal-row">
+          <span style="color:var(--color-text-secondary);">Subtotal:</span>
+          <strong id="cart-drawer-subtotal">₹0</strong>
+        </div>
+        <div class="cart-subtotal-row">
+          <span style="color:var(--color-text-secondary);">Estimated Shipping:</span>
+          <strong id="cart-drawer-shipping" style="color:var(--color-success);">FREE</strong>
+        </div>
+        <div class="cart-total-row">
+          <span>Estimated Total:</span>
+          <span id="cart-drawer-total">₹0</span>
+        </div>
+        <button type="button" class="btn btn-primary" id="cart-checkout-btn" style="width:100%;font-size:0.92rem;padding:0.9rem;">
+          Proceed to Checkout
+        </button>
+        <button type="button" class="btn btn-outline" id="cart-continue-btn" style="width:100%;margin-top:0.6rem;font-size:0.85rem;">
+          Continue Shopping
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- =========================================================================
+       17. Authentication Modal (Sign In / Register / Forgot Password)
+       ========================================================================= -->
+  <div class="modal-backdrop" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+    <div class="modal-content auth-modal-box">
+      <button type="button" class="modal-close-btn" id="auth-modal-close-btn" aria-label="Close dialog">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="auth-modal-header">
+        <div class="logo-wordmark" style="font-size:1.25rem;">DEVSHREE</div>
+        <h3 class="auth-modal-title" id="auth-modal-title">Welcome to Devshree</h3>
+        <p class="auth-modal-subtitle" id="auth-modal-desc">
+          Sign in or create an account to place orders and access your official GST tax invoices.
+        </p>
+      </div>
+
+      <!-- Auth Tabs Switcher -->
+      <div class="auth-tabs-nav">
+        <button type="button" class="auth-tab-btn active" id="tab-btn-login">Sign In</button>
+        <button type="button" class="auth-tab-btn" id="tab-btn-register">Create Account</button>
+      </div>
+
+      <!-- Login Tab Content -->
+      <div class="auth-tab-pane" id="auth-login-form-wrap">
+        <form id="auth-login-form" novalidate>
+          <div class="form-group">
+            <label for="login-email" class="form-label">Email Address</label>
+            <input type="email" id="login-email" class="form-control" placeholder="name@domain.com" required autocomplete="email" />
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
+              <label for="login-password" class="form-label" style="margin-bottom:0;">Password</label>
+              <a href="javascript:void(0)" class="auth-link-sm" id="link-to-forgot" style="font-size:0.78rem;color:var(--color-accent);">Forgot Password?</a>
+            </div>
+            <input type="password" id="login-password" class="form-control" placeholder="Enter your password" required autocomplete="current-password" />
+          </div>
+
+          <button type="submit" class="btn btn-primary auth-submit-btn" id="login-submit-btn">
+            Sign In to Devshree
+          </button>
+        </form>
+
+        <div class="auth-divider">
+          <span>or sign in with</span>
+        </div>
+
+        <button type="button" class="auth-google-btn" id="google-signin-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <p class="auth-switch-text">
+          New to Devshree? <a href="javascript:void(0)" id="switch-to-register">Create an account</a>
+        </p>
+      </div>
+
+      <!-- Register Tab Content -->
+      <div class="auth-tab-pane" id="auth-register-form-wrap" style="display:none;">
+        <form id="auth-register-form" novalidate>
+          <div class="form-group">
+            <label for="reg-name" class="form-label">Full Name / Contractor Name</label>
+            <input type="text" id="reg-name" class="form-control" placeholder="e.g. Ramesh Patel" required autocomplete="name" />
+          </div>
+
+          <div class="form-group">
+            <label for="reg-email" class="form-label">Email Address</label>
+            <input type="email" id="reg-email" class="form-control" placeholder="ramesh@example.com" required autocomplete="email" />
+          </div>
+
+          <div class="form-group">
+            <label for="reg-phone" class="form-label">Mobile Number</label>
+            <div style="display:flex;gap:0.5rem;">
+              <span style="display:flex;align-items:center;padding:0 0.85rem;background:var(--color-bg-sand);border:1px solid var(--color-border);border-radius:var(--radius-sm);font-weight:600;font-size:0.85rem;">+91</span>
+              <input type="tel" id="reg-phone" class="form-control" placeholder="98765 43210" maxlength="10" autocomplete="tel" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-password" class="form-label">Create Password (min. 6 characters)</label>
+            <input type="password" id="reg-password" class="form-control" placeholder="••••••••" minlength="6" required autocomplete="new-password" />
+          </div>
+
+          <div class="form-group">
+            <label for="reg-confirm-password" class="form-label">Confirm Password</label>
+            <input type="password" id="reg-confirm-password" class="form-control" placeholder="••••••••" minlength="6" required autocomplete="new-password" />
+          </div>
+
+          <button type="submit" class="btn btn-primary auth-submit-btn" id="register-submit-btn">
+            Create Account &amp; Continue
+          </button>
+        </form>
+
+        <p class="auth-switch-text">
+          Already registered? <a href="javascript:void(0)" id="switch-to-login">Sign in to your account</a>
+        </p>
+      </div>
+
+      <!-- Forgot Password Tab Content -->
+      <div class="auth-tab-pane" id="auth-forgot-form-wrap" style="display:none;">
+        <form id="auth-forgot-form" novalidate>
+          <div class="form-group">
+            <label for="forgot-email" class="form-label">Registered Email Address</label>
+            <input type="email" id="forgot-email" class="form-control" placeholder="ramesh@example.com" required />
+          </div>
+
+          <button type="submit" class="btn btn-primary auth-submit-btn" id="forgot-submit-btn">
+            Send Reset Instructions
+          </button>
+        </form>
+
+        <p class="auth-switch-text">
+          Remembered your password? <a href="javascript:void(0)" id="forgot-back-to-login">Back to Sign In</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       18. Customer Account & GST Invoices Modal
+       ========================================================================= -->
+  <div class="modal-backdrop" id="invoices-list-modal" role="dialog" aria-modal="true" aria-labelledby="invoices-modal-title">
+    <div class="modal-content invoices-modal-box">
+      <button type="button" class="modal-close-btn" id="invoices-modal-close-btn" aria-label="Close dialog">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="invoices-header">
+        <div class="user-profile-bar" id="user-profile-bar">
+          <div class="user-avatar-circle" id="user-avatar-initial">U</div>
+          <div class="user-info-text">
+            <h3 class="user-name" id="user-display-name">Customer Account</h3>
+            <span class="user-email" id="user-display-email">user@devshree.in</span>
+            <span class="badge badge-stock-in" id="user-role-badge">Verified Customer</span>
+          </div>
+          <div id="admin-profile-quick-actions" style="margin-left:auto;display:flex;align-items:center;gap:0.5rem;"></div>
+          <button type="button" class="btn btn-outline btn-sm" id="user-signout-btn">
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      <div class="invoices-section-title-bar">
+        <h4 id="invoices-modal-title">My Orders &amp; GST Invoices</h4>
+        <span style="font-size:0.8rem;color:var(--color-text-secondary);">Real-time Cloud Database Sync</span>
+      </div>
+
+      <div class="invoices-list-container" id="invoices-list-container">
+        <!-- Rendered dynamically by orders.js openUserInvoicesModal() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       19. Official GST Tax Invoice Printable Modal
+       ========================================================================= -->
+  <div class="modal-backdrop" id="tax-invoice-modal" role="dialog" aria-modal="true" aria-labelledby="tax-invoice-title">
+    <div class="modal-content tax-invoice-modal-box">
+      <button type="button" class="modal-close-btn" id="tax-invoice-close-btn" aria-label="Close dialog">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="tax-invoice-body" id="tax-invoice-content">
+        <!-- Populated dynamically by orders.js openInvoiceViewer() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       20. Multi-Step Checkout Modal
+       ========================================================================= -->
+  <div class="modal-backdrop" id="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-modal-title">
+    <div class="modal-content checkout-modal-box">
+      <button type="button" class="modal-close-btn" id="checkout-modal-close-btn" aria-label="Close checkout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="checkout-stepper-header">
+        <div class="checkout-brand-title">
+          <div class="checkout-brand-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h3 id="checkout-modal-title" class="checkout-modal-heading">DEVSHREE SECURE CHECKOUT</h3>
+            <span class="checkout-modal-subheading">Direct Warehouse Dispatch &bull; 18% GST Invoicing</span>
+          </div>
+        </div>
+
+        <div class="checkout-steps-tracker">
+          <div class="checkout-step-indicator active" data-step-indicator="1">
+            <span class="step-num">1</span>
+            <span class="step-label">Delivery Address</span>
+          </div>
+          <div class="checkout-step-indicator-line"></div>
+          <div class="checkout-step-indicator" data-step-indicator="2">
+            <span class="step-num">2</span>
+            <span class="step-label">Payment &amp; Review</span>
+          </div>
+          <div class="checkout-step-indicator-line"></div>
+          <div class="checkout-step-indicator" data-step-indicator="3">
+            <span class="step-num">3</span>
+            <span class="step-label">Confirmation</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="checkout-modal-body" id="checkout-step-body">
+        <!-- Rendered dynamically by checkout.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       21. Online Payment QR Code Gateway Modal
+       ========================================================================= -->
+  <div class="modal-backdrop razorpay-overlay" id="razorpay-simulation-modal" role="dialog" aria-modal="true" style="z-index: 1400;">
+    <div class="modal-content razorpay-box">
+      <!-- Brand Header -->
+      <div class="rzp-header">
+        <div class="rzp-header-left">
+          <div class="rzp-shield-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            <span>Scan &amp; Pay via UPI QR</span>
+          </div>
+          <h3 class="rzp-merchant-title">Devshree Hardware &amp; Electricals</h3>
+          <div class="rzp-timer-pill">
+            <span class="rzp-timer-pulse"></span>
+            <span>Session expires in <strong id="rzp-countdown-timer">09:59</strong></span>
+          </div>
+        </div>
+
+        <div class="rzp-header-right">
+          <span class="rzp-amount-label">Total Payable</span>
+          <div class="rzp-amount-value" id="rzp-modal-amount">₹0</div>
+          <button type="button" class="rzp-header-close-btn" id="rzp-modal-close-icon" aria-label="Close Payment Modal">&times;</button>
+        </div>
+      </div>
+
+      <!-- Focused QR-Only Body -->
+      <div class="rzp-body rzp-qr-only-body">
+        <div class="rzp-qr-main-card">
+          <!-- QR Box -->
+          <div class="rzp-qr-box">
+            <div class="rzp-qr-img-wrapper">
+              <img src="assets/images/payment_upi_qr.png" alt="Devshree Store UPI QR Code" id="rzp-dynamic-qr-img" />
+            </div>
+
+            <div class="rzp-qr-caption">
+              <div class="rzp-verified-badge">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Verified Merchant UPI</span>
+              </div>
+              <span class="rzp-scan-subtext">Scan &amp; Pay with any UPI App</span>
+
+              <div class="rzp-vpa-copy-pill">
+                <span class="rzp-vpa-code" id="rzp-display-vpa">8866130409@axisbank</span>
+                <button type="button" class="btn btn-outline btn-sm" id="rzp-copy-upi-btn" title="Copy UPI ID">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Accepted Apps -->
+          <div class="rzp-accepted-apps-row">
+            <span class="rzp-accepted-label">Scan with any UPI App:</span>
+            <div class="rzp-app-badges">
+              <span class="rzp-badge-tag"><span class="app-dot gpay"></span>Google Pay</span>
+              <span class="rzp-badge-tag"><span class="app-dot phonepe"></span>PhonePe</span>
+              <span class="rzp-badge-tag"><span class="app-dot paytm"></span>Paytm</span>
+              <span class="rzp-badge-tag"><span class="app-dot bhim"></span>BHIM / Cred</span>
+            </div>
+          </div>
+
+          <!-- Quick instructions -->
+          <div class="rzp-payment-steps">
+            <div class="rzp-step-item">
+              <span class="rzp-step-num">1</span>
+              <span>Open Google Pay, PhonePe, Paytm, or BHIM</span>
+            </div>
+            <div class="rzp-step-item">
+              <span class="rzp-step-num">2</span>
+              <span>Scan QR &amp; complete payment of <strong class="rzp-inline-amount">₹0</strong></span>
+            </div>
+            <div class="rzp-step-item">
+              <span class="rzp-step-num">3</span>
+              <span>Click <strong>'I Have Paid'</strong> below to complete order</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Footer (Always Visible & Pinned) -->
+      <div class="rzp-actions-row">
+        <button type="button" class="btn btn-outline" id="rzp-cancel-btn">Back / Cancel</button>
+        <button type="button" class="btn btn-primary rzp-pay-submit-btn" id="rzp-pay-action-btn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span id="rzp-pay-btn-text">I Have Paid</span>
+        </button>
+      </div>
+
+      <!-- Processing Screen Overlay -->
+      <div class="rzp-processing-overlay" id="rzp-processing-overlay" style="display:none;">
+        <div class="rzp-processing-card">
+          <div class="rzp-spinner"></div>
+          <h4 id="rzp-proc-title">Verifying Payment...</h4>
+          <p id="rzp-proc-subtitle">Confirming UPI transaction receipt with bank network.</p>
+          <div class="rzp-proc-progress">
+            <div class="rzp-proc-progress-bar" id="rzp-proc-bar"></div>
+          </div>
+          <small style="color:var(--color-text-secondary);font-size:0.75rem;">Please do not refresh or press back.</small>
+        </div>
+      </div>
+
+      <!-- Trust Footer -->
+      <div class="rzp-footer">
+        <div class="rzp-trust-items">
+          <span>🔒 256-Bit SSL Encrypted</span>
+          <span>&bull;</span>
+          <span>PCI-DSS Level 1 Compliant</span>
+          <span>&bull;</span>
+          <span>RBI Licensed Payment Gateway</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       22. Live Consignment Tracking Modal
+       ========================================================================= -->
+  <div class="modal-backdrop" id="track-order-modal" role="dialog" aria-modal="true" aria-labelledby="track-order-modal-title">
+    <div class="modal-content track-order-modal-box">
+      <button type="button" class="modal-close-btn" id="track-order-close-btn" aria-label="Close tracking">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="track-order-modal-body" id="track-order-body">
+        <!-- Rendered dynamically by orders.js renderTrackingResults() or renderTrackingSearchPrompt() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       23. Live Toast Notification Stack
+       ========================================================================= -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- JavaScript ES Modules Entrypoint -->
+  <script type="module" src="assets/js/home.js"></script>
+
+</body>
+</html>

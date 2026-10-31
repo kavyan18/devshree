@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="page-title">Product Details — DEVSHREE Hardware &amp; Trade Supplies</title>
+  <meta name="description" id="page-meta-desc" content="Detailed technical specifications, trade pricing, and verified contractor reviews for Devshree hardware products." />
+  <link rel="icon" type="image/png" href="assets/images/logo.png" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800;900&family=Noto+Sans+Gujarati:wght@600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/responsive.css" />
+
+  <style>
+    .pdp-container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 5rem;
+    }
+    .pdp-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3.5rem;
+      align-items: start;
+    }
+    .pdp-gallery-card {
+      position: sticky;
+      top: 90px;
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      text-align: center;
+    }
+    .pdp-main-image-wrap {
+      width: 100%;
+      height: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #FDFCF9;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+    .pdp-main-image {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+    }
+    .pdp-main-image:hover {
+      transform: scale(1.05);
+    }
+    .pdp-badge-stack {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 2;
+    }
+    .pdp-share-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--color-border);
+      padding-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--color-text-secondary);
+    }
+    .pdp-details-col {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .pdp-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--color-text-secondary);
+      flex-wrap: wrap;
+    }
+    .pdp-brand-tag {
+      background: var(--color-deep-navy);
+      color: #FFF;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+    }
+    .pdp-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--color-text-primary);
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+    .pdp-pricing-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+    }
+    .pdp-bulk-tier-card {
+      background: #F8F5EE;
+      border: 1px solid #E5DFD3;
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+    }
+    .pdp-tier-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+    }
+    .pdp-tier-table th, .pdp-tier-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #DFD8CB;
+      text-align: left;
+    }
+    .pdp-tier-active {
+      background: rgba(194, 98, 59, 0.1);
+      font-weight: 700;
+      color: var(--color-terracotta);
+    }
+    .pdp-specs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .pdp-specs-table tr:nth-child(even) {
+      background: #FDFCF9;
+    }
+    .pdp-specs-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .pdp-specs-table td:first-child {
+      font-weight: 600;
+      color: var(--color-text-primary);
+      width: 35%;
+      border-right: 1px solid var(--color-border);
+    }
+    @media (max-width: 900px) {
+      .pdp-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      .pdp-gallery-card {
+        position: static;
+      }
+      .pdp-main-image-wrap {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Announcement Bar -->
+  <aside class="announcement-bar" aria-label="Store Announcement">
+    <div class="container">
+      <div class="announcement-left">
+        <span>Free express dispatch across India on orders above ₹1,999</span>
+        <span style="opacity:0.4;">|</span>
+        <span>100% Genuine Factory Direct Supplies</span>
+      </div>
+      <div class="announcement-right">
+        <span>GST Invoices Available for Contractors</span>
+        <span style="opacity:0.4;">|</span>
+        <a href="tel:+918866130409" class="announcement-link">Helpline: +91 88661 30409</a>
+        <a href="index.html" class="announcement-link">Back to Store</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-main">
+        <a href="index.html" class="brand-logo" aria-label="Devshree - The Hardware Gallery">
+          <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" class="brand-logo-img" />
+        </a>
+
+        <nav class="header-nav" aria-label="Primary Navigation">
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="index.html#bestsellers-section" class="nav-link has-caret">Shop Catalog</a>
+          <a href="index.html#story-section" class="nav-link">About</a>
+          <a href="shipping-policy.html" class="nav-link">Shipping Policy</a>
+          <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+
+        <div class="header-actions">
+          <button type="button" class="header-icon-btn" id="header-cart-btn" aria-label="Shopping Cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span class="header-badge" id="header-cart-badge">0</span>
+          </button>
+          <a href="index.html#bestsellers-section" class="btn btn-primary btn-sm">Explore All &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Product Detail Page Body -->
+  <main class="pdp-container">
+    
+    <!-- Dynamic Breadcrumb -->
+    <nav aria-label="Breadcrumb" style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 2rem;">
+      <a href="index.html" style="color: var(--color-terracotta); text-decoration: none;">Home</a> &gt; 
+      <a href="index.html#bestsellers-section" id="pdp-breadcrumb-cat" style="color: var(--color-terracotta); text-decoration: none;">Catalog</a> &gt; 
+      <span id="pdp-breadcrumb-title" style="color: var(--color-text-primary); font-weight: 600;">Loading product...</span>
+    </nav>
+
+    <!-- Loading State -->
+    <div id="pdp-loading" style="text-align:center; padding: 5rem 0;">
+      <div class="rzp-spinner" style="margin: 0 auto 1.5rem;"></div>
+      <h3 style="font-weight: 700; color: var(--color-text-primary);">Loading Product Specifications...</h3>
+      <p style="color: var(--color-text-secondary); font-size: 0.9rem;">Connecting to Devshree catalog database</p>
+    </div>
+
+    <!-- Product Not Found State -->
+    <div id="pdp-not-found" style="display:none; text-align:center; padding: 4rem 1rem; background: var(--color-card); border-radius: var(--radius-lg); border: 1px solid var(--color-border);">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+      <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 0.5rem;">Product Not Found</h2>
+      <p style="color: var(--color-text-secondary); max-width: 480px; margin: 0 auto 1.5rem;">
+        The requested supply item may have been moved or updated. Browse our verified hardware catalog below.
+      </p>
+      <a href="index.html#bestsellers-section" class="btn btn-primary">Browse Full Store Catalog &rarr;</a>
+    </div>
+
+    <!-- PDP Main Content View -->
+    <div id="pdp-content" class="pdp-grid" style="display:none;">
+      
+      <!-- Left Visual Card -->
+      <div class="pdp-gallery-card">
+        <div class="pdp-main-image-wrap">
+          <div class="pdp-badge-stack" id="pdp-badges">
+            <!-- Dynamic badges (e.g. BESTSELLER, 18% GST) -->
+          </div>
+          <img src="assets/images/logo.png" alt="Product photo" class="pdp-main-image" id="pdp-image" />
+        </div>
+
+        <div class="pdp-share-bar">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span>100% Genuine Factory Direct</span>
+          </span>
+          <button type="button" class="btn btn-outline btn-sm" id="btn-share-whatsapp" style="font-size:0.78rem;">
+            💬 Share on WhatsApp
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Details Column -->
+      <div class="pdp-details-col">
+        
+        <div class="pdp-meta-row">
+          <span class="pdp-brand-tag" id="pdp-brand">DEvSHREE</span>
+          <span id="pdp-cat-label">Department</span>
+          <span>&bull;</span>
+          <span id="pdp-sku">SKU: ---</span>
+          <span>&bull;</span>
+          <span id="pdp-hsn" style="font-family:'JetBrains Mono', monospace; font-size:0.8rem; background:#EEE; padding:2px 6px; border-radius:3px;">HSN: 8301</span>
+        </div>
+
+        <h1 class="pdp-title" id="pdp-name">Product Name</h1>
+
+        <!-- Rating & Stock Strip -->
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-bottom:1px solid var(--color-border); padding-bottom:1rem;">
+          <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem;">
+            <span style="color:#F59E0B; font-size:1.1rem;">★★★★★</span>
+            <strong id="pdp-rating">4.8</strong>
+            <span style="color:var(--color-text-secondary); font-size:0.85rem;" id="pdp-review-count">(24 verified buyer reviews)</span>
+          </div>
+
+          <div style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600; color:#047857; background:#ECFDF5; padding:4px 10px; border-radius:20px;">
+            <span style="width:8px; height:8px; border-radius:50%; background:#10B981; display:inline-block;"></span>
+            <span id="pdp-stock-label">In Stock &bull; Ready to Dispatch</span>
+          </div>
+        </div>
+
+        <!-- Pricing Card with GST Breakdown -->
+        <div class="pdp-pricing-card">
+          <div style="display:flex; align-items:baseline; gap:0.75rem; margin-bottom:0.5rem;">
+            <span style="font-size:2.2rem; font-weight:800; color:var(--color-text-primary);" id="pdp-price">₹0</span>
+            <span style="font-size:1.15rem; color:var(--color-text-secondary); text-decoration:line-through;" id="pdp-mrp"></span>
+            <span class="badge badge-discount" id="pdp-discount-badge" style="display:none;"></span>
+          </div>
+
+          <div style="font-size:0.82rem; color:var(--color-text-secondary); line-height:1.5; border-top:1px dashed var(--color-border); padding-top:0.75rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>Base Price (Excl. Tax):</span>
+              <strong id="pdp-base-price">₹0</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>GST (18% - CGST 9% + SGST 9%):</span>
+              <strong id="pdp-gst-amount">₹0</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:var(--color-text-primary); font-weight:700;">
+              <span>Total Inclusive Tax:</span>
+              <span id="pdp-final-price">₹0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contractor B2B Bulk Discount Table -->
+        <div class="pdp-bulk-tier-card">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <strong style="color:var(--color-text-primary); font-size:0.9rem;">👷 Contractor &amp; Builder Bulk Pricing</strong>
+            <span style="font-size:0.75rem; background:var(--color-terracotta); color:white; padding:2px 8px; border-radius:12px; font-weight:700;">GST ITC Eligible</span>
+          </div>
+          <table class="pdp-tier-table">
+            <thead>
+              <tr>
+                <th>Quantity Tier</th>
+                <th>Trade Discount</th>
+                <th>Effective Unit Price</th>
+              </tr>
+            </thead>
+            <tbody id="pdp-tier-tbody">
+              <tr class="pdp-tier-active" id="tier-1">
+                <td>1 – 4 Units</td>
+                <td>Standard Retail</td>
+                <td id="tier-1-price">₹0 / unit</td>
+              </tr>
+              <tr id="tier-2">
+                <td>5 – 14 Units</td>
+                <td><strong>5% OFF</strong> (Trade Pack)</td>
+                <td id="tier-2-price">₹0 / unit</td>
+              </tr>
+              <tr id="tier-3">
+                <td>15+ Units</td>
+                <td><strong>10% OFF</strong> (Bulk Contractor)</td>
+                <td id="tier-3-price">₹0 / unit</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Quantity & Purchasing Actions -->
+        <div style="display:flex; flex-direction:column; gap:1rem; border-top:1px solid var(--color-border); padding-top:1.5rem;">
+          <div style="display:flex; align-items:center; gap:1.25rem;">
+            <div>
+              <label for="pdp-qty-input" style="display:block; font-size:0.8rem; font-weight:700; color:var(--color-text-secondary); margin-bottom:4px;">ORDER QUANTITY</label>
+              <div class="qty-counter" style="display:inline-flex;">
+                <button type="button" class="qty-btn" id="pdp-qty-minus">-</button>
+                <input type="number" id="pdp-qty-input" class="qty-input" value="1" min="1" max="99" readonly />
+                <button type="button" class="qty-btn" id="pdp-qty-plus">+</button>
+              </div>
+            </div>
+
+            <div style="flex:1; display:flex; gap:0.75rem;">
+              <button type="button" class="btn btn-primary" id="pdp-btn-add-cart" style="flex:1; padding:0.9rem; font-weight:700;">
+                Add to Cart
+              </button>
+              <button type="button" class="btn btn-secondary modal-btn-buy" id="pdp-btn-buy-now" style="flex:1; padding:0.9rem; font-weight:700;">
+                ⚡ Instant Buy Now
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Overview / Description -->
+        <div style="border-top:1px solid var(--color-border); padding-top:1.5rem;">
+          <h3 style="font-size:1.15rem; font-weight:700; color:var(--color-text-primary); margin-bottom:0.75rem;">
+            Product Overview
+          </h3>
+          <p id="pdp-description" style="color:var(--color-text-secondary); font-size:0.95rem; line-height:1.7;">
+            Description loading...
+          </p>
+        </div>
+
+        <!-- Technical Specifications Table -->
+        <div style="border-top:1px solid var(--color-border); padding-top:1.5rem;">
+          <h3 style="font-size:1.15rem; font-weight:700; color:var(--color-text-primary); margin-bottom:1rem;">
+            Verified Technical Specifications
+          </h3>
+          <table class="pdp-specs-table" id="pdp-specs-table">
+            <!-- Dynamically populated -->
+          </table>
+        </div>
+
+        <!-- Verified Contractor Reviews Section -->
+        <div style="border-top:1px solid var(--color-border); padding-top:1.5rem;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+            <h3 style="font-size:1.15rem; font-weight:700; color:var(--color-text-primary); margin:0;">
+              Verified Contractor &amp; Buyer Reviews
+            </h3>
+            <span style="font-size:0.85rem; color:var(--color-text-secondary);">4.8 ★ out of 5</span>
+          </div>
+
+          <div id="pdp-reviews-list" style="display:flex; flex-direction:column; gap:0.75rem;">
+            <div style="background:var(--color-card); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:1rem;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <strong>Bhavesh Solanki (Civil Contractor, Rajkot)</strong>
+                <span style="color:#F59E0B;">★★★★★</span>
+              </div>
+              <p style="font-size:0.85rem; color:var(--color-text-secondary); margin:0;">
+                "Excellent build quality and 100% genuine material. Delivered right on time with GST tax invoice for Input Tax Credit."
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Slide-Over Mini-Cart Drawer & Modal Backdrop -->
+  <div class="cart-drawer-backdrop" id="cart-drawer-backdrop" role="dialog" aria-modal="true">
+    <aside class="cart-drawer" id="cart-drawer">
+      <div class="cart-drawer-header">
+        <h3 class="cart-drawer-title">Your Cart (<span id="cart-drawer-count">0</span>)</h3>
+        <button type="button" class="cart-drawer-close" id="cart-drawer-close">&times;</button>
+      </div>
+      <div class="cart-drawer-body" id="cart-drawer-body">
+        <!-- Rendered by cart.js -->
+      </div>
+      <div class="cart-drawer-footer" id="cart-drawer-footer">
+        <div class="cart-drawer-subtotal">
+          <span>Subtotal</span>
+          <span id="cart-drawer-subtotal">₹0</span>
+        </div>
+        <button type="button" class="btn btn-primary btn-block" id="cart-drawer-checkout-btn">
+          Proceed to Checkout &rarr;
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Toast Notification Stack -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Footer -->
+  <footer class="site-footer" id="footer-section">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <a href="index.html" style="display:inline-block;margin-bottom:0.75rem;text-decoration:none;">
+            <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" style="height:52px;width:auto;max-width:160px;object-fit:contain;display:block;" />
+          </a>
+          <p class="footer-brand-desc">
+            Thoughtfully selected supplies for a more beautiful, sustainable tomorrow. Serving contractors and homeowners with verified materials.
+          </p>
+          <div style="font-size:0.8rem;color:var(--color-text-secondary);line-height:1.5;">
+            📍 B-13, Jainam Apartment, Jamnagar Road, Rajkot - 360006<br/>
+            📞 Helpline: <a href="tel:+918866130409" style="color:var(--color-terracotta);text-decoration:none;font-weight:600;">+91 88661 30409</a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Quick Links</h4>
+          <ul class="footer-links">
+            <li><a href="index.html" class="footer-link">Home</a></li>
+            <li><a href="index.html#bestsellers-section" class="footer-link">All Products</a></li>
+            <li><a href="contact.html" class="footer-link">Contact Support</a></li>
+            <li><a href="index.html" class="footer-link">Track Order</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Legal &amp; Policies</h4>
+          <ul class="footer-links">
+            <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+            <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+            <li><a href="shipping-policy.html" class="footer-link">Shipping Policy</a></li>
+            <li><a href="refund-policy.html" class="footer-link">Return &amp; Refund Policy</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 DEVSHREE Supplies Pvt Ltd. All rights reserved.</div>
+        <div class="footer-bottom-tagline">A more beautiful tomorrow, together. ♡</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Product Detail Script -->
+  <script type="module">
+    import { MOCK_PRODUCTS } from './assets/js/mock-data.js';
+    import { formatINR, showToast, escapeHTML } from './assets/js/utils.js';
+    import { addToCart, getCartCount, getCartTotals } from './assets/js/cart.js';
+    import { fetchProducts } from './assets/js/products.js';
+
+    let currentProduct = null;
+    let selectedQuantity = 1;
+
+    async function loadPDP() {
+      const params = new URLSearchParams(window.location.search);
+      const prodId = params.get('id');
+
+      if (!prodId) {
+        showNotFound();
+        return;
+      }
+
+      // Try fetching from Firestore catalog, fallback to MOCK_PRODUCTS
+      let allProducts = [];
+      try {
+        allProducts = await fetchProducts();
+      } catch (e) {
+        allProducts = MOCK_PRODUCTS;
+      }
+
+      currentProduct = allProducts.find(p => String(p.id) === String(prodId));
+
+      if (!currentProduct) {
+        showNotFound();
+        return;
+      }
+
+      renderPDP(currentProduct);
+    }
+
+    function showNotFound() {
+      document.getElementById('pdp-loading').style.display = 'none';
+      document.getElementById('pdp-not-found').style.display = 'block';
+      document.getElementById('pdp-content').style.display = 'none';
+    }
+
+    function renderPDP(p) {
+      document.getElementById('pdp-loading').style.display = 'none';
+      document.getElementById('pdp-content').style.display = 'grid';
+
+      // Meta and titles
+      document.getElementById('page-title').textContent = `${p.name} — DEVSHREE Hardware`;
+      document.getElementById('pdp-breadcrumb-title').textContent = p.name;
+      document.getElementById('pdp-breadcrumb-cat').textContent = formatCatName(p.categoryId);
+      document.getElementById('pdp-name').textContent = p.name;
+      document.getElementById('pdp-brand').textContent = (p.brand || 'Devshree').toUpperCase();
+      document.getElementById('pdp-cat-label').textContent = formatCatName(p.categoryId);
+      document.getElementById('pdp-sku').textContent = `SKU: ${p.sku || p.id.toUpperCase()}`;
+      document.getElementById('pdp-image').src = p.image || 'assets/images/logo.png';
+      document.getElementById('pdp-image').alt = p.name;
+      document.getElementById('pdp-description').textContent = p.description || 'Architectural grade trade supplies crafted for durability and high safety.';
+
+      // Pricing
+      const basePrice = p.basePrice || (p.price / 1.18);
+      const gstAmount = p.price - basePrice;
+      document.getElementById('pdp-price').textContent = formatINR(p.price);
+      document.getElementById('pdp-base-price').textContent = formatINR(basePrice);
+      document.getElementById('pdp-gst-amount').textContent = formatINR(gstAmount);
+      document.getElementById('pdp-final-price').textContent = formatINR(p.price);
+
+      if (p.compareAtPrice && p.compareAtPrice > p.price) {
+        document.getElementById('pdp-mrp').textContent = formatINR(p.compareAtPrice);
+        const discountPct = Math.round(((p.compareAtPrice - p.price) / p.compareAtPrice) * 100);
+        const badge = document.getElementById('pdp-discount-badge');
+        badge.textContent = `${discountPct}% OFF`;
+        badge.style.display = 'inline-block';
+      }
+
+      // Tier pricing calculations
+      document.getElementById('tier-1-price').textContent = `${formatINR(p.price)} / unit`;
+      document.getElementById('tier-2-price').textContent = `${formatINR(p.price * 0.95)} / unit`;
+      document.getElementById('tier-3-price').textContent = `${formatINR(p.price * 0.90)} / unit`;
+
+      // Specifications Table
+      const specsTable = document.getElementById('pdp-specs-table');
+      const specs = p.specifications || {
+        'Brand': p.brand || 'Devshree',
+        'Material': 'Industrial Grade Certified',
+        'Standard': 'IS / BIS Compliant',
+        'GST Rate': '18% Tax Included',
+        'Warranty': '1 Year Manufacturer Warranty'
+      };
+
+      specsTable.innerHTML = Object.entries(specs).map(([k, v]) => `
+        <tr>
+          <td>${escapeHTML(k)}</td>
+          <td>${escapeHTML(String(v))}</td>
+        </tr>
+      `).join('');
+
+      // WhatsApp Share button
+      document.getElementById('btn-share-whatsapp').onclick = () => {
+        const text = `Take a look at this ${p.name} on Devshree Hardware: ${window.location.href}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      };
+
+      updateCartBadge();
+    }
+
+    function formatCatName(catId) {
+      switch(catId) {
+        case 'cat-electrical': return 'Electrical Supplies';
+        case 'cat-hardware': return 'Hardware Products';
+        case 'cat-plumbing': return 'Plumbing & Fittings';
+        case 'cat-paints': return 'Wall Paints & Coatings';
+        default: return 'Trade Supplies';
+      }
+    }
+
+    // Quantity Counter & Bulk Tier Highlighting
+    const qtyInput = document.getElementById('pdp-qty-input');
+    const updateTiers = (qty) => {
+      document.getElementById('tier-1').classList.toggle('pdp-tier-active', qty < 5);
+      document.getElementById('tier-2').classList.toggle('pdp-tier-active', qty >= 5 && qty < 15);
+      document.getElementById('tier-3').classList.toggle('pdp-tier-active', qty >= 15);
+    };
+
+    document.getElementById('pdp-qty-minus').onclick = () => {
+      let current = parseInt(qtyInput.value, 10) || 1;
+      if (current > 1) {
+        qtyInput.value = current - 1;
+        selectedQuantity = current - 1;
+        updateTiers(selectedQuantity);
+      }
+    };
+
+    document.getElementById('pdp-qty-plus').onclick = () => {
+      let current = parseInt(qtyInput.value, 10) || 1;
+      qtyInput.value = current + 1;
+      selectedQuantity = current + 1;
+      updateTiers(selectedQuantity);
+    };
+
+    // Add to Cart
+    document.getElementById('pdp-btn-add-cart').onclick = () => {
+      if (!currentProduct) return;
+      addToCart(currentProduct.id, selectedQuantity, currentProduct);
+      showToast(`Added ${selectedQuantity} × "${currentProduct.name}" to cart!`, 'success');
+      updateCartBadge();
+    };
+
+    // Buy Now
+    document.getElementById('pdp-btn-buy-now').onclick = () => {
+      if (!currentProduct) return;
+      addToCart(currentProduct.id, selectedQuantity, currentProduct);
+      window.location.href = 'index.html';
+    };
+
+    function updateCartBadge() {
+      const badge = document.getElementById('header-cart-badge');
+      if (badge) badge.textContent = getCartCount();
+    }
+
+    document.getElementById('header-cart-btn')?.addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+
+    window.addEventListener('DOMContentLoaded', loadPDP);
+  </script>
+</body>
+</html>
