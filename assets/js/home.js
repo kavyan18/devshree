@@ -5,7 +5,7 @@
  */
 
 import { MOCK_CATEGORIES, MOCK_PRODUCTS, MOCK_REVIEWS, STORE_INFO } from './mock-data.js';
-import { formatINR, calculateDiscount, escapeHTML, showToast, getStorage } from './utils.js';
+import { formatINR, calculateDiscount, escapeHTML, showToast, getStorage, setStorage } from './utils.js';
 
 /**
  * Helper to get all available products combining localStorage cache (from admin / firestore) and mock data
@@ -47,7 +47,8 @@ import {
   switchAuthTab,
   updateHeaderAuthUI,
   isAdminEmail,
-  checkIsUserAdmin
+  checkIsUserAdmin,
+  notifyAuthChange
 } from './auth.js';
 import { 
   createOrderAndInvoice, 
@@ -1671,6 +1672,21 @@ function initAuthUI() {
     } catch (err) {
       console.warn('[Devshree] Google sign-in error:', err);
     }
+  });
+
+  // Instant Guest Access button (for quick browsing / fallback)
+  document.getElementById('auth-demo-guest-btn')?.addEventListener('click', () => {
+    const demoGuest = {
+      uid: 'guest-' + Date.now().toString(36),
+      displayName: 'Valued Customer',
+      email: 'customer@devshree.in',
+      phone: '+91 98765 43210',
+      role: 'customer'
+    };
+    setStorage('devshree_current_user', demoGuest);
+    notifyAuthChange(demoGuest);
+    showToast('Signed in as Guest Customer! You can now place orders & generate GST bills.', 'success');
+    closeAuthModal();
   });
 }
 
