@@ -25,7 +25,10 @@ export function formatINR(amount) {
  * @param {number} compareAtPrice
  * @returns {number}
  */
-export function calculateDiscount(price, compareAtPrice) {
+export function calculateDiscount(price, compareAtPrice, discountPercentage = null) {
+  if (discountPercentage != null && discountPercentage > 0) {
+    return Math.round(discountPercentage);
+  }
   if (!compareAtPrice || compareAtPrice <= price) return 0;
   return Math.round(((compareAtPrice - price) / compareAtPrice) * 100);
 }
