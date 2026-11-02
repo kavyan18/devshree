@@ -375,19 +375,80 @@
                   </div>
                 </div>
 
-                <!-- Row 3: Product Description -->
+                <!-- Row 3: Original MRP (₹) & Discount (% OFF) -->
+                <div class="form-row-3" style="background:#FAF7F2;padding:0.85rem 1rem;border-radius:10px;border:1px dashed #D6CFC4;margin-bottom:1.15rem;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="admin-numbered-label" for="prod-compare-price">
+                      <span class="step-num" style="background:#C2410C;">7</span>
+                      <span>Original MRP (₹) <span class="step-optional">(Strikethrough)</span></span>
+                    </label>
+                    <input type="number" id="prod-compare-price" class="admin-input" placeholder="e.g. 180" min="0" step="any" />
+                    <small style="font-size:0.72rem;color:var(--admin-text-secondary);display:block;margin-top:3px;">
+                      Enter MRP or set % OFF below
+                    </small>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="admin-numbered-label" for="prod-discount-percent">
+                      <span class="step-num" style="background:#C2410C;">8</span>
+                      <span>Discount (% OFF) <span class="step-optional">(Card Badge)</span></span>
+                    </label>
+                    <div style="position:relative;">
+                      <input type="number" id="prod-discount-percent" class="admin-input" placeholder="e.g. 25" min="0" max="99" style="padding-right:2.85rem;" />
+                      <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-weight:700;color:#C2410C;font-size:0.8rem;pointer-events:none;">% OFF</span>
+                    </div>
+                    <small style="font-size:0.72rem;color:var(--admin-text-secondary);display:block;margin-top:3px;">
+                      Auto-computes MRP or set directly
+                    </small>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:center;">
+                    <span style="font-size:0.75rem;font-weight:700;color:var(--admin-text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Live Badge Preview</span>
+                    <div id="admin-badge-preview-tag" style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                      <span class="badge badge-discount" id="preview-discount-pill" style="display:none;background:#C2410C;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">0% OFF</span>
+                      <span class="badge badge-bestseller" id="preview-bestseller-pill" style="display:none;background:#1E293B;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">BESTSELLER</span>
+                      <span class="badge badge-new" id="preview-new-pill" style="display:none;background:#87553B;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">NEW</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Row 4: Storefront Badges & Status (Bestseller, New Arrival, Featured) -->
+                <div class="form-group" style="background:#FFFFFF;border:1px solid #ECE7DF;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.15rem;">
+                  <label class="admin-numbered-label" style="margin-bottom:0.5rem;">
+                    <span class="step-num" style="background:#1E293B;">9</span>
+                    <span>Storefront Badges &amp; Highlights</span>
+                  </label>
+                  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;">
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#1E293B;user-select:none;">
+                      <input type="checkbox" id="prod-is-bestseller" style="width:18px;height:18px;accent-color:#1E293B;cursor:pointer;" />
+                      <span>🔥 Mark as Bestseller (Shows black BESTSELLER badge)</span>
+                    </label>
+
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#87553B;user-select:none;">
+                      <input type="checkbox" id="prod-is-new" style="width:18px;height:18px;accent-color:#87553B;cursor:pointer;" />
+                      <span>✨ Mark as New Arrival (Shows brown NEW badge)</span>
+                    </label>
+
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#357653;user-select:none;">
+                      <input type="checkbox" id="prod-is-featured" style="width:18px;height:18px;accent-color:#357653;cursor:pointer;" />
+                      <span>⭐ Featured Item</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Row 5: Product Description -->
                 <div class="form-group">
                   <label class="admin-numbered-label" for="prod-desc">
-                    <span class="step-num">7</span>
+                    <span class="step-num">10</span>
                     <span>Product Description <span class="step-optional">(Optional)</span></span>
                   </label>
                   <textarea id="prod-desc" class="admin-textarea" rows="2" placeholder="Energy efficient LED bulb, long life, best for home and office."></textarea>
                 </div>
 
-                <!-- Row 4: Product Image Upload & Preview -->
+                <!-- Row 6: Product Image Upload & Preview -->
                 <div class="form-group" style="margin-bottom:0;">
                   <label class="admin-numbered-label">
-                    <span class="step-num">8</span>
+                    <span class="step-num">11</span>
                     <span>Product Image *</span>
                   </label>
 
@@ -442,13 +503,23 @@
                     <span class="val" id="summary-customer-price">₹ 141.60</span>
                   </div>
 
+                  <div class="admin-price-row" id="summary-mrp-row" style="display:none;color:#78716C;">
+                    <span class="label">Original MRP</span>
+                    <span class="val" id="summary-mrp" style="text-decoration:line-through;">₹ 0.00</span>
+                  </div>
+
+                  <div class="admin-price-row" id="summary-discount-row" style="display:none;color:#C2410C;font-weight:700;">
+                    <span class="label">Discount</span>
+                    <span class="val" id="summary-discount-amount">0% OFF</span>
+                  </div>
+
                   <div class="admin-calc-note">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="10"></circle>
                       <line x1="12" y1="16" x2="12" y2="12"></line>
                       <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    <span>GST is calculated automatically.</span>
+                    <span>GST and discount percentage are calculated automatically.</span>
                   </div>
 
                   <button type="submit" class="btn-save-product" id="btn-save-product">
@@ -506,7 +577,9 @@
                   <th style="width:70px;">Image</th>
                   <th>Product Name</th>
                   <th>Category</th>
-                  <th>Price (₹)</th>
+                  <th>Price / MRP</th>
+                  <th>Discount</th>
+                  <th>Bestseller Status</th>
                   <th>Stock</th>
                   <th style="text-align:right;">Actions</th>
                 </tr>
@@ -825,6 +898,56 @@
             </form>
           </div>
 
+          <!-- Admin Security & Portal Password Card -->
+          <div class="admin-form-card" style="border-left:4px solid #1E293B;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+              <h2 class="admin-section-title" style="margin:0;">🔐 Admin Portal Security &amp; Credentials</h2>
+              <span class="badge" style="background:#EEF2F6;color:#1E293B;padding:4px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;">Owner Authentication</span>
+            </div>
+            <p style="font-size:0.85rem;color:var(--admin-text-secondary);margin-bottom:1.25rem;">
+              Only this specific email and password can sign in and open the Admin Portal. You can change your administrator password anytime below.
+            </p>
+
+            <form id="admin-security-settings-form" onsubmit="return false;">
+              <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                <div class="form-group">
+                  <label class="admin-numbered-label" for="settings-admin-email">Authorized Admin Email</label>
+                  <input type="email" class="admin-input" id="settings-admin-email" placeholder="admin@devshree.in" />
+                  <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                    Email required to unlock the admin console.
+                  </small>
+                </div>
+                <div class="form-group">
+                  <label class="admin-numbered-label" for="settings-admin-password">Admin Password</label>
+                  <div class="admin-password-wrap">
+                    <input type="password" class="admin-input" id="settings-admin-password" placeholder="Enter new password" />
+                    <button type="button" class="admin-password-toggle-btn" id="settings-password-toggle-btn" title="Toggle password visibility">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </button>
+                  </div>
+                  <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                    Change password to keep portal access secure.
+                  </small>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:0.75rem;align-items:center;">
+                <button type="button" class="btn-terracotta" id="btn-save-admin-credentials" style="padding:0.75rem 1.5rem;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                  </svg>
+                  <span>Update Admin Password</span>
+                </button>
+                <span id="admin-credentials-status" style="font-size:0.8rem;color:#16A34A;display:none;font-weight:700;">✓ Updated!</span>
+              </div>
+            </form>
+          </div>
+
           <!-- Store Legal Details Card -->
           <div class="admin-form-card">
             <h2 class="admin-section-title">Devshree Store Legal Configuration</h2>
@@ -954,14 +1077,14 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- =========================================================================
-       4. Admin Authentication Gate Overlay
+       4. Admin Authentication Gate Overlay (Protected)
        ========================================================================= -->
   <div class="admin-gate-overlay" id="admin-gate-screen">
     <div class="admin-gate-card">
       <div class="admin-gate-icon-circle">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          <path d="M9 12l2 2 4-4"></path>
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
       </div>
 
@@ -970,77 +1093,80 @@
       </div>
       <h1 class="admin-gate-title">Admin Console Security</h1>
       <p class="admin-gate-subtitle" id="admin-gate-subtext">
-        Restricted to store managers &amp; administrators. Sign in to manage your store catalog and customer orders.
+        Restricted to store management. Enter your authorized administrator email and password to open the admin portal.
       </p>
 
-      <!-- Access Denied Alert -->
-      <div id="admin-gate-denied" style="display:none;margin-bottom:1.5rem;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:1rem;text-align:left;">
+      <!-- Access Denied / Error Alert -->
+      <div id="admin-gate-denied" style="display:none;margin-bottom:1.25rem;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:0.85rem 1rem;text-align:left;">
         <div style="display:flex;align-items:center;gap:0.5rem;color:#DC2626;font-weight:700;font-size:0.875rem;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="8" x2="12" y2="12"></line>
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
-          Access Denied
+          <span id="admin-gate-error-title">Access Denied</span>
         </div>
-        <p style="font-size:0.8rem;color:#7F1D1D;margin:0.5rem 0 0.75rem;" id="admin-gate-denied-msg">
-          Customer accounts cannot view administrative data.
+        <p style="font-size:0.8rem;color:#7F1D1D;margin:0.35rem 0 0;" id="admin-gate-denied-msg">
+          Invalid email or password. Only authorized store administrators can open this portal.
         </p>
-        <button type="button" class="btn-admin-outline" id="admin-gate-switch-btn" style="width:100%;font-size:0.775rem;">
-          Sign Out &amp; Sign In with Admin Account
-        </button>
-      </div>
-
-      <!-- Admin Gate Tabs -->
-      <div class="admin-gate-tabs" id="admin-gate-tabs">
-        <button type="button" class="admin-gate-tab active" id="admin-tab-login">Admin Sign In</button>
-        <button type="button" class="admin-gate-tab" id="admin-tab-register">New Admin Sign Up</button>
       </div>
 
       <!-- Admin Login Form -->
-      <form id="admin-gate-login-form" style="text-align:left;">
-        <div class="form-group">
-          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;">Admin Email *</label>
-          <input type="email" id="admin-login-email" class="admin-input" placeholder="admin@devshree.in" required />
+      <form id="admin-gate-login-form" style="text-align:left;" novalidate>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;" for="admin-login-email">
+            Admin Email *
+          </label>
+          <input type="email" id="admin-login-email" class="admin-input" placeholder="admin@devshree.in" autocomplete="username" required />
         </div>
+
         <div class="form-group" style="margin-bottom:1.25rem;">
-          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;">Password *</label>
-          <input type="password" id="admin-login-password" class="admin-input" placeholder="••••••••" required />
+          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;" for="admin-login-password">
+            Admin Password *
+          </label>
+          <div class="admin-password-wrap">
+            <input type="password" id="admin-login-password" class="admin-input" placeholder="••••••••" autocomplete="current-password" required />
+            <button type="button" class="admin-password-toggle-btn" id="admin-password-toggle-btn" title="Show / Hide Password" aria-label="Toggle password visibility">
+              <svg id="admin-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
         </div>
-        <button type="submit" class="btn-terracotta" id="admin-login-submit-btn" style="width:100%;justify-content:center;padding:10px;">
-          Unlock Admin Console
+
+        <button type="submit" class="btn-terracotta" id="admin-login-submit-btn" style="width:100%;justify-content:center;padding:11px;font-size:0.9rem;font-weight:700;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="margin-right:6px;">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Unlock Admin Portal</span>
         </button>
       </form>
 
-      <!-- Admin Register Form -->
-      <form id="admin-gate-register-form" style="text-align:left;display:none;">
-        <div class="form-group">
-          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;">Full Name *</label>
-          <input type="text" id="admin-reg-name" class="admin-input" placeholder="Store Manager Name" required />
-        </div>
-        <div class="form-group">
-          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;">Admin Email *</label>
-          <input type="email" id="admin-reg-email" class="admin-input" placeholder="admin@devshree.in" required />
-        </div>
-        <div class="form-group" style="margin-bottom:1.25rem;">
-          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;">Password (Min. 6 characters) *</label>
-          <input type="password" id="admin-reg-password" class="admin-input" placeholder="••••••••" required />
-        </div>
-        <button type="submit" class="btn-terracotta" id="admin-reg-submit-btn" style="width:100%;justify-content:center;padding:10px;">
-          Create Admin Account &amp; Unlock
-        </button>
-      </form>
+      <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--admin-border);display:flex;align-items:center;justify-content:space-between;">
+        <a href="index.html" style="font-size:0.8rem;color:var(--admin-text-secondary);text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:600;">
+          &larr; Back to Store
+        </a>
+        <span style="font-size:0.725rem;color:var(--admin-text-muted);font-family:var(--admin-font-mono);">🔒 Protected Admin Portal</span>
+      </div>
+    </div>
+  </div>
 
-      <!-- 1-Click Quick Demo Access Button -->
-      <button type="button" class="btn-demo-unlock" id="btn-demo-preview">
-        ⚡ Continue as Demo Admin (Preview Console)
+  <!-- =========================================================================
+       Tax Invoice Printable Modal
+       ========================================================================= -->
+  <div class="modal-backdrop" id="tax-invoice-modal" role="dialog" aria-modal="true" aria-labelledby="tax-invoice-title">
+    <div class="modal-content tax-invoice-modal-box">
+      <button type="button" class="modal-close-btn" id="tax-invoice-close-btn" aria-label="Close dialog">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
       </button>
 
-      <div style="margin-top:1.25rem;padding-top:0.85rem;border-top:1px solid var(--admin-border);display:flex;align-items:center;justify-content:space-between;">
-        <a href="index.html" style="font-size:0.8rem;color:var(--admin-text-secondary);text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:600;">
-          &larr; Back to Customer Store
-        </a>
-        <span style="font-size:0.725rem;color:var(--admin-text-muted);font-family:var(--admin-font-mono);">Role-Based Security</span>
+      <div class="tax-invoice-body" id="tax-invoice-content">
+        <!-- Populated dynamically by orders.js openInvoiceViewer() -->
       </div>
     </div>
   </div>
