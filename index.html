@@ -858,6 +858,9 @@
         </p>
       </div>
 
+      <!-- User-Friendly Notice / Error Banner (Dynamically shown on auth errors) -->
+      <div id="auth-modal-alert" class="auth-modal-alert" style="display:none;" role="alert"></div>
+
       <!-- Auth Tabs Switcher -->
       <div class="auth-tabs-nav">
         <button type="button" class="auth-tab-btn active" id="tab-btn-login">Sign In</button>
@@ -898,6 +901,13 @@
           </svg>
           Continue with Google
         </button>
+
+        <!-- Instant Guest / Demo Access Option -->
+        <div id="auth-guest-shortcut-wrap" style="margin-top:0.75rem;text-align:center;">
+          <button type="button" class="auth-demo-guest-btn" id="auth-demo-guest-btn" title="Explore store immediately as Guest Customer">
+            <span>⚡ Instant Guest Access (Demo)</span>
+          </button>
+        </div>
 
         <p class="auth-switch-text">
           New to Devshree? <a href="javascript:void(0)" id="switch-to-register">Create an account</a>
