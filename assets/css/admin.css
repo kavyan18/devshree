@@ -1296,10 +1296,37 @@ body.admin-body {
   background-color: rgba(251, 249, 245, 0.98);
   backdrop-filter: blur(8px);
   z-index: 2500;
-  display: none;
+  display: flex; /* LOCKED BY DEFAULT - ONLY UNLOCKS ON VERIFIED AUTH */
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+}
+
+.admin-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.admin-password-wrap input {
+  padding-right: 2.75rem;
+}
+
+.admin-password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  color: var(--admin-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-password-toggle-btn:hover {
+  color: var(--admin-text-main);
 }
 
 .admin-gate-card {
