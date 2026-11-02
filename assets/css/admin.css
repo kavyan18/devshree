@@ -1933,4 +1933,60 @@ body.admin-body {
   border-left: 3px solid #DC2626;
 }
 
+/* Product Table Discount & Bestseller Badges */
+.admin-table-discount-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background-color: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+  font-weight: 800;
+  font-size: 0.725rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.admin-table-mrp {
+  font-size: 0.75rem;
+  color: #9E9A90;
+  text-decoration: line-through;
+  margin-left: 4px;
+}
+
+.btn-toggle-bestseller {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid #E2E8F0;
+  background-color: #F8FAFC;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-toggle-bestseller:hover {
+  border-color: #1E293B;
+  color: #1E293B;
+  background-color: #F1F5F9;
+}
+
+.btn-toggle-bestseller.active {
+  background-color: #0F172A;
+  color: #FFFFFF;
+  border-color: #0F172A;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.2);
+}
+
+.btn-toggle-bestseller.active:hover {
+  background-color: #334155;
+  border-color: #334155;
+}
+
+
 
