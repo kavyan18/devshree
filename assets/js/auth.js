@@ -102,7 +102,7 @@ export async function registerCustomer(name, email, phone, password) {
       }
       return user;
     } catch (error) {
-      handleAuthError(error);
+      handleAuthError(error, 'register');
       throw error;
     }
   } else {
@@ -136,7 +136,7 @@ export async function registerCustomer(name, email, phone, password) {
  * @param {string} password
  * @returns {Promise<Object>}
  */
-export async function loginCustomer(email, password) {
+export async function loginCustomer(email, password, suppressToast = false) {
   const normEmail = (email || '').trim().toLowerCase();
   const normPass = (password || '').trim();
 
@@ -195,7 +195,7 @@ export async function loginCustomer(email, password) {
         }, 600);
         return adminUser;
       }
-      handleAuthError(error);
+      if (!suppressToast) handleAuthError(error, 'login');
       throw error;
     }
   } else {
@@ -231,6 +231,7 @@ export async function loginWithGoogle() {
   if (isConfigured && auth && db) {
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const isAdmin = isAdminEmail(user.email);
@@ -256,15 +257,16 @@ export async function loginWithGoogle() {
           window.location.href = 'admin.html';
         }, 750);
       } else {
-        showToast(`Signed in with Google as ${user.displayName}!`, 'success');
+        showToast(`Signed in with Google as ${user.displayName || user.email}!`, 'success');
       }
       return user;
     } catch (error) {
-      handleAuthError(error);
+      handleAuthError(error, 'google');
       throw error;
     }
   } else {
-    showToast('To use Google Sign-In, please paste your Firebase config in assets/js/firebase-config.js.', 'info');
+    showToast('To use Google Sign-In with real accounts, authorize your domain in Firebase Console. Using Demo Account instead...', 'info');
+    return loginCustomer('demo.customer@devshree.in', 'demo123', true);
   }
 }
 
@@ -312,7 +314,7 @@ export async function resetPassword(email) {
       await sendPasswordResetEmail(auth, email);
       showToast('Password reset link sent to your email address.', 'success');
     } catch (error) {
-      handleAuthError(error);
+      handleAuthError(error, 'reset');
     }
   } else {
     showToast(`Password reset link simulated for ${email} (Demo Mode).`, 'info');
@@ -417,6 +419,9 @@ export function openAuthModal(activeTab = 'login') {
   const modal = document.getElementById('auth-modal');
   if (!modal) return;
 
+  const alertBox = document.getElementById('auth-modal-alert');
+  if (alertBox) alertBox.style.display = 'none';
+
   switchAuthTab(activeTab);
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -426,6 +431,8 @@ export function closeAuthModal() {
   const modal = document.getElementById('auth-modal');
   modal?.classList.remove('active');
   document.body.style.overflow = '';
+  const alertBox = document.getElementById('auth-modal-alert');
+  if (alertBox) alertBox.style.display = 'none';
 }
 
 export function switchAuthTab(tab) {
@@ -434,6 +441,8 @@ export function switchAuthTab(tab) {
   const forgotForm = document.getElementById('auth-forgot-form-wrap');
   const tabLogin = document.getElementById('tab-btn-login');
   const tabRegister = document.getElementById('tab-btn-register');
+  const alertBox = document.getElementById('auth-modal-alert');
+  if (alertBox) alertBox.style.display = 'none';
 
   tabLogin?.classList.toggle('active', tab === 'login');
   tabRegister?.classList.toggle('active', tab === 'register');
@@ -443,30 +452,170 @@ export function switchAuthTab(tab) {
   if (forgotForm) forgotForm.style.display = tab === 'forgot' ? 'block' : 'none';
 }
 
-function handleAuthError(error) {
-  let message = 'Authentication error. Please try again.';
-  switch (error.code) {
-    case 'auth/email-already-in-use':
-      message = 'This email is already registered. Please sign in instead.';
-      break;
-    case 'auth/invalid-email':
-      message = 'Invalid email address format.';
-      break;
-    case 'auth/user-not-found':
-    case 'auth/wrong-password':
-    case 'auth/invalid-credential':
-      message = 'Incorrect email or password. Please verify and try again.';
-      break;
-    case 'auth/weak-password':
-      message = 'Password must be at least 6 characters.';
-      break;
+/**
+ * Translate technical Firebase Auth error codes into clear, human-friendly messages
+ * @param {Object} error
+ * @returns {string}
+ */
+export function getFriendlyAuthErrorMessage(error) {
+  if (!error) return 'An unexpected authentication error occurred. Please try again.';
+
+  const code = error.code || '';
+  const currentHost = (typeof window !== 'undefined' && window.location && window.location.hostname)
+    ? window.location.hostname
+    : 'this web domain';
+
+  switch (code) {
+    case 'auth/unauthorized-domain':
+      return `Google Sign-In is temporarily not authorized for "${currentHost}". Please sign in with Email & Password below, or add this domain in Firebase Console.`;
+
     case 'auth/popup-closed-by-user':
-      message = 'Google sign-in popup was cancelled.';
-      break;
+      return 'The Google sign-in window was closed before completion. You can try again or use your Email and Password below.';
+
+    case 'auth/popup-blocked':
+      return `The sign-in popup was blocked by your browser. Please allow popups for ${currentHost} and try again.`;
+
+    case 'auth/cancelled-popup-request':
+      return 'The previous sign-in request was cancelled. Please try again.';
+
+    case 'auth/user-not-found':
+      return 'No account was found with this email. Please check your spelling or click "Create Account" to register.';
+
+    case 'auth/wrong-password':
+      return 'Incorrect password. Please double-check and try again, or click "Forgot Password?".';
+
+    case 'auth/invalid-credential':
+      return 'Invalid email or password. Please verify your credentials and try again.';
+
+    case 'auth/email-already-in-use':
+      return 'An account with this email address already exists. Please switch to "Sign In" to continue.';
+
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address (e.g. name@example.com).';
+
+    case 'auth/weak-password':
+      return 'Password is too weak. Please choose a password with at least 6 characters.';
+
+    case 'auth/user-disabled':
+      return 'This account has been disabled. Please contact Devshree customer support.';
+
+    case 'auth/operation-not-allowed':
+      return 'This sign-in method is currently disabled. Please sign in with Email & Password.';
+
+    case 'auth/too-many-requests':
+      return 'Too many unsuccessful attempts. Access is temporarily paused for security. Please try again in a few moments or reset your password.';
+
+    case 'auth/network-request-failed':
+      return 'Network connection issue. Please check your internet connection and try again.';
+
+    case 'auth/requires-recent-login':
+      return 'Please sign out and sign in again before performing this sensitive action.';
+
+    case 'auth/account-exists-with-different-credential':
+      return 'An account already exists with this email address using a different sign-in method. Please sign in with Email and Password.';
+
     default:
-      message = error.message || message;
+      if (typeof error.message === 'string') {
+        const clean = error.message
+          .replace(/^Firebase:\s*Error\s*\(([^)]+)\)\.?/i, '$1')
+          .replace(/^auth\//, '')
+          .replace(/-/g, ' ');
+        if (clean && clean !== error.message) {
+          return `Authentication notice: ${clean.charAt(0).toUpperCase() + clean.slice(1)}. Please try again or use Email & Password.`;
+        }
+      }
+      return error.message || 'Authentication error. Please check your credentials and try again.';
   }
-  showToast(message, 'error');
+}
+
+/**
+ * Handle authentication errors with friendly toasts and in-modal feedback
+ * @param {Object} error
+ * @param {'login'|'register'|'google'|'reset'|'general'} context
+ */
+export function handleAuthError(error, context = 'general') {
+  const currentHost = (typeof window !== 'undefined' && window.location && window.location.hostname)
+    ? window.location.hostname
+    : 'this web domain';
+
+  const friendlyMsg = getFriendlyAuthErrorMessage(error);
+
+  // 1. Show clean, friendly toast
+  showToast(friendlyMsg, 'error', 3500);
+
+  // 2. If the auth modal is present in DOM, show user-friendly in-modal card
+  const alertBox = document.getElementById('auth-modal-alert');
+  if (alertBox) {
+    alertBox.style.display = 'flex';
+
+    if (error.code === 'auth/unauthorized-domain') {
+      alertBox.className = 'auth-modal-alert alert-warning';
+      alertBox.innerHTML = `
+        <div class="auth-modal-alert-icon">⚠️</div>
+        <div class="auth-modal-alert-body">
+          <strong class="auth-modal-alert-title">Google Sign-In Unavailable on This Domain</strong>
+          <p class="auth-modal-alert-desc">
+            This web address (<strong>${escapeHtml(currentHost)}</strong>) has not yet been authorized in Firebase Console.
+          </p>
+          <p class="auth-modal-alert-desc" style="margin-top:0.4rem;">
+            👉 <strong>Please sign in with your Email & Password below</strong>, or click "Create Account".
+          </p>
+          <div class="auth-modal-alert-hint">
+            <strong>Store Setup Tip:</strong> Add <code>${escapeHtml(currentHost)}</code> in Firebase Console &rarr; Authentication &rarr; Settings &rarr; Authorized domains.
+          </div>
+        </div>
+        <button type="button" class="auth-modal-alert-close" aria-label="Dismiss alert">&times;</button>
+      `;
+
+      // Auto-switch to email login tab and focus email input
+      switchAuthTab('login');
+      setTimeout(() => {
+        document.getElementById('login-email')?.focus();
+      }, 120);
+    } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+      alertBox.className = 'auth-modal-alert alert-info';
+      alertBox.innerHTML = `
+        <div class="auth-modal-alert-icon">ℹ️</div>
+        <div class="auth-modal-alert-body">
+          <strong class="auth-modal-alert-title">Google Sign-In Cancelled</strong>
+          <p class="auth-modal-alert-desc">The Google popup was closed. You can try again or use your Email and Password below.</p>
+        </div>
+        <button type="button" class="auth-modal-alert-close" aria-label="Dismiss alert">&times;</button>
+      `;
+    } else if (error.code === 'auth/popup-blocked') {
+      alertBox.className = 'auth-modal-alert alert-warning';
+      alertBox.innerHTML = `
+        <div class="auth-modal-alert-icon">⚠️</div>
+        <div class="auth-modal-alert-body">
+          <strong class="auth-modal-alert-title">Popup Blocked by Browser</strong>
+          <p class="auth-modal-alert-desc">Your browser blocked the Google popup. Please enable popups for <strong>${escapeHtml(currentHost)}</strong> or sign in with Email & Password below.</p>
+        </div>
+        <button type="button" class="auth-modal-alert-close" aria-label="Dismiss alert">&times;</button>
+      `;
+    } else {
+      alertBox.className = 'auth-modal-alert alert-error';
+      alertBox.innerHTML = `
+        <div class="auth-modal-alert-icon">⚠️</div>
+        <div class="auth-modal-alert-body">
+          <strong class="auth-modal-alert-title">Sign-In Notice</strong>
+          <p class="auth-modal-alert-desc">${escapeHtml(friendlyMsg)}</p>
+        </div>
+        <button type="button" class="auth-modal-alert-close" aria-label="Dismiss alert">&times;</button>
+      `;
+    }
+
+    alertBox.querySelector('.auth-modal-alert-close')?.addEventListener('click', () => {
+      alertBox.style.display = 'none';
+    });
+  }
+
+  // 3. If on admin gate screen, also update admin-gate-denied box
+  const adminDeniedBox = document.getElementById('admin-gate-denied');
+  const adminDeniedMsg = document.getElementById('admin-gate-denied-msg');
+  if (adminDeniedBox && adminDeniedMsg) {
+    adminDeniedBox.style.display = 'block';
+    adminDeniedMsg.textContent = friendlyMsg;
+  }
 }
 
 function escapeHtml(str) {
