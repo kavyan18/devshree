@@ -1706,9 +1706,13 @@ h1, h2, h3, h4, h5, h6 {
   top: 10px;
   left: 10px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  max-width: calc(100% - 60px);
   z-index: 2;
+  pointer-events: none;
 }
 
 .badge {
@@ -1722,18 +1726,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .badge-discount {
-  background-color: var(--color-accent);
+  background-color: #C2410C;
   color: #FFFFFF;
 }
 
 .badge-bestseller {
-  background-color: var(--color-text-primary);
+  background-color: #1E293B;
   color: #FFFFFF;
 }
 
 .badge-new {
-  background-color: var(--color-bg-sand);
-  color: var(--color-text-primary);
+  background-color: #87553B;
+  color: #FFFFFF;
 }
 
 .badge-stock-in {
