@@ -12,8 +12,7 @@ import {
   openWhatsAppDispatchModal, 
   notifyStoreOwnerOrderPlaced, 
   openWhatsAppChat, 
-  getStoreOwnerPhone, 
-  buildStoreOwnerOrderWhatsAppMessage 
+  getStoreOwnerPhone 
 } from './whatsapp-service.js';
 
 // Major Indian PIN code directory for instant auto-filling
@@ -986,11 +985,11 @@ async function executeOrderPlacement(paymentMethod, paymentStatus) {
     // Save active invoice to window for step 3 actions
     window.__devshree_last_invoice = invoice;
 
-    // Trigger WhatsApp notification for the Shop Owner (+91 88661 30409)
+    // Background order dispatch logging and webhook trigger (do NOT auto-open WhatsApp for customer)
     try {
-      notifyStoreOwnerOrderPlaced(invoice, { openChat: true });
+      notifyStoreOwnerOrderPlaced(invoice, { openChat: false });
     } catch (waErr) {
-      console.warn('[Checkout] Failed to trigger store owner WhatsApp notification:', waErr);
+      console.warn('[Checkout] Failed to trigger store owner background notification:', waErr);
     }
 
     // Clear cart if standard cart checkout
@@ -1005,7 +1004,7 @@ async function executeOrderPlacement(paymentMethod, paymentStatus) {
 }
 
 /**
- * Step 3: Order Confirmation HTML with Instant Shop Owner WhatsApp Dispatch & Customer receipts
+ * Step 3: Order Confirmation HTML with Customer Receipt & Support Desk options
  */
 function getStep3ConfirmationHtml() {
   const inv = window.__devshree_last_invoice || {};
@@ -1049,7 +1048,7 @@ function getStep3ConfirmationHtml() {
         </div>
       </div>
 
-      <!-- Instant WhatsApp Notification Card (Shop Owner Dispatch & Customer Copy) -->
+      <!-- Customer Receipt & Help Card -->
       <div style="margin:1.5rem 0;text-align:left;">
         <div class="checkout-wa-prompt-card" style="border-left:4px solid #10B981;background:#F0FDF4;padding:1.25rem;border-radius:12px;box-shadow:0 2px 8px rgba(16,185,129,0.08);">
           <div class="checkout-wa-header" style="display:flex;align-items:flex-start;gap:12px;">
@@ -1060,20 +1059,20 @@ function getStep3ConfirmationHtml() {
             </div>
             <div class="checkout-wa-text" style="flex:1;">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-                <h4 style="color:#15803D;margin:0;font-size:1.05rem;font-weight:700;">WhatsApp Order Notification</h4>
-                <span style="background:#DCFCE7;color:#15803D;font-size:0.75rem;padding:2px 8px;border-radius:12px;font-weight:700;">Shop Owner Alert Ready</span>
+                <h4 style="color:#15803D;margin:0;font-size:1.05rem;font-weight:700;">Order Confirmation &amp; Updates</h4>
+                <span style="background:#DCFCE7;color:#15803D;font-size:0.75rem;padding:2px 8px;border-radius:12px;font-weight:700;">Dispatched Direct from Rajkot</span>
               </div>
               <p style="margin:0;font-size:0.875rem;color:var(--color-text-secondary);line-height:1.45;">
-                An automated order dispatch notification for Invoice <strong>${escapeHTML(inv.invoiceNumber || '')}</strong> has been generated for the <strong>Devshree Shop Owner (+91 88661 30409)</strong>.
+                An automated order alert has been saved to the store management system for Invoice <strong>${escapeHTML(inv.invoiceNumber || '')}</strong>. You can save a copy of your receipt or contact our support desk below.
               </p>
             </div>
           </div>
           <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1rem;">
-            <button type="button" class="btn-wa-pill" id="co-notify-owner-wa-btn" style="background:#16A34A;color:#fff;font-size:0.92rem;font-weight:700;padding:0.65rem 1.35rem;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 6px rgba(22,163,74,0.25);">
-              <span>📲 Send Order to Shop Owner on WhatsApp (+91 88661 30409)</span>
+            <button type="button" class="btn-wa-pill" id="co-whatsapp-receipt-btn" style="background:#16A34A;color:#fff;font-size:0.92rem;font-weight:700;padding:0.65rem 1.35rem;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 6px rgba(22,163,74,0.25);">
+              <span>💬 Save Customer WhatsApp Receipt</span>
             </button>
-            <button type="button" class="btn btn-outline" id="co-whatsapp-receipt-btn" style="border:1.5px solid #16A34A;color:#15803D;background:#fff;font-size:0.92rem;font-weight:600;padding:0.65rem 1.25rem;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
-              <span>💬 Customer WhatsApp Copy</span>
+            <button type="button" class="btn btn-outline" id="co-help-wa-btn" style="border:1.5px solid #16A34A;color:#15803D;background:#fff;font-size:0.92rem;font-weight:600;padding:0.65rem 1.25rem;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+              <span>📞 Contact Support (+91 88661 30409)</span>
             </button>
           </div>
         </div>
@@ -1108,25 +1107,24 @@ function getStep3ConfirmationHtml() {
 }
 
 /**
- * Initialize Step 3 Listeners (View invoice, Track order, Finish, WhatsApp to Owner & Customer)
+ * Initialize Step 3 Listeners (View invoice, Track order, Finish, WhatsApp Receipt & Customer Support)
  */
 function initStep3Listeners() {
   const inv = window.__devshree_last_invoice;
 
-  // Direct 1-Click WhatsApp notification to Devshree Shop Owner
-  document.getElementById('co-notify-owner-wa-btn')?.addEventListener('click', () => {
-    if (inv) {
-      const ownerPhone = getStoreOwnerPhone();
-      const message = buildStoreOwnerOrderWhatsAppMessage(inv);
-      openWhatsAppChat(ownerPhone, message);
-      showToast('Opening WhatsApp to notify Shop Owner (+91 88661 30409)...', 'info');
-    }
-  });
-
-  // Customer's personal WhatsApp copy
+  // Customer's personal WhatsApp copy / receipt
   document.getElementById('co-whatsapp-receipt-btn')?.addEventListener('click', () => {
     if (inv) {
       openWhatsAppDispatchModal(inv, 'customer');
+    }
+  });
+
+  // Customer support inquiry on WhatsApp
+  document.getElementById('co-help-wa-btn')?.addEventListener('click', () => {
+    if (inv) {
+      const ownerPhone = getStoreOwnerPhone();
+      const helpMsg = `Hello Devshree Hardware, I have an inquiry about my order: ${inv.invoiceNumber || ''}`;
+      openWhatsAppChat(ownerPhone, helpMsg);
     }
   });
 
