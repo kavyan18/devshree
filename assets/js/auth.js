@@ -269,21 +269,37 @@ export async function loginWithGoogle() {
 }
 
 /**
- * Sign out customer
+ * Sign out customer / administrator
+ * Cleans up local user storage, admin session tokens, and terminates Firebase session.
  */
 export async function logoutCustomer() {
+  // 1. Purge all local user storage
+  try {
+    localStorage.removeItem(LOCAL_USER_KEY);
+  } catch (e) {
+    console.warn('[Devshree Auth] Error clearing localStorage:', e);
+  }
+
+  // 2. Purge all session storage admin tokens
+  try {
+    sessionStorage.removeItem('devshree_admin_session_auth');
+    sessionStorage.removeItem('devshree_admin_authenticated');
+  } catch (e) {
+    console.warn('[Devshree Auth] Error clearing sessionStorage:', e);
+  }
+
+  // 3. Terminate Firebase Auth session if active
   if (isConfigured && auth) {
     try {
       await signOut(auth);
-      showToast('You have been signed out successfully.', 'info');
     } catch (error) {
-      showToast('Error signing out: ' + error.message, 'error');
+      console.warn('[Devshree Auth] Firebase signOut error:', error);
     }
-  } else {
-    localStorage.removeItem(LOCAL_USER_KEY);
-    notifyAuthChange(null);
-    showToast('Signed out (Demo Mode).', 'info');
   }
+
+  // 4. Reactive notification to header and custom event listeners
+  notifyAuthChange(null);
+  showToast('You have been signed out successfully.', 'info');
 }
 
 /**
@@ -321,12 +337,13 @@ export function getCurrentUser() {
 export function listenAuthState(callback) {
   if (isConfigured && auth) {
     onAuthStateChanged(auth, (user) => {
-      callback(user);
-      updateHeaderAuthUI(user);
-      if (user && pendingPostAuthAction) {
+      const activeUser = user || getStorage(LOCAL_USER_KEY, null);
+      callback(activeUser);
+      updateHeaderAuthUI(activeUser);
+      if (activeUser && pendingPostAuthAction) {
         const action = pendingPostAuthAction;
         pendingPostAuthAction = null;
-        action(user);
+        action(activeUser);
       }
     });
   } else {
@@ -336,7 +353,7 @@ export function listenAuthState(callback) {
   }
 }
 
-function notifyAuthChange(user) {
+export function notifyAuthChange(user) {
   updateHeaderAuthUI(user);
   const event = new CustomEvent('devshree:auth-state-changed', { detail: { user } });
   window.dispatchEvent(event);
