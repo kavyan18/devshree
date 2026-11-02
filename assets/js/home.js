@@ -650,8 +650,9 @@ async function renderCategories() {
  * Create reusable HTML for a single product card
  */
 function createProductCardHtml(product) {
-  const discount = calculateDiscount(product.price, product.compareAtPrice);
+  const discount = calculateDiscount(product.price, product.compareAtPrice, product.discountPercentage);
   const inWishlist = isInWishlist(product.id);
+  const comparePrice = product.compareAtPrice || (discount > 0 ? Math.round(product.price / (1 - discount / 100)) : null);
 
   let badgeHtml = '';
   if (discount > 0) {
@@ -717,8 +718,8 @@ function createProductCardHtml(product) {
 
         <div class="product-price-block">
           <span class="price-current">${formatINR(product.price)}</span>
-          ${product.compareAtPrice ? `<span class="price-original">${formatINR(product.compareAtPrice)}</span>` : ''}
-          ${discount > 0 ? `<span class="price-discount-chip">Save ${formatINR(product.compareAtPrice - product.price)}</span>` : ''}
+          ${comparePrice ? `<span class="price-original">${formatINR(comparePrice)}</span>` : ''}
+          ${discount > 0 && comparePrice ? `<span class="price-discount-chip">Save ${formatINR(comparePrice - product.price)}</span>` : ''}
         </div>
 
         <div class="product-footer">
@@ -764,7 +765,7 @@ async function renderProductSections() {
 
   if (dealsGrid) {
     const allProducts = await fetchProducts();
-    const deals = allProducts.filter(p => calculateDiscount(p.price, p.compareAtPrice) >= 20).slice(0, 4);
+    const deals = allProducts.filter(p => calculateDiscount(p.price, p.compareAtPrice, p.discountPercentage) >= 20).slice(0, 4);
     dealsGrid.innerHTML = deals.map(createProductCardHtml).join('');
     bindProductCardEvents(dealsGrid);
   }
@@ -978,8 +979,9 @@ async function openQuickView(productId) {
   const body = document.getElementById('modal-dynamic-body');
   if (!modal || !body) return;
 
-  const discount = calculateDiscount(product.price, product.compareAtPrice);
+  const discount = calculateDiscount(product.price, product.compareAtPrice, product.discountPercentage);
   const inWishlist = isInWishlist(product.id);
+  const comparePrice = product.compareAtPrice || (discount > 0 ? Math.round(product.price / (1 - discount / 100)) : null);
   const stockLimit = (typeof product.stock === 'number' && !isNaN(product.stock)) 
     ? product.stock 
     : (parseInt(product.stock, 10) || 50);
@@ -1103,8 +1105,8 @@ async function openQuickView(productId) {
         <div class="modal-pricing-box">
           <div class="modal-price-main">
             <span class="modal-price-current">${formatINR(product.price)}</span>
-            ${product.compareAtPrice ? `<span class="modal-price-mrp">${formatINR(product.compareAtPrice)}</span>` : ''}
-            ${discount > 0 ? `<span class="modal-savings-tag">Save ${formatINR(product.compareAtPrice - product.price)} (${discount}% OFF)</span>` : ''}
+            ${comparePrice ? `<span class="modal-price-mrp">${formatINR(comparePrice)}</span>` : ''}
+            ${discount > 0 && comparePrice ? `<span class="modal-savings-tag">Save ${formatINR(comparePrice - product.price)} (${discount}% OFF)</span>` : ''}
           </div>
           <div class="modal-gst-note">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
