@@ -129,8 +129,8 @@ export async function fetchProducts(options = {}) {
       products.sort((a, b) => (b.isBestseller ? 1 : 0) - (a.isBestseller ? 1 : 0));
       break;
     default:
-      // 'featured'
-      products.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+      // 'featured' / default: prioritize featured and bestsellers
+      products.sort((a, b) => ((b.isFeatured || b.featured || b.isBestseller) ? 1 : 0) - ((a.isFeatured || a.featured || a.isBestseller) ? 1 : 0));
       break;
   }
 
