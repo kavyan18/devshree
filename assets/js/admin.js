@@ -1469,6 +1469,10 @@ function initAdminGate() {
 function showAdminGate(state, user = null) {
   const gate = document.getElementById('admin-gate-screen');
   const deniedBox = document.getElementById('admin-gate-denied');
+  const passInput = document.getElementById('admin-login-password');
+  const menu = document.getElementById('admin-dropdown-menu');
+  if (menu) menu.classList.remove('show');
+  if (passInput) passInput.value = '';
   if (gate) gate.style.display = 'flex';
   if (deniedBox) deniedBox.style.display = (state === 'denied') ? 'block' : 'none';
 }
