@@ -1482,6 +1482,10 @@ function initAuthUI() {
     updateAccountModalProfile(user);
   });
 
+  window.addEventListener('devshree:auth-state-changed', (e) => {
+    updateAccountModalProfile(e.detail?.user || null);
+  });
+
   // Account button in header
   const accountBtn = document.getElementById('header-account-btn');
   accountBtn?.addEventListener('click', (e) => {
@@ -1547,10 +1551,17 @@ function initAuthUI() {
   document.getElementById('forgot-back-to-login')?.addEventListener('click', () => switchAuthTab('login'));
 
   // Sign out button
-  document.getElementById('user-signout-btn')?.addEventListener('click', async () => {
-    document.getElementById('invoices-list-modal')?.classList.remove('active');
+  document.getElementById('user-signout-btn')?.addEventListener('click', async (e) => {
+    e?.preventDefault();
+    const modal = document.getElementById('invoices-list-modal');
+    if (modal) modal.classList.remove('active');
     document.body.style.overflow = '';
-    await logoutCustomer();
+    updateAccountModalProfile(null);
+    try {
+      await logoutCustomer();
+    } catch (err) {
+      console.warn('[Home] Sign out error:', err);
+    }
   });
 
   // Sign in form submit
@@ -1669,7 +1680,18 @@ async function updateAccountModalProfile(user) {
   const initialEl = document.getElementById('user-avatar-initial');
   const roleBadge = document.getElementById('user-role-badge');
   const quickActions = document.getElementById('admin-profile-quick-actions');
-  if (!user) return;
+  if (!user) {
+    if (nameEl) nameEl.textContent = 'Customer Account';
+    if (emailEl) emailEl.textContent = 'user@devshree.in';
+    if (initialEl) initialEl.textContent = 'U';
+    if (roleBadge) {
+      roleBadge.textContent = 'Verified Customer';
+      roleBadge.style.background = '';
+      roleBadge.style.color = '';
+    }
+    if (quickActions) quickActions.innerHTML = '';
+    return;
+  }
 
   const displayName = user.displayName || user.email?.split('@')[0] || 'Customer';
   if (nameEl) nameEl.textContent = displayName;
