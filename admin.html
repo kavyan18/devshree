@@ -375,19 +375,80 @@
                   </div>
                 </div>
 
-                <!-- Row 3: Product Description -->
+                <!-- Row 3: Original MRP (₹) & Discount (% OFF) -->
+                <div class="form-row-3" style="background:#FAF7F2;padding:0.85rem 1rem;border-radius:10px;border:1px dashed #D6CFC4;margin-bottom:1.15rem;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="admin-numbered-label" for="prod-compare-price">
+                      <span class="step-num" style="background:#C2410C;">7</span>
+                      <span>Original MRP (₹) <span class="step-optional">(Strikethrough)</span></span>
+                    </label>
+                    <input type="number" id="prod-compare-price" class="admin-input" placeholder="e.g. 180" min="0" step="any" />
+                    <small style="font-size:0.72rem;color:var(--admin-text-secondary);display:block;margin-top:3px;">
+                      Enter MRP or set % OFF below
+                    </small>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="admin-numbered-label" for="prod-discount-percent">
+                      <span class="step-num" style="background:#C2410C;">8</span>
+                      <span>Discount (% OFF) <span class="step-optional">(Card Badge)</span></span>
+                    </label>
+                    <div style="position:relative;">
+                      <input type="number" id="prod-discount-percent" class="admin-input" placeholder="e.g. 25" min="0" max="99" style="padding-right:2.85rem;" />
+                      <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-weight:700;color:#C2410C;font-size:0.8rem;pointer-events:none;">% OFF</span>
+                    </div>
+                    <small style="font-size:0.72rem;color:var(--admin-text-secondary);display:block;margin-top:3px;">
+                      Auto-computes MRP or set directly
+                    </small>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:center;">
+                    <span style="font-size:0.75rem;font-weight:700;color:var(--admin-text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Live Badge Preview</span>
+                    <div id="admin-badge-preview-tag" style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                      <span class="badge badge-discount" id="preview-discount-pill" style="display:none;background:#C2410C;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">0% OFF</span>
+                      <span class="badge badge-bestseller" id="preview-bestseller-pill" style="display:none;background:#1E293B;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">BESTSELLER</span>
+                      <span class="badge badge-new" id="preview-new-pill" style="display:none;background:#87553B;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">NEW</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Row 4: Storefront Badges & Status (Bestseller, New Arrival, Featured) -->
+                <div class="form-group" style="background:#FFFFFF;border:1px solid #ECE7DF;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.15rem;">
+                  <label class="admin-numbered-label" style="margin-bottom:0.5rem;">
+                    <span class="step-num" style="background:#1E293B;">9</span>
+                    <span>Storefront Badges &amp; Highlights</span>
+                  </label>
+                  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;">
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#1E293B;user-select:none;">
+                      <input type="checkbox" id="prod-is-bestseller" style="width:18px;height:18px;accent-color:#1E293B;cursor:pointer;" />
+                      <span>🔥 Mark as Bestseller (Shows black BESTSELLER badge)</span>
+                    </label>
+
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#87553B;user-select:none;">
+                      <input type="checkbox" id="prod-is-new" style="width:18px;height:18px;accent-color:#87553B;cursor:pointer;" />
+                      <span>✨ Mark as New Arrival (Shows brown NEW badge)</span>
+                    </label>
+
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#357653;user-select:none;">
+                      <input type="checkbox" id="prod-is-featured" style="width:18px;height:18px;accent-color:#357653;cursor:pointer;" />
+                      <span>⭐ Featured Item</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Row 5: Product Description -->
                 <div class="form-group">
                   <label class="admin-numbered-label" for="prod-desc">
-                    <span class="step-num">7</span>
+                    <span class="step-num">10</span>
                     <span>Product Description <span class="step-optional">(Optional)</span></span>
                   </label>
                   <textarea id="prod-desc" class="admin-textarea" rows="2" placeholder="Energy efficient LED bulb, long life, best for home and office."></textarea>
                 </div>
 
-                <!-- Row 4: Product Image Upload & Preview -->
+                <!-- Row 6: Product Image Upload & Preview -->
                 <div class="form-group" style="margin-bottom:0;">
                   <label class="admin-numbered-label">
-                    <span class="step-num">8</span>
+                    <span class="step-num">11</span>
                     <span>Product Image *</span>
                   </label>
 
@@ -442,13 +503,23 @@
                     <span class="val" id="summary-customer-price">₹ 141.60</span>
                   </div>
 
+                  <div class="admin-price-row" id="summary-mrp-row" style="display:none;color:#78716C;">
+                    <span class="label">Original MRP</span>
+                    <span class="val" id="summary-mrp" style="text-decoration:line-through;">₹ 0.00</span>
+                  </div>
+
+                  <div class="admin-price-row" id="summary-discount-row" style="display:none;color:#C2410C;font-weight:700;">
+                    <span class="label">Discount</span>
+                    <span class="val" id="summary-discount-amount">0% OFF</span>
+                  </div>
+
                   <div class="admin-calc-note">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="10"></circle>
                       <line x1="12" y1="16" x2="12" y2="12"></line>
                       <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    <span>GST is calculated automatically.</span>
+                    <span>GST and discount percentage are calculated automatically.</span>
                   </div>
 
                   <button type="submit" class="btn-save-product" id="btn-save-product">
@@ -506,7 +577,9 @@
                   <th style="width:70px;">Image</th>
                   <th>Product Name</th>
                   <th>Category</th>
-                  <th>Price (₹)</th>
+                  <th>Price / MRP</th>
+                  <th>Discount</th>
+                  <th>Bestseller Status</th>
                   <th>Stock</th>
                   <th style="text-align:right;">Actions</th>
                 </tr>
