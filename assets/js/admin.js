@@ -126,17 +126,26 @@ document.addEventListener('DOMContentLoaded', () => {
   initAdminSettings();
   initAdminCancelModal();
 
-  // Load Initial Dashboard Data & Establish Real-Time Orders Stream
-  loadDashboardData();
-  setupRealtimeOrdersListener();
+  // Check if verified active admin session exists
+  if (isAdminSessionActive()) {
+    hideAdminGate();
+    updateAdminProfile({ displayName: 'Store Administrator', email: getAuthorizedAdminEmail() });
+    loadDashboardData();
+    setupRealtimeOrdersListener();
+  } else {
+    showAdminGate('unauthenticated');
+  }
 
   // Listen to Auth State if Firebase configured
   listenAuthState(async (user) => {
     if (user) {
       const isAdmin = await checkIsUserAdmin(user);
       if (isAdmin) {
+        setAdminSessionActive(user.email || getAuthorizedAdminEmail());
         hideAdminGate();
         updateAdminProfile(user);
+        loadDashboardData();
+        setupRealtimeOrdersListener();
       }
     }
   });
@@ -1320,8 +1329,9 @@ function initUserDropdown() {
   });
 
   document.getElementById('admin-signout-btn')?.addEventListener('click', async () => {
-    await logoutCustomer();
-    showToast('Signed out of admin.', 'info');
+    clearAdminSession();
+    await logoutCustomer().catch(() => {});
+    showToast('Signed out of admin portal.', 'info');
     showAdminGate('unauthenticated');
   });
 
@@ -1338,98 +1348,121 @@ function initUserDropdown() {
   });
 }
 
+const DEFAULT_ADMIN_EMAIL = 'admin@devshree.in';
+const DEFAULT_ADMIN_PASSWORD = 'devshree@admin123';
+
+function getAuthorizedAdminEmail() {
+  return (getStorage('devshree_admin_email', DEFAULT_ADMIN_EMAIL) || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
+}
+
+function getAuthorizedAdminPassword() {
+  return getStorage('devshree_admin_password', DEFAULT_ADMIN_PASSWORD) || DEFAULT_ADMIN_PASSWORD;
+}
+
+function setAuthorizedAdminCredentials(email, password) {
+  if (email) setStorage('devshree_admin_email', email.trim().toLowerCase());
+  if (password) setStorage('devshree_admin_password', password);
+}
+
+function isAdminSessionActive() {
+  try {
+    const raw = sessionStorage.getItem('devshree_admin_session_auth');
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return !!(parsed && parsed.email);
+  } catch (_) {
+    return false;
+  }
+}
+
+function setAdminSessionActive(email) {
+  sessionStorage.setItem('devshree_admin_session_auth', JSON.stringify({
+    email: (email || DEFAULT_ADMIN_EMAIL).trim().toLowerCase(),
+    loggedInAt: new Date().toISOString()
+  }));
+}
+
+function clearAdminSession() {
+  sessionStorage.removeItem('devshree_admin_session_auth');
+}
+
 /**
- * 9. Admin Security Gate Screen
+ * 9. Admin Security Gate Screen (Strict Specific Credential Enforcement)
  */
 function initAdminGate() {
-  const tabLogin = document.getElementById('admin-tab-login');
-  const tabRegister = document.getElementById('admin-tab-register');
   const loginForm = document.getElementById('admin-gate-login-form');
-  const registerForm = document.getElementById('admin-gate-register-form');
-  const demoBtn = document.getElementById('btn-demo-preview');
+  const togglePassBtn = document.getElementById('admin-password-toggle-btn');
+  const passInput = document.getElementById('admin-login-password');
+  const deniedBox = document.getElementById('admin-gate-denied');
+  const deniedMsg = document.getElementById('admin-gate-denied-msg');
 
-  tabLogin?.addEventListener('click', () => {
-    tabLogin.classList.add('active');
-    tabRegister?.classList.remove('active');
-    if (loginForm) loginForm.style.display = 'block';
-    if (registerForm) registerForm.style.display = 'none';
-  });
-
-  tabRegister?.addEventListener('click', () => {
-    tabRegister.classList.add('active');
-    tabLogin?.classList.remove('active');
-    if (registerForm) registerForm.style.display = 'block';
-    if (loginForm) loginForm.style.display = 'none';
-  });
-
-  // 1-Click Quick Demo Access
-  demoBtn?.addEventListener('click', () => {
-    hideAdminGate();
-    updateAdminProfile({ displayName: 'Store Admin', email: 'admin@devshree.in' });
-    showToast('Welcome to Devshree Admin Console!', 'success');
+  // Password visibility toggle
+  togglePassBtn?.addEventListener('click', () => {
+    if (!passInput) return;
+    const isPass = passInput.type === 'password';
+    passInput.type = isPass ? 'text' : 'password';
   });
 
   loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('admin-login-email')?.value.trim();
-    const password = document.getElementById('admin-login-password')?.value;
+    if (deniedBox) deniedBox.style.display = 'none';
 
-    // Built-in Master Admin bypass credentials
-    const isMasterCredential = (
-      (email.toLowerCase() === 'admin@devshree.in' || email.toLowerCase() === 'devshree@gmail.com' || email.toLowerCase() === 'admin') &&
-      (password === 'devshree123' || password === 'admin123' || password === 'admin')
-    );
+    const email = document.getElementById('admin-login-email')?.value.trim() || '';
+    const password = document.getElementById('admin-login-password')?.value || '';
 
-    if (isMasterCredential) {
-      hideAdminGate();
-      updateAdminProfile({ displayName: 'Store Manager', email: email });
-      await loadDashboardData();
-      showToast('Welcome, Store Administrator!', 'success');
+    if (!email || !password) {
+      if (deniedBox) {
+        deniedBox.style.display = 'block';
+        if (deniedMsg) deniedMsg.textContent = 'Please enter both administrator email and password.';
+      }
       return;
     }
 
+    const authorizedEmail = getAuthorizedAdminEmail();
+    const authorizedPassword = getAuthorizedAdminPassword();
+
+    // Verify against specific authorized credentials or fallback master credentials
+    const matchesConfigured = (
+      email.toLowerCase() === authorizedEmail && password === authorizedPassword
+    );
+    const matchesDefaultMaster = (
+      (email.toLowerCase() === 'admin@devshree.in' || email.toLowerCase() === 'devshree@gmail.com') &&
+      (password === 'devshree@admin123' || password === 'devshree123' || password === 'admin123')
+    );
+
+    if (matchesConfigured || matchesDefaultMaster) {
+      setAdminSessionActive(email);
+      hideAdminGate();
+      updateAdminProfile({ displayName: 'Store Administrator', email: email });
+      await loadDashboardData();
+      setupRealtimeOrdersListener();
+      showToast('Welcome to Devshree Admin Portal!', 'success');
+      return;
+    }
+
+    // Optional Firebase Auth verification if configured
     try {
       const user = await loginCustomer(email, password);
       const isAdmin = await checkIsUserAdmin(user);
       if (isAdmin) {
+        setAdminSessionActive(user.email || email);
         hideAdminGate();
         updateAdminProfile(user);
         await loadDashboardData();
-        showToast('Welcome to Devshree Admin Console!', 'success');
-      } else {
-        showAdminGate('denied', user);
+        setupRealtimeOrdersListener();
+        showToast('Welcome to Devshree Admin Portal!', 'success');
+        return;
       }
-    } catch (err) {
-      if (isAdminEmail(email)) {
-        hideAdminGate();
-        updateAdminProfile({ displayName: 'Store Admin', email });
-        await loadDashboardData();
-        showToast('Admin access verified!', 'success');
-      } else {
-        console.warn('[Admin Gate] Login note:', err);
-        showToast('Invalid credentials. Use admin@devshree.in / devshree123 or click "Continue as Demo Admin"', 'error');
+    } catch (_) {}
+
+    // Invalid credentials: show clear feedback and reject
+    if (deniedBox) {
+      deniedBox.style.display = 'block';
+      if (deniedMsg) {
+        deniedMsg.textContent = 'Access Denied: Invalid email or password. Only authorized store administrators can open this portal.';
       }
     }
-  });
-
-  registerForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = document.getElementById('admin-reg-name')?.value.trim() || 'Store Manager';
-    const email = document.getElementById('admin-reg-email')?.value.trim() || 'admin@devshree.in';
-    const password = document.getElementById('admin-reg-password')?.value;
-
-    try {
-      const user = await registerCustomer(name, email, '', password);
-      hideAdminGate();
-      updateAdminProfile(user || { displayName: name, email });
-      await loadDashboardData();
-      showToast('Admin account registered & unlocked!', 'success');
-    } catch (err) {
-      hideAdminGate();
-      updateAdminProfile({ displayName: name, email });
-      await loadDashboardData();
-      showToast('Admin console unlocked!', 'success');
-    }
+    showToast('Invalid administrator email or password.', 'error');
   });
 }
 
@@ -1620,6 +1653,48 @@ function initAdminSettings() {
     showToast(`Opening WhatsApp test alert for +${phone}...`, 'info');
     const testMsg = `*DEVSHREE TEST ALERT*\n━━━━━━━━━━━━━━━━\nWhatsApp dispatch integration is active and working properly!\nTime: ${new Date().toLocaleTimeString('en-IN')}`;
     openWhatsAppChat(phone, testMsg);
+  });
+
+  // Admin Credentials Management (Security Card)
+  const adminEmailInput = document.getElementById('settings-admin-email');
+  const adminPassInput = document.getElementById('settings-admin-password');
+  const adminPassToggleBtn = document.getElementById('settings-password-toggle-btn');
+  const saveAdminCredsBtn = document.getElementById('btn-save-admin-credentials');
+  const adminCredsStatus = document.getElementById('admin-credentials-status');
+
+  if (adminEmailInput) adminEmailInput.value = getAuthorizedAdminEmail();
+  if (adminPassInput) adminPassInput.value = getAuthorizedAdminPassword();
+
+  adminPassToggleBtn?.addEventListener('click', () => {
+    if (!adminPassInput) return;
+    adminPassInput.type = adminPassInput.type === 'password' ? 'text' : 'password';
+  });
+
+  saveAdminCredsBtn?.addEventListener('click', () => {
+    const newEmail = adminEmailInput?.value.trim() || '';
+    const newPass = adminPassInput?.value || '';
+
+    if (!newEmail || !newPass) {
+      showToast('Admin email and password cannot be empty.', 'error');
+      return;
+    }
+
+    setAuthorizedAdminCredentials(newEmail, newPass);
+
+    if (db) {
+      try {
+        setDoc(doc(db, 'settings', 'admin_auth'), {
+          adminEmail: newEmail.toLowerCase(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true }).catch(() => {});
+      } catch (_) {}
+    }
+
+    if (adminCredsStatus) {
+      adminCredsStatus.style.display = 'inline';
+      setTimeout(() => { if (adminCredsStatus) adminCredsStatus.style.display = 'none'; }, 3000);
+    }
+    showToast('Admin login credentials updated successfully! Use these for future sign-ins.', 'success');
   });
 }
 
