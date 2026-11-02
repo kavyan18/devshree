@@ -3433,6 +3433,109 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
+/* User-Friendly In-Modal Alert Box */
+.auth-modal-alert {
+  margin-bottom: 1.25rem;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  text-align: left;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.auth-modal-alert.alert-warning {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  color: #92400E;
+}
+
+.auth-modal-alert.alert-error {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+}
+
+.auth-modal-alert.alert-info {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #1E40AF;
+}
+
+.auth-modal-alert-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.auth-modal-alert-body {
+  flex: 1;
+}
+
+.auth-modal-alert-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.auth-modal-alert-desc {
+  margin: 0;
+  font-size: 0.81rem;
+  opacity: 0.95;
+}
+
+.auth-modal-alert-hint {
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.auth-modal-alert-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  padding: 0 4px;
+}
+
+.auth-modal-alert-close:hover {
+  opacity: 1;
+}
+
+/* Instant Guest / Demo Button */
+.auth-demo-guest-btn {
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.auth-demo-guest-btn:hover {
+  background: var(--color-bg-sand);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
 /* --------------------------------------------------------------------------
    21. Customer Account & GST Invoices Modal
    -------------------------------------------------------------------------- */
