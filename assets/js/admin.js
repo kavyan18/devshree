@@ -1442,7 +1442,7 @@ function initAdminGate() {
 
     // Optional Firebase Auth verification if configured
     try {
-      const user = await loginCustomer(email, password);
+      const user = await loginCustomer(email, password, true);
       const isAdmin = await checkIsUserAdmin(user);
       if (isAdmin) {
         setAdminSessionActive(user.email || email);
