@@ -1,13 +1,3 @@
 {
-  "cleanUrls": true,
-  "rewrites": [
-    { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/admin/", "destination": "/admin.html" },
-    { "source": "/product", "destination": "/product.html" },
-    { "source": "/contact", "destination": "/contact.html" },
-    { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
-    { "source": "/terms-of-service", "destination": "/terms-of-service.html" },
-    { "source": "/shipping-policy", "destination": "/shipping-policy.html" },
-    { "source": "/refund-policy", "destination": "/refund-policy.html" }
-  ]
+  "cleanUrls": true
 }
