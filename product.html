@@ -564,12 +564,37 @@
       document.getElementById('pdp-gst-amount').textContent = formatINR(gstAmount);
       document.getElementById('pdp-final-price').textContent = formatINR(p.price);
 
-      if (p.compareAtPrice && p.compareAtPrice > p.price) {
-        document.getElementById('pdp-mrp').textContent = formatINR(p.compareAtPrice);
-        const discountPct = Math.round(((p.compareAtPrice - p.price) / p.compareAtPrice) * 100);
+      let discountPct = p.discountPercentage || 0;
+      let comparePrice = p.compareAtPrice;
+      if (!discountPct && comparePrice && comparePrice > p.price) {
+        discountPct = Math.round(((comparePrice - p.price) / comparePrice) * 100);
+      } else if (discountPct > 0 && (!comparePrice || comparePrice <= p.price)) {
+        comparePrice = Math.round(p.price / (1 - discountPct / 100));
+      }
+
+      if (discountPct > 0) {
+        if (comparePrice) {
+          document.getElementById('pdp-mrp').textContent = formatINR(comparePrice);
+        }
         const badge = document.getElementById('pdp-discount-badge');
-        badge.textContent = `${discountPct}% OFF`;
-        badge.style.display = 'inline-block';
+        if (badge) {
+          badge.textContent = `${discountPct}% OFF`;
+          badge.style.display = 'inline-block';
+        }
+      }
+
+      const badgesContainer = document.getElementById('pdp-badges');
+      if (badgesContainer) {
+        let bHtml = '';
+        if (discountPct > 0) {
+          bHtml += `<span class="badge badge-discount">${discountPct}% OFF</span>`;
+        }
+        if (p.isBestseller) {
+          bHtml += `<span class="badge badge-bestseller">BESTSELLER</span>`;
+        } else if (p.isNew) {
+          bHtml += `<span class="badge badge-new">NEW</span>`;
+        }
+        badgesContainer.innerHTML = bHtml;
       }
 
       // Tier pricing calculations
