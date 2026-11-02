@@ -245,28 +245,108 @@ function initAdminNavigation() {
 function initPriceCalculation() {
   const priceInput = document.getElementById('prod-price');
   const gstSelect = document.getElementById('prod-gst-rate');
+  const comparePriceInput = document.getElementById('prod-compare-price');
+  const discountPercentInput = document.getElementById('prod-discount-percent');
+  const bestsellerCheckbox = document.getElementById('prod-is-bestseller');
+  const newCheckbox = document.getElementById('prod-is-new');
 
   const basePriceEl = document.getElementById('summary-base-price');
   const gstLabelEl = document.getElementById('summary-gst-label');
   const gstAmountEl = document.getElementById('summary-gst-amount');
   const custPriceEl = document.getElementById('summary-customer-price');
+  const mrpRowEl = document.getElementById('summary-mrp-row');
+  const mrpValEl = document.getElementById('summary-mrp');
+  const discountRowEl = document.getElementById('summary-discount-row');
+  const discountValEl = document.getElementById('summary-discount-amount');
 
-  function calculate() {
+  const previewDiscountPill = document.getElementById('preview-discount-pill');
+  const previewBestsellerPill = document.getElementById('preview-bestseller-pill');
+  const previewNewPill = document.getElementById('preview-new-pill');
+
+  function calculate(source = null) {
     const rawPrice = parseFloat(priceInput?.value) || 0;
     const gstRate = parseFloat(gstSelect?.value) || 0;
 
     const basePrice = rawPrice;
     const gstAmount = (basePrice * gstRate) / 100;
-    const customerPrice = basePrice + gstAmount;
+    const customerPrice = basePrice > 0 ? +(basePrice + gstAmount).toFixed(2) : 0;
+
+    let comparePrice = parseFloat(comparePriceInput?.value) || 0;
+    let discountPercent = parseFloat(discountPercentInput?.value) || 0;
+
+    // Bi-directional calculation
+    if (source === 'discount') {
+      if (discountPercent > 0 && discountPercent < 100 && customerPrice > 0) {
+        comparePrice = Math.round(customerPrice / (1 - discountPercent / 100));
+        if (comparePriceInput) comparePriceInput.value = comparePrice;
+      } else if (discountPercent <= 0 && comparePriceInput) {
+        comparePriceInput.value = '';
+        comparePrice = 0;
+      }
+    } else if (source === 'compare') {
+      if (comparePrice > customerPrice && customerPrice > 0) {
+        discountPercent = Math.round(((comparePrice - customerPrice) / comparePrice) * 100);
+        if (discountPercentInput) discountPercentInput.value = discountPercent;
+      } else if (discountPercentInput) {
+        discountPercentInput.value = '';
+        discountPercent = 0;
+      }
+    } else {
+      // Selling price or GST changed
+      if (discountPercent > 0 && customerPrice > 0) {
+        comparePrice = Math.round(customerPrice / (1 - discountPercent / 100));
+        if (comparePriceInput) comparePriceInput.value = comparePrice;
+      } else if (comparePrice > customerPrice && customerPrice > 0) {
+        discountPercent = Math.round(((comparePrice - customerPrice) / comparePrice) * 100);
+        if (discountPercentInput) discountPercentInput.value = discountPercent;
+      }
+    }
 
     if (basePriceEl) basePriceEl.textContent = `₹ ${basePrice.toFixed(2)}`;
     if (gstLabelEl) gstLabelEl.textContent = `GST (${gstRate}%)`;
     if (gstAmountEl) gstAmountEl.textContent = `₹ ${gstAmount.toFixed(2)}`;
     if (custPriceEl) custPriceEl.textContent = `₹ ${customerPrice.toFixed(2)}`;
+
+    // Price Summary MRP & Discount Rows
+    if (comparePrice > customerPrice && customerPrice > 0 && discountPercent > 0) {
+      if (mrpRowEl) {
+        mrpRowEl.style.display = 'flex';
+        if (mrpValEl) mrpValEl.textContent = `₹ ${comparePrice.toFixed(2)}`;
+      }
+      if (discountRowEl) {
+        discountRowEl.style.display = 'flex';
+        if (discountValEl) discountValEl.textContent = `${discountPercent}% OFF`;
+      }
+    } else {
+      if (mrpRowEl) mrpRowEl.style.display = 'none';
+      if (discountRowEl) discountRowEl.style.display = 'none';
+    }
+
+    // Live Badge Preview
+    if (previewDiscountPill) {
+      if (discountPercent > 0) {
+        previewDiscountPill.style.display = 'inline-block';
+        previewDiscountPill.textContent = `${discountPercent}% OFF`;
+      } else {
+        previewDiscountPill.style.display = 'none';
+      }
+    }
+
+    if (previewBestsellerPill) {
+      previewBestsellerPill.style.display = bestsellerCheckbox?.checked ? 'inline-block' : 'none';
+    }
+
+    if (previewNewPill) {
+      previewNewPill.style.display = newCheckbox?.checked ? 'inline-block' : 'none';
+    }
   }
 
-  priceInput?.addEventListener('input', calculate);
-  gstSelect?.addEventListener('change', calculate);
+  priceInput?.addEventListener('input', () => calculate('price'));
+  gstSelect?.addEventListener('change', () => calculate('gst'));
+  comparePriceInput?.addEventListener('input', () => calculate('compare'));
+  discountPercentInput?.addEventListener('input', () => calculate('discount'));
+  bestsellerCheckbox?.addEventListener('change', () => calculate('badge'));
+  newCheckbox?.addEventListener('change', () => calculate('badge'));
 
   // Initial calculation
   calculate();
@@ -354,6 +434,12 @@ function initProductForm() {
     const description = document.getElementById('prod-desc')?.value.trim() || 'Quality hardware supplies.';
     const image = hiddenImgInput?.value.trim() || previewImg?.src || DEFAULT_BULB_IMG;
 
+    let compareAtPrice = parseFloat(document.getElementById('prod-compare-price')?.value) || 0;
+    let discountPercentage = parseInt(document.getElementById('prod-discount-percent')?.value, 10) || 0;
+    const isBestseller = !!document.getElementById('prod-is-bestseller')?.checked;
+    const isNew = !!document.getElementById('prod-is-new')?.checked;
+    const isFeatured = !!document.getElementById('prod-is-featured')?.checked;
+
     if (!name || basePrice <= 0) {
       showToast('Please enter product name and selling price.', 'error');
       return;
@@ -361,6 +447,13 @@ function initProductForm() {
 
     const customerPrice = +(basePrice * (1 + gstRate / 100)).toFixed(2);
     const skuCode = document.getElementById('prod-sku')?.value || generateCode(categoryId, name);
+
+    // Reconcile discountPercentage and compareAtPrice
+    if (discountPercentage > 0 && (!compareAtPrice || compareAtPrice <= customerPrice)) {
+      compareAtPrice = Math.round(customerPrice / (1 - discountPercentage / 100));
+    } else if (compareAtPrice > customerPrice && !discountPercentage) {
+      discountPercentage = Math.round(((compareAtPrice - customerPrice) / compareAtPrice) * 100);
+    }
 
     const submitBtn = document.getElementById('btn-save-product');
     if (submitBtn) submitBtn.disabled = true;
@@ -379,6 +472,11 @@ function initProductForm() {
           sku: skuCode,
           description,
           image,
+          compareAtPrice: compareAtPrice > customerPrice ? compareAtPrice : null,
+          discountPercentage: discountPercentage > 0 ? discountPercentage : null,
+          isBestseller,
+          isNew,
+          isFeatured,
           updatedAt: new Date().toISOString()
         };
 
@@ -411,9 +509,14 @@ function initProductForm() {
           sku: skuCode,
           description,
           image,
+          compareAtPrice: compareAtPrice > customerPrice ? compareAtPrice : null,
+          discountPercentage: discountPercentage > 0 ? discountPercentage : null,
+          isBestseller,
+          isNew,
+          isFeatured,
           rating: 4.8,
           reviewCount: 1,
-          isNew: true
+          createdAt: new Date().toISOString()
         };
 
         if (db) {
@@ -460,6 +563,18 @@ function resetProductForm() {
   if (previewImg) previewImg.src = DEFAULT_BULB_IMG;
   if (hiddenImgInput) hiddenImgInput.value = '';
 
+  const comparePriceInput = document.getElementById('prod-compare-price');
+  const discountPercentInput = document.getElementById('prod-discount-percent');
+  const bestsellerCheckbox = document.getElementById('prod-is-bestseller');
+  const newCheckbox = document.getElementById('prod-is-new');
+  const featuredCheckbox = document.getElementById('prod-is-featured');
+
+  if (comparePriceInput) comparePriceInput.value = '';
+  if (discountPercentInput) discountPercentInput.value = '';
+  if (bestsellerCheckbox) bestsellerCheckbox.checked = false;
+  if (newCheckbox) newCheckbox.checked = false;
+  if (featuredCheckbox) featuredCheckbox.checked = false;
+
   // Trigger price recalculation to defaults
   document.getElementById('prod-price')?.dispatchEvent(new Event('input'));
 }
@@ -504,6 +619,24 @@ function editProduct(prod) {
   if (stockInput) stockInput.value = prod.stock ?? 0;
   if (descInput) descInput.value = prod.description || '';
 
+  const comparePriceInput = document.getElementById('prod-compare-price');
+  const discountPercentInput = document.getElementById('prod-discount-percent');
+  const bestsellerCheckbox = document.getElementById('prod-is-bestseller');
+  const newCheckbox = document.getElementById('prod-is-new');
+  const featuredCheckbox = document.getElementById('prod-is-featured');
+
+  if (comparePriceInput) comparePriceInput.value = prod.compareAtPrice || '';
+
+  let discountPct = prod.discountPercentage || 0;
+  if (!discountPct && prod.compareAtPrice && prod.compareAtPrice > prod.price) {
+    discountPct = Math.round(((prod.compareAtPrice - prod.price) / prod.compareAtPrice) * 100);
+  }
+  if (discountPercentInput) discountPercentInput.value = discountPct > 0 ? discountPct : '';
+
+  if (bestsellerCheckbox) bestsellerCheckbox.checked = !!prod.isBestseller;
+  if (newCheckbox) newCheckbox.checked = !!prod.isNew;
+  if (featuredCheckbox) featuredCheckbox.checked = !!prod.isFeatured;
+
   const img = prod.image || DEFAULT_BULB_IMG;
   if (previewImg) previewImg.src = img;
   if (hiddenImgInput) hiddenImgInput.value = img;
@@ -511,7 +644,7 @@ function editProduct(prod) {
   if (formTitle) formTitle.textContent = `Edit Product: ${prod.name}`;
   if (saveBtnText) saveBtnText.textContent = 'Update Product';
 
-  // Recalculate price summary
+  // Recalculate price summary & badges
   priceInput?.dispatchEvent(new Event('input'));
 
   // Smooth scroll to form
@@ -562,7 +695,7 @@ function renderProductsTable(products = null) {
   if (list.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align:center;padding:2.5rem;color:var(--admin-text-secondary);">
+        <td colspan="8" style="text-align:center;padding:2.5rem;color:var(--admin-text-secondary);">
           <div style="font-size:1.75rem;margin-bottom:0.5rem;">📦</div>
           <div style="font-weight:700;color:var(--admin-text-main);margin-bottom:0.25rem;">No products found</div>
           <span style="font-size:0.8rem;">No items match your search or category filter.</span>
@@ -588,6 +721,32 @@ function renderProductsTable(products = null) {
     const catName = formatCategoryName(prod.categoryId);
     const skuCode = prod.sku ? `Code: ${prod.sku}` : (prod.id ? `Code: ${prod.id.slice(0, 6).toUpperCase()}` : '');
 
+    // Price & MRP
+    const currentPrice = Number(prod.price || 0);
+    const mrpPrice = Number(prod.compareAtPrice || 0);
+    const mrpHtml = (mrpPrice > currentPrice) 
+      ? `<div class="admin-table-mrp">MRP: ₹ ${mrpPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>` 
+      : '';
+
+    // Discount %
+    let discount = prod.discountPercentage || 0;
+    if (!discount && mrpPrice > currentPrice) {
+      discount = Math.round(((mrpPrice - currentPrice) / mrpPrice) * 100);
+    }
+    const discountHtml = discount > 0 
+      ? `<span class="admin-table-discount-badge">${discount}% OFF</span>` 
+      : `<span style="color:var(--admin-text-secondary);font-size:0.8rem;">—</span>`;
+
+    // Bestseller toggle button
+    const isBestseller = !!prod.isBestseller;
+    const bestsellerHtml = isBestseller 
+      ? `<button type="button" class="btn-toggle-bestseller active" data-bestseller-toggle-id="${prod.id}" title="Click to remove from Bestsellers">
+          <span>🔥 BESTSELLER</span>
+        </button>`
+      : `<button type="button" class="btn-toggle-bestseller" data-bestseller-toggle-id="${prod.id}" title="Click to mark as Bestseller">
+          <span>+ Mark Bestseller</span>
+        </button>`;
+
     return `
       <tr data-prod-id="${prod.id}">
         <td>
@@ -601,7 +760,14 @@ function renderProductsTable(products = null) {
           <span class="admin-row-cat-badge">${escapeHTML(catName)}</span>
         </td>
         <td>
-          <span class="admin-row-price">₹ ${Number(prod.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span class="admin-row-price">₹ ${currentPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          ${mrpHtml}
+        </td>
+        <td>
+          ${discountHtml}
+        </td>
+        <td>
+          ${bestsellerHtml}
         </td>
         <td>
           <span class="admin-row-stock-qty">${stock}</span>
@@ -645,6 +811,34 @@ function renderProductsTable(products = null) {
     btn.addEventListener('click', () => {
       const id = btn.dataset.removeId;
       if (id) removeProduct(id);
+    });
+  });
+
+  tbody.querySelectorAll('[data-bestseller-toggle-id]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.bestsellerToggleId;
+      const target = allProducts.find(p => p.id === id);
+      if (!target) return;
+
+      const newStatus = !target.isBestseller;
+      target.isBestseller = newStatus;
+      target.updatedAt = new Date().toISOString();
+
+      if (db) {
+        try {
+          await updateDoc(doc(db, 'products', id), { 
+            isBestseller: newStatus, 
+            updatedAt: target.updatedAt 
+          });
+        } catch (err) {
+          console.warn('[Admin] Firestore bestseller toggle fallback:', err);
+        }
+      }
+
+      syncProductsCache();
+      renderProductsTable();
+      showToast(`"${target.name}" ${newStatus ? 'marked as BESTSELLER! 🔥' : 'removed from bestsellers.'}`, newStatus ? 'success' : 'info');
     });
   });
 }
