@@ -18,6 +18,7 @@ import {
 } from './firebase-config.js';
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from './mock-data.js';
 import { showToast, getStorage, setStorage } from './utils.js';
+import { showSafeErrorToast } from './error-handler.js';
 
 const CACHE_PRODUCTS_KEY = 'devshree_cached_products';
 const CACHE_CATEGORIES_KEY = 'devshree_cached_categories';
@@ -188,8 +189,8 @@ export async function isCatalogSeeded() {
  */
 export async function seedFirestoreCatalog() {
   if (!isConfigured || !db) {
-    showToast('Firebase credentials are not yet configured in firebase-config.js.', 'error');
-    throw new Error('Firebase is not configured');
+    showToast('Catalog database service is initializing. Running in offline demo mode.', 'info');
+    throw new Error('Database service not initialized');
   }
 
   showToast('Starting catalog sync to Cloud Firestore...', 'info');
@@ -244,8 +245,7 @@ export async function seedFirestoreCatalog() {
     showToast(`Success! Synced ${catCount} categories and ${prodCount} products to Firestore!`, 'success');
     return { categoriesCount: catCount, productsCount: prodCount };
   } catch (err) {
-    console.error('[Devshree] Seeding failed:', err);
-    showToast(`Error seeding catalog: ${err.message}`, 'error');
+    showSafeErrorToast(err, 'Unable to sync catalog at this time. Please try again.');
     throw err;
   }
 }

@@ -29,6 +29,8 @@ import {
   checkIsUserAdmin 
 } from './auth.js';
 import { formatINR, showToast, escapeHTML, getStorage, setStorage } from './utils.js';
+import { showSafeErrorToast } from './error-handler.js';
+import { sanitizeAndOptimizeImage, verifyStorageIsolation } from './file-validator.js';
 import { MOCK_PRODUCTS } from './mock-data.js';
 import { 
   initAdminNotificationCenter, 
@@ -380,42 +382,81 @@ function initProductForm() {
   // Trigger Image File Picker
   chooseBtn?.addEventListener('click', () => fileInput?.click());
 
-  // Handle Image Upload with Firebase Storage & Canvas Optimization Fallback
-  fileInput?.addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
+  // Helper: Secure Multi-Stage Image File Handler (Validation, Deep Canvas Sanitization, Isolated Storage)
+  async function handleImageFileSelection(file) {
     if (!file) return;
 
     try {
-      showToast('Optimizing & uploading product photo...', 'info');
+      showToast('Inspecting, verifying & sanitizing image...', 'info');
+
+      // 1. Multi-layer validation (size, extension, MIME, magic bytes) & Canvas re-encoding
+      const { sanitizedBlob, dataUrl, safeFileName, mimeType } = await sanitizeAndOptimizeImage(file);
 
       let imageUrl = null;
 
-      // 1. Attempt upload to Firebase Storage if connected
+      // 2. Upload the SANITIZED binary blob to isolated Firebase Storage if connected
       if (storage) {
         try {
-          const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-          const fileRef = ref(storage, `products/${Date.now()}_${cleanName}`);
-          const snapshot = await uploadBytesResumable(fileRef, file);
+          const storagePath = `products/${safeFileName}`;
+          const isolation = verifyStorageIsolation(storagePath);
+          if (!isolation.isIsolated) {
+            throw new Error(isolation.reason || 'Storage path violates isolation policy');
+          }
+
+          const fileRef = ref(storage, storagePath);
+          const snapshot = await uploadBytesResumable(fileRef, sanitizedBlob, {
+            contentType: mimeType,
+            cacheControl: 'public, max-age=31536000'
+          });
           imageUrl = await getDownloadURL(snapshot.ref);
-          console.log('[Admin] Uploaded to Firebase Storage:', imageUrl);
+          console.log('[Admin] Sanitized image uploaded to isolated Cloud Storage:', imageUrl);
         } catch (storageErr) {
-          console.warn('[Admin] Firebase Storage upload skipped / fallback to canvas:', storageErr);
+          console.warn('[Admin] Cloud Storage upload fallback to client sanitized DataURL:', storageErr);
         }
       }
 
-      // 2. Fallback to client-side optimized canvas Base64
+      // 3. Fallback to client-side sanitized DataURL
       if (!imageUrl) {
-        imageUrl = await optimizeImageFile(file);
+        imageUrl = dataUrl;
       }
 
       if (previewImg) previewImg.src = imageUrl;
       if (hiddenImgInput) hiddenImgInput.value = imageUrl;
-      showToast('Product photo uploaded successfully!', 'success');
+      showToast('Product photo verified, sanitized & uploaded successfully!', 'success');
     } catch (err) {
-      console.error(err);
-      showToast('Error uploading image: ' + err.message, 'error');
+      showSafeErrorToast(err, 'Unable to process image. Please verify file format (JPG, PNG, WebP under 5MB) and try again.');
     }
+  }
+
+  // Handle Image Upload via file picker
+  fileInput?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    await handleImageFileSelection(file);
   });
+
+  // Handle Drag and Drop on dropzone box
+  if (chooseBtn) {
+    ['dragenter', 'dragover'].forEach((eventName) => {
+      chooseBtn.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        chooseBtn.classList.add('admin-dropzone-dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach((eventName) => {
+      chooseBtn.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        chooseBtn.classList.remove('admin-dropzone-dragover');
+      });
+    });
+
+    chooseBtn.addEventListener('drop', async (e) => {
+      const file = e.dataTransfer?.files?.[0];
+      await handleImageFileSelection(file);
+    });
+  }
 
   // Remove Image Button
   removeImgBtn?.addEventListener('click', (e) => {
@@ -545,8 +586,7 @@ function initProductForm() {
       updateKpis();
       renderProductsTable();
     } catch (err) {
-      console.error(err);
-      showToast('Failed to save product: ' + err.message, 'error');
+      showSafeErrorToast(err, 'Unable to save product. Please try again.');
     } finally {
       if (submitBtn) submitBtn.disabled = false;
     }
@@ -687,8 +727,7 @@ async function removeProduct(prodId) {
     renderProductsTable();
     showToast(`Removed "${name}" from products.`, 'info');
   } catch (err) {
-    console.error(err);
-    showToast('Failed to remove product: ' + err.message, 'error');
+    showSafeErrorToast(err, 'Unable to remove product. Please try again.');
   }
 }
 
@@ -1349,19 +1388,9 @@ function initUserDropdown() {
 }
 
 const DEFAULT_ADMIN_EMAIL = 'admin@devshree.in';
-const DEFAULT_ADMIN_PASSWORD = 'devshree@admin123';
 
 function getAuthorizedAdminEmail() {
   return (getStorage('devshree_admin_email', DEFAULT_ADMIN_EMAIL) || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
-}
-
-function getAuthorizedAdminPassword() {
-  return getStorage('devshree_admin_password', DEFAULT_ADMIN_PASSWORD) || DEFAULT_ADMIN_PASSWORD;
-}
-
-function setAuthorizedAdminCredentials(email, password) {
-  if (email) setStorage('devshree_admin_email', email.trim().toLowerCase());
-  if (password) setStorage('devshree_admin_password', password);
 }
 
 function isAdminSessionActive() {
@@ -1387,7 +1416,7 @@ function clearAdminSession() {
 }
 
 /**
- * 9. Admin Security Gate Screen (Strict Specific Credential Enforcement)
+ * 9. Admin Security Gate Screen (Strict Environment & Auth Verification)
  */
 function initAdminGate() {
   const loginForm = document.getElementById('admin-gate-login-form');
@@ -1418,29 +1447,31 @@ function initAdminGate() {
       return;
     }
 
-    const authorizedEmail = getAuthorizedAdminEmail();
-    const authorizedPassword = getAuthorizedAdminPassword();
-
-    // Verify against specific authorized credentials or fallback master credentials
-    const matchesConfigured = (
-      email.toLowerCase() === authorizedEmail && password === authorizedPassword
-    );
-    const matchesDefaultMaster = (
-      (email.toLowerCase() === 'admin@devshree.in' || email.toLowerCase() === 'devshree@gmail.com') &&
-      (password === 'devshree@admin123' || password === 'devshree123' || password === 'admin123')
-    );
-
-    if (matchesConfigured || matchesDefaultMaster) {
-      setAdminSessionActive(email);
-      hideAdminGate();
-      updateAdminProfile({ displayName: 'Store Administrator', email: email });
-      await loadDashboardData();
-      setupRealtimeOrdersListener();
-      showToast('Welcome to Devshree Admin Portal!', 'success');
-      return;
+    // 1. Primary: Verify credentials against secure Serverless API endpoint
+    // (Endpoint validates against ADMIN_PASSWORD from process.env on server - never in client code)
+    try {
+      const apiRes = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (apiRes.ok) {
+        const apiData = await apiRes.json();
+        if (apiData.success && apiData.user?.role === 'admin') {
+          setAdminSessionActive(email);
+          hideAdminGate();
+          updateAdminProfile({ displayName: 'Store Administrator', email: email });
+          await loadDashboardData();
+          setupRealtimeOrdersListener();
+          showToast('Welcome to Devshree Admin Portal!', 'success');
+          return;
+        }
+      }
+    } catch (_) {
+      // Offline fallback: proceed to Firebase Auth
     }
 
-    // Optional Firebase Auth verification if configured
+    // 2. Firebase Auth verification if configured
     try {
       const user = await loginCustomer(email, password, true);
       const isAdmin = await checkIsUserAdmin(user);
@@ -1538,44 +1569,11 @@ async function loadDashboardData() {
 }
 
 /**
- * Helper: Client-Side Canvas Image Optimizer
+ * Helper: Client-Side Canvas Image Optimizer & Sanitizer (Backwards Compatibility Wrapper)
  */
-function optimizeImageFile(file) {
-  return new Promise((resolve, reject) => {
-    if (!file || !file.type.startsWith('image/')) {
-      reject(new Error('Please select an image file'));
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const maxDim = 500;
-        let w = img.width;
-        let h = img.height;
-        if (w > maxDim || h > maxDim) {
-          if (w > h) {
-            h = Math.round((h * maxDim) / w);
-            w = maxDim;
-          } else {
-            w = Math.round((w * maxDim) / h);
-            h = maxDim;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.85));
-      };
-      img.onerror = () => reject(new Error('Image processing error'));
-      img.src = e.target.result;
-    };
-    reader.onerror = () => reject(new Error('File reading error'));
-    reader.readAsDataURL(file);
-  });
+async function optimizeImageFile(file) {
+  const result = await sanitizeAndOptimizeImage(file);
+  return result.dataUrl;
 }
 
 function formatCategoryName(catId) {

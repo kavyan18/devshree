@@ -291,7 +291,7 @@
           <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem;">
             <span style="color:#F59E0B; font-size:1.1rem;">★★★★★</span>
             <strong id="pdp-rating">4.8</strong>
-            <span style="color:var(--color-text-secondary); font-size:0.85rem;" id="pdp-review-count">(24 verified buyer reviews)</span>
+            <span style="color:var(--color-text-secondary); font-size:0.85rem;" id="pdp-review-count">(Customer Feedback)</span>
           </div>
 
           <div style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600; color:#047857; background:#ECFDF5; padding:4px 10px; border-radius:20px;">
@@ -401,25 +401,24 @@
           </table>
         </div>
 
-        <!-- Verified Contractor Reviews Section -->
-        <div style="border-top:1px solid var(--color-border); padding-top:1.5rem;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-            <h3 style="font-size:1.15rem; font-weight:700; color:var(--color-text-primary); margin:0;">
-              Verified Contractor &amp; Buyer Reviews
-            </h3>
-            <span style="font-size:0.85rem; color:var(--color-text-secondary);">4.8 ★ out of 5</span>
+        <!-- Verified Customer Feedback & Reviews Section -->
+        <div style="border-top:1px solid var(--color-border); padding-top:1.75rem; margin-top:1rem;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
+            <div>
+              <h3 style="font-size:1.15rem; font-weight:700; color:var(--color-text-primary); margin:0;">
+                Customer Feedback &amp; Reviews
+              </h3>
+              <p style="font-size:0.82rem; color:var(--color-text-secondary); margin:0.25rem 0 0;">
+                100% genuine experiences from verified contractors and trade buyers.
+              </p>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" id="pdp-write-review-btn" style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.82rem;">
+              <span>⭐</span> Give Your Feedback
+            </button>
           </div>
 
           <div id="pdp-reviews-list" style="display:flex; flex-direction:column; gap:0.75rem;">
-            <div style="background:var(--color-card); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:1rem;">
-              <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                <strong>Bhavesh Solanki (Civil Contractor, Rajkot)</strong>
-                <span style="color:#F59E0B;">★★★★★</span>
-              </div>
-              <p style="font-size:0.85rem; color:var(--color-text-secondary); margin:0;">
-                "Excellent build quality and 100% genuine material. Delivered right on time with GST tax invoice for Input Tax Credit."
-              </p>
-            </div>
+            <!-- Rendered dynamically by feedback.js renderCustomerFeedback() -->
           </div>
         </div>
 
@@ -503,6 +502,7 @@
     import { formatINR, showToast, escapeHTML } from './assets/js/utils.js';
     import { addToCart, getCartCount, getCartTotals } from './assets/js/cart.js';
     import { fetchProducts } from './assets/js/products.js';
+    import { renderCustomerFeedback, openFeedbackModal, initFeedbackSystem } from './assets/js/feedback.js';
 
     let currentProduct = null;
     let selectedQuantity = 1;
@@ -625,6 +625,12 @@
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
       };
 
+      // Real Customer Feedback for this product
+      renderCustomerFeedback('pdp-reviews-list', p.id);
+      document.getElementById('pdp-write-review-btn').onclick = () => {
+        openFeedbackModal(p.id, p.name);
+      };
+
       updateCartBadge();
     }
 
@@ -667,6 +673,12 @@
       if (!currentProduct) return;
       addToCart(currentProduct.id, selectedQuantity, currentProduct);
       showToast(`Added ${selectedQuantity} × "${currentProduct.name}" to cart!`, 'success');
+      // Real Customer Feedback for this product
+      renderCustomerFeedback('pdp-reviews-list', p.id);
+      document.getElementById('pdp-write-review-btn').onclick = () => {
+        openFeedbackModal(p.id, p.name);
+      };
+
       updateCartBadge();
     };
 
@@ -686,7 +698,10 @@
       window.location.href = 'index.html';
     });
 
-    window.addEventListener('DOMContentLoaded', loadPDP);
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPDP();
+      initFeedbackSystem();
+    });
   </script>
 </body>
 </html>

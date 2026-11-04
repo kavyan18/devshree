@@ -152,26 +152,25 @@ Right-click on `index.html` in VS Code and select **"Open with Live Server"**.
 
 ---
 
-## 🔑 How to Connect Your Real Firebase Project
+## 🔑 How to Configure Environment Variables & Real Firebase
 
-1. Visit [Firebase Console](https://console.firebase.google.com/) and create a project named **Devshree**.
-2. Under **Build > Authentication**, enable the **Email/Password** and **Google** sign-in providers.
-3. Under **Build > Firestore Database**, click **Create Database** (choose production or test mode in region `asia-south1` or default).
-4. Under **Project Settings > General**, add a **Web App (`</>`)** and copy your `firebaseConfig` keys.
-5. Open `assets/js/firebase-config.js` in VS Code and paste your credentials into `firebaseConfig`:
-   ```javascript
-   export const firebaseConfig = {
-     apiKey: "YOUR_ACTUAL_API_KEY",
-     authDomain: "devshree-your-id.firebaseapp.com",
-     projectId: "devshree-your-id",
-     storageBucket: "devshree-your-id.appspot.com",
-     messagingSenderId: "1234567890",
-     appId: "1:1234567890:web:abcdef123456"
-   };
+1. Copy `.env.example` to `.env`:
+   ```powershell
+   Copy-Item .env.example .env
    ```
-6. Deploy Firestore security rules using Firebase CLI:
+2. In your `.env` (or in Vercel Project Settings > Environment Variables), configure your production keys:
+   ```env
+   # Admin portal password for /api/auth/login
+   ADMIN_PASSWORD=your_secure_admin_password_here
+
+   # Firebase Web Configuration
+   FIREBASE_API_KEY=your_firebase_api_key_here
+   FIREBASE_PROJECT_ID=your_firebase_project_id
+   FIREBASE_APP_ID=your_firebase_app_id
+   ```
+3. Deploy Firestore and Storage security rules using Firebase CLI:
    ```powershell
    firebase deploy --only firestore:rules,storage:rules
    ```
-   *(Note: Until real keys are pasted, Devshree functions smoothly in offline Demo Mode with complete simulation!)*
+   *(Note: The repository enforces strict `.gitignore` protection so `.env` and private keys are never committed to Git!)*
 

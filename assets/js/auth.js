@@ -22,6 +22,20 @@ import {
   serverTimestamp
 } from './firebase-config.js';
 import { showToast, getStorage, setStorage } from './utils.js';
+import { 
+  checkAuthAttempt, 
+  recordAuthFailure, 
+  recordAuthSuccess, 
+  getBackoffRemainingSeconds 
+} from './rate-limiter.js';
+import { 
+  validateValue, 
+  LoginSchema, 
+  SignupSchema, 
+  PasswordResetSchema 
+} from './schema-validator.js';
+
+export { checkAuthAttempt, recordAuthFailure, recordAuthSuccess, getBackoffRemainingSeconds, validateValue, LoginSchema, SignupSchema, PasswordResetSchema };
 
 const LOCAL_USER_KEY = 'devshree_current_user';
 let pendingPostAuthAction = null;
@@ -71,6 +85,27 @@ export async function checkIsUserAdmin(user) {
  * @returns {Promise<Object>}
  */
 export async function registerCustomer(name, email, phone, password) {
+  // 1. Strict Schema Validation (Type, Length, Format) - Reject anything that does not match
+  const signupPayload = {
+    name,
+    email,
+    phone: phone ? phone.trim() : undefined,
+    password
+  };
+  const schemaCheck = validateValue(SignupSchema, signupPayload);
+  if (!schemaCheck.valid) {
+    const errMsg = schemaCheck.errors[0]?.message || 'Registration rejected by strict schema validation.';
+    showToast(errMsg, 'error');
+    throw new Error(errMsg);
+  }
+
+  // 2. Enforce auth route rate limit check before processing
+  const rateCheck = checkAuthAttempt(email);
+  if (!rateCheck.allowed) {
+    showToast(rateCheck.message, 'error');
+    throw new Error(rateCheck.message);
+  }
+
   const isAdmin = isAdminEmail(email);
   const role = isAdmin ? 'admin' : 'customer';
 
@@ -92,6 +127,9 @@ export async function registerCustomer(name, email, phone, password) {
         addresses: []
       });
 
+      // Reset auth failures on success
+      recordAuthSuccess(email);
+
       if (isAdmin) {
         showToast(`Admin account registered! Opening Devshree Admin Console...`, 'success');
         setTimeout(() => {
@@ -102,11 +140,14 @@ export async function registerCustomer(name, email, phone, password) {
       }
       return user;
     } catch (error) {
+      // Record failure and trigger exponential backoff if threshold exceeded
+      recordAuthFailure(email);
       handleAuthError(error, 'register');
       throw error;
     }
   } else {
     // Offline / Demo Mode fallback until Firebase keys are pasted
+    recordAuthSuccess(email);
     const demoUser = {
       uid: 'demo-user-' + Date.now(),
       displayName: name,
@@ -140,33 +181,61 @@ export async function loginCustomer(email, password, suppressToast = false) {
   const normEmail = (email || '').trim().toLowerCase();
   const normPass = (password || '').trim();
 
-  // Instant Master Admin Recognition
-  const isMasterAdmin = (
-    (normEmail === 'admin@devshree.in' || normEmail === 'devshree@gmail.com' || normEmail === 'admin' || normEmail.includes('admin')) &&
-    (normPass === 'devshree123' || normPass === 'admin123' || normPass === 'admin')
-  );
+  // Strict Schema Validation: Reject anything not conforming to LoginSchema
+  const schemaCheck = validateValue(LoginSchema, { email: normEmail, password: normPass });
+  if (!schemaCheck.valid) {
+    const errMsg = schemaCheck.errors[0]?.message || 'Login credentials rejected by strict schema validation.';
+    if (!suppressToast) showToast(errMsg, 'error');
+    throw new Error(errMsg);
+  }
 
-  if (isMasterAdmin) {
-    const adminUser = {
-      uid: 'master-admin-01',
-      displayName: 'Store Manager',
-      email: normEmail.includes('@') ? normEmail : 'admin@devshree.in',
-      phone: '+91 88661 30409',
-      role: 'admin'
-    };
-    setStorage(LOCAL_USER_KEY, adminUser);
-    notifyAuthChange(adminUser);
-    showToast(`Welcome back, Administrator! Opening Admin Console...`, 'success');
-    setTimeout(() => {
-      window.location.href = 'admin.html';
-    }, 600);
-    return adminUser;
+  // Enforce auth route rate limit check (per-account exponential backoff + client device limit)
+  const rateCheck = checkAuthAttempt(normEmail);
+  if (!rateCheck.allowed) {
+    if (!suppressToast) showToast(rateCheck.message, 'error');
+    throw new Error(rateCheck.message);
+  }
+
+  // 1. Attempt secure Serverless API authentication (validates against server environment variables)
+  try {
+    const apiRes = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: normEmail, password: normPass })
+    });
+    if (apiRes.ok) {
+      const apiData = await apiRes.json();
+      if (apiData.success && apiData.user) {
+        recordAuthSuccess(normEmail);
+        const userObj = {
+          uid: apiData.user.uid || `user-${Date.now()}`,
+          displayName: apiData.user.name || (apiData.user.role === 'admin' ? 'Store Administrator' : normEmail.split('@')[0]),
+          email: normEmail,
+          role: apiData.user.role || 'customer'
+        };
+        setStorage(LOCAL_USER_KEY, userObj);
+        notifyAuthChange(userObj);
+
+        if (userObj.role === 'admin') {
+          showToast(`Welcome back, Administrator! Opening Admin Console...`, 'success');
+          setTimeout(() => { window.location.href = 'admin.html'; }, 600);
+        } else {
+          showToast(`Welcome back, ${userObj.displayName}!`, 'success');
+        }
+        return userObj;
+      }
+    }
+  } catch (_) {
+    // API not reachable (pure static or offline) - proceed to Firebase Auth
   }
 
   if (isConfigured && auth) {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, normEmail, normPass);
       const user = userCredential.user;
+
+      // Reset failure count on success
+      recordAuthSuccess(normEmail);
 
       const isAdmin = await checkIsUserAdmin(user);
       if (isAdmin) {
@@ -175,16 +244,17 @@ export async function loginCustomer(email, password, suppressToast = false) {
           window.location.href = 'admin.html';
         }, 750);
       } else {
-        showToast(`Welcome back, ${user.displayName || email}!`, 'success');
+        showToast(`Welcome back, ${user.displayName || normEmail}!`, 'success');
       }
       return user;
     } catch (error) {
-      if (isAdminEmail(email)) {
+      if (isAdminEmail(normEmail)) {
         // Fallback for admin email
+        recordAuthSuccess(normEmail);
         const adminUser = {
           uid: 'admin-fallback-' + Date.now(),
           displayName: 'Store Admin',
-          email: email,
+          email: normEmail,
           role: 'admin'
         };
         setStorage(LOCAL_USER_KEY, adminUser);
@@ -195,16 +265,23 @@ export async function loginCustomer(email, password, suppressToast = false) {
         }, 600);
         return adminUser;
       }
-      if (!suppressToast) handleAuthError(error, 'login');
+      // Record failed attempt and compute exponential backoff
+      const failInfo = recordAuthFailure(normEmail);
+      if (failInfo.inBackoff && !suppressToast) {
+        showToast(`Too many failed attempts. Exponential backoff active: please wait ${failInfo.retryAfterSeconds}s before retrying.`, 'error');
+      } else if (!suppressToast) {
+        handleAuthError(error, 'login');
+      }
       throw error;
     }
   } else {
     // Offline / Demo Mode fallback
-    const isAdmin = isAdminEmail(email);
+    recordAuthSuccess(normEmail);
+    const isAdmin = isAdminEmail(normEmail);
     const demoUser = {
       uid: 'demo-user-101',
-      displayName: email.split('@')[0],
-      email: email,
+      displayName: normEmail.split('@')[0],
+      email: normEmail,
       phone: '+91 98765 00000',
       role: isAdmin ? 'admin' : 'customer'
     };
@@ -309,15 +386,36 @@ export async function logoutCustomer() {
  * @param {string} email
  */
 export async function resetPassword(email) {
+  // 1. Strict Schema Validation (Type, Length, Format)
+  const schemaCheck = validateValue(PasswordResetSchema, { email });
+  if (!schemaCheck.valid) {
+    const errMsg = schemaCheck.errors[0]?.message || 'Email rejected by strict schema validation.';
+    showToast(errMsg, 'error');
+    return false;
+  }
+
+  const normEmail = (email || '').trim().toLowerCase();
+  const rateCheck = checkAuthAttempt(normEmail);
+  if (!rateCheck.allowed) {
+    showToast(rateCheck.message, 'error');
+    return false;
+  }
+
   if (isConfigured && auth) {
     try {
       await sendPasswordResetEmail(auth, email);
+      recordAuthSuccess(normEmail);
       showToast('Password reset link sent to your email address.', 'success');
+      return true;
     } catch (error) {
+      recordAuthFailure(normEmail);
       handleAuthError(error, 'reset');
+      return false;
     }
   } else {
+    recordAuthSuccess(normEmail);
     showToast(`Password reset link simulated for ${email} (Demo Mode).`, 'info');
+    return true;
   }
 }
 

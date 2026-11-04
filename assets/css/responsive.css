@@ -391,12 +391,17 @@
 
   .checkout-grid-layout {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
   .checkout-assurance-banner {
-    grid-template-columns: 1fr;
-    gap: 0.65rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .assurance-text span {
+    font-size: 0.62rem;
   }
 
   .delivery-address-text,
@@ -549,3 +554,858 @@
   }
 }
 
+
+
+/* ==========================================================================
+   DEVSHREE — REFINED MOBILE OPTIMIZATIONS (Smartphones & Touch Devices)
+   Addresses mobile layout, header actions, checkout form, invoice cards & touch hover
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Announcement Bar Single-Line Centered */
+  .announcement-bar {
+    padding: 0.35rem 0.5rem !important;
+    font-size: 0.72rem !important;
+  }
+  .announcement-bar .container {
+    justify-content: center !important;
+    padding: 0 0.75rem !important;
+  }
+  .announcement-left {
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 0.35rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .announcement-left span:nth-child(2),
+  .announcement-left span:nth-child(3) {
+    display: none !important;
+  }
+  .announcement-right {
+    display: none !important;
+  }
+
+  /* Header & Action Icons (Guarantees Cart Button Fits Without Off-Screen Truncation) */
+  .site-header {
+    --header-height: 64px !important;
+  }
+  .site-header .container {
+    padding-left: 0.85rem !important;
+    padding-right: 0.85rem !important;
+  }
+  .header-main {
+    gap: 0.5rem !important;
+  }
+  .brand-logo {
+    gap: 0.5rem !important;
+    flex-shrink: 0 !important;
+  }
+  .brand-logo-img {
+    height: 38px !important;
+    max-width: 120px !important;
+  }
+  .brand-logo-text .logo-title {
+    font-size: 1.1rem !important;
+  }
+  .brand-logo-text .logo-sub {
+    font-size: 0.55rem !important;
+    letter-spacing: 0.08em !important;
+  }
+  .header-actions {
+    gap: 0.35rem !important;
+    flex-shrink: 0 !important;
+  }
+  .header-icon-btn {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+  }
+  .header-icon-btn svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+  .header-icon-btn .badge-count {
+    top: 2px !important;
+    right: 2px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    font-size: 0.6rem !important;
+    padding: 0 3px !important;
+  }
+
+  /* Search Bar Clean Mobile Mode */
+  .search-master-form {
+    padding: 0.25rem 0.35rem 0.25rem 0.75rem !important;
+    border-radius: 9999px !important;
+  }
+  .search-cat-dropdown-wrap,
+  .search-input-divider {
+    display: none !important;
+  }
+  .search-master-input {
+    font-size: 0.85rem !important;
+    padding: 0.45rem 0 !important;
+  }
+  .search-lens-icon {
+    margin-right: 0.45rem !important;
+  }
+  .search-master-submit-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+  }
+  .search-master-submit-btn span {
+    display: none !important;
+  }
+
+  /* Hero Section Proportions */
+  .hero-section {
+    padding: 1.5rem 0 2.25rem !important;
+  }
+  .hero-title {
+    font-size: 1.95rem !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 0.85rem !important;
+  }
+  .eyebrow-tag {
+    font-size: 0.68rem !important;
+    letter-spacing: 0.12em !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .hero-desc {
+    font-size: 0.92rem !important;
+    line-height: 1.55 !important;
+    margin-bottom: 1.5rem !important;
+  }
+  .btn-hero {
+    padding: 0.85rem 1.25rem !important;
+    font-size: 0.92rem !important;
+  }
+  .hero-secondary-link {
+    font-size: 0.85rem !important;
+  }
+
+  /* Section Header Rows */
+  .section-header-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.35rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+  .section-title {
+    font-size: 1.55rem !important;
+    line-height: 1.25 !important;
+  }
+  .view-all-link {
+    align-self: flex-start !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Category Circles 2x2 Grid */
+  .category-circles-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.5rem 1rem !important;
+    max-width: 360px !important;
+    margin: 0 auto !important;
+  }
+  .category-circle-thumb {
+    width: 92px !important;
+    height: 92px !important;
+    margin: 0 auto 0.65rem !important;
+  }
+  .category-circle-name {
+    font-size: 0.88rem !important;
+  }
+  .category-circle-count {
+    font-size: 0.72rem !important;
+  }
+
+  /* =========================================================================
+     MULTI-STEP CHECKOUT MODAL MOBILE PERFECTION (Screenshot 2 Fix)
+     ========================================================================= */
+  .checkout-modal-box {
+    padding: 0 !important;
+    width: 95% !important;
+    max-height: 94vh !important;
+    margin: 0.5rem auto !important;
+    border-radius: 14px !important;
+  }
+  .checkout-stepper-header {
+    padding: 0.85rem 3.25rem 0.85rem 1rem !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+  }
+  .checkout-brand-title {
+    gap: 0.6rem !important;
+  }
+  .checkout-brand-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .checkout-modal-heading {
+    font-size: 0.95rem !important;
+  }
+  .checkout-modal-subheading {
+    font-size: 0.68rem !important;
+  }
+  .checkout-steps-tracker {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.35rem !important;
+  }
+  .checkout-step-indicator {
+    font-size: 0.72rem !important;
+    gap: 0.35rem !important;
+  }
+  .checkout-step-indicator .step-num {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 0.7rem !important;
+    flex-shrink: 0 !important;
+  }
+  /* On mobile screens, only show label of active step to avoid horizontal clipping */
+  .checkout-step-indicator .step-label {
+    display: none !important;
+  }
+  .checkout-step-indicator.active .step-label {
+    display: inline-block !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    max-width: 120px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .checkout-step-indicator-line {
+    flex: 1 !important;
+    min-width: 8px !important;
+  }
+  .checkout-modal-body {
+    padding: 1rem 0.85rem !important;
+  }
+
+  /* Single Column Layout for Address Fields (Solves Cramping in Screenshot 2) */
+  .form-row-2 {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+  .phone-input-group {
+    width: 100% !important;
+  }
+  .phone-prefix {
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.85rem !important;
+  }
+  .form-control {
+    font-size: 0.88rem !important;
+    padding: 0.65rem 0.85rem !important;
+  }
+  .checkout-pane-title {
+    font-size: 1.15rem !important;
+  }
+  .checkout-pane-desc {
+    font-size: 0.78rem !important;
+    margin-bottom: 1.15rem !important;
+  }
+  .checkout-actions-bar {
+    flex-direction: column-reverse !important;
+    gap: 0.75rem !important;
+    margin-top: 1.25rem !important;
+    padding-top: 1rem !important;
+  }
+  .checkout-actions-bar button {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* =========================================================================
+     Step 2 Payment & Review Mobile Perfection (Video Fix)
+     ========================================================================= */
+  .checkout-grid-layout {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+  .checkout-main-col {
+    gap: 0.65rem !important;
+  }
+
+  /* Delivery Address Card - Compact on Mobile */
+  .checkout-delivery-card {
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 10px !important;
+  }
+  .delivery-card-header {
+    margin-bottom: 0.25rem !important;
+  }
+  .delivery-icon-box {
+    width: 26px !important;
+    height: 26px !important;
+  }
+  .delivery-icon-box svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  .delivery-badge-label {
+    font-size: 0.65rem !important;
+  }
+  .delivery-recipient-name {
+    font-size: 0.86rem !important;
+  }
+  .delivery-recipient-phone {
+    font-size: 0.76rem !important;
+  }
+  .delivery-edit-btn {
+    padding: 0.25rem 0.55rem !important;
+    font-size: 0.72rem !important;
+    border-radius: 6px !important;
+  }
+  .delivery-address-text {
+    margin-left: 0 !important;
+    margin-top: 0.35rem !important;
+    font-size: 0.78rem !important;
+    line-height: 1.4 !important;
+  }
+  .delivery-gstin-pill {
+    margin-left: 0 !important;
+    margin-top: 0.35rem !important;
+    font-size: 0.68rem !important;
+    padding: 0.15rem 0.5rem !important;
+  }
+
+  /* Payment Selection Header & Options */
+  .payment-section-header {
+    margin-top: 0.2rem !important;
+    margin-bottom: 0.45rem !important;
+  }
+  .payment-section-title {
+    font-size: 0.88rem !important;
+  }
+  .payment-security-note {
+    font-size: 0.68rem !important;
+  }
+  .payment-options-stack {
+    gap: 0.55rem !important;
+  }
+  .payment-option-card {
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 10px !important;
+  }
+  .payment-card-left {
+    gap: 0.65rem !important;
+  }
+  .custom-radio-indicator {
+    width: 18px !important;
+    height: 18px !important;
+    margin-top: 2px !important;
+  }
+  .radio-dot {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  .payment-method-icon-wrap {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 8px !important;
+  }
+  .payment-method-icon-wrap svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  .payment-title-row {
+    margin-bottom: 0.2rem !important;
+    gap: 0.35rem !important;
+  }
+  .payment-option-title {
+    font-size: 0.86rem !important;
+  }
+  .payment-badge-recommended,
+  .payment-badge-neutral {
+    font-size: 0.62rem !important;
+    padding: 0.1rem 0.45rem !important;
+  }
+  .payment-option-desc {
+    font-size: 0.74rem !important;
+    line-height: 1.35 !important;
+  }
+  .payment-methods-pills {
+    margin-top: 0.35rem !important;
+    gap: 0.25rem !important;
+  }
+  .pay-pill {
+    font-size: 0.64rem !important;
+    padding: 0.1rem 0.35rem !important;
+  }
+
+  /* Buyer Assurance Strip - Compact 3-Column on Mobile (Eliminates 120px wasted vertical scroll) */
+  .checkout-assurance-banner {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.35rem !important;
+    padding: 0.55rem 0.65rem !important;
+    margin-top: 0.35rem !important;
+    border-radius: 8px !important;
+    background-color: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+  }
+  .assurance-item {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 0.2rem !important;
+  }
+  .assurance-icon svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+  .assurance-text strong {
+    font-size: 0.66rem !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+  }
+  .assurance-text span {
+    display: none !important;
+  }
+
+  /* Order Summary Box - Integrated Sub-card on Mobile */
+  .checkout-summary-box {
+    padding: 0.85rem 0.95rem !important;
+    border-radius: 12px !important;
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: none !important;
+  }
+  .summary-box-header {
+    margin-bottom: 0.55rem !important;
+    padding-bottom: 0.45rem !important;
+  }
+  .summary-box-title {
+    font-size: 0.92rem !important;
+  }
+  .summary-items-count {
+    font-size: 0.7rem !important;
+    padding: 0.1rem 0.45rem !important;
+  }
+  .checkout-items-list {
+    max-height: 135px !important;
+    gap: 0.45rem !important;
+    margin-bottom: 0.55rem !important;
+  }
+  .checkout-item-row {
+    gap: 0.55rem !important;
+    padding-bottom: 0.45rem !important;
+  }
+  .checkout-item-thumb-box {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .checkout-item-thumb {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 6px !important;
+  }
+  .checkout-item-qty-badge {
+    width: 15px !important;
+    height: 15px !important;
+    font-size: 0.6rem !important;
+    top: -4px !important;
+    right: -4px !important;
+  }
+  .checkout-item-title {
+    font-size: 0.78rem !important;
+  }
+  .checkout-item-brand {
+    font-size: 0.66rem !important;
+  }
+  .checkout-item-total {
+    font-size: 0.82rem !important;
+  }
+  .checkout-price-divider {
+    margin: 0.55rem 0 !important;
+  }
+  .checkout-price-table {
+    gap: 0.35rem !important;
+  }
+  .checkout-price-line {
+    font-size: 0.78rem !important;
+  }
+  .grand-total-label {
+    font-size: 0.92rem !important;
+  }
+  .grand-total-tax-note {
+    font-size: 0.62rem !important;
+  }
+  .grand-total-amount {
+    font-size: 1.15rem !important;
+  }
+  .checkout-cta-stack {
+    margin-top: 0.75rem !important;
+    gap: 0.45rem !important;
+  }
+  .btn-checkout-action {
+    padding: 0.82rem 1rem !important;
+    font-size: 0.9rem !important;
+    border-radius: 10px !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+  }
+  .btn-checkout-back {
+    padding: 0.6rem 0.85rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+  }
+  .checkout-security-footer {
+    margin-top: 0.5rem !important;
+    font-size: 0.68rem !important;
+  }
+
+  /* Step 3 Order Confirmation Mobile Perfection (Screenshot Fix) */
+  .checkout-confirmation-pane {
+    padding: 0.5rem 0.15rem 1rem !important;
+  }
+  .conf-hero-wrap {
+    margin-bottom: 0.85rem !important;
+  }
+  .conf-success-icon {
+    width: 48px !important;
+    height: 48px !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .conf-success-icon svg {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .conf-title {
+    font-size: 1.25rem !important;
+    line-height: 1.25 !important;
+  }
+  .conf-subtitle {
+    font-size: 0.8rem !important;
+    line-height: 1.4 !important;
+  }
+  .conf-receipt-card {
+    padding: 0.85rem 0.9rem !important;
+    margin: 0.85rem 0 !important;
+    border-radius: 12px !important;
+  }
+  .conf-inv-number {
+    font-size: 0.88rem !important;
+  }
+  .conf-total-value {
+    font-size: 1.1rem !important;
+  }
+  .conf-receipt-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+  .conf-whatsapp-card {
+    padding: 0.95rem 0.9rem !important;
+    margin: 0.85rem 0 !important;
+    border-radius: 12px !important;
+  }
+  .conf-wa-icon-bubble {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .conf-wa-icon-bubble svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  .conf-wa-title {
+    font-size: 0.92rem !important;
+  }
+  .conf-wa-desc {
+    font-size: 0.76rem !important;
+    line-height: 1.35 !important;
+  }
+  .conf-btn-wa-primary,
+  .conf-btn-wa-secondary,
+  .conf-btn-primary,
+  .conf-btn-secondary,
+  .conf-btn-ghost {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    word-break: normal !important;
+  }
+  .conf-btn-wa-primary {
+    padding: 0.72rem 0.85rem !important;
+    font-size: 0.86rem !important;
+  }
+  .conf-btn-wa-secondary {
+    padding: 0.65rem 0.85rem !important;
+    font-size: 0.82rem !important;
+  }
+  .conf-btn-primary {
+    padding: 0.8rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+  .conf-btn-secondary {
+    padding: 0.72rem 1rem !important;
+    font-size: 0.86rem !important;
+  }
+
+  /* =========================================================================
+     INVOICES & MY ORDERS MODAL MOBILE PERFECTION (Screenshot 1 Fix)
+     ========================================================================= */
+  .invoices-modal-box {
+    padding: 1.25rem 0.85rem !important;
+    width: 95% !important;
+    max-height: 92vh !important;
+    border-radius: 14px !important;
+  }
+  /* Perfect circular avatar (Fixes egg/oval distortion) */
+  .user-profile-bar {
+    gap: 0.85rem !important;
+    padding-bottom: 1.15rem !important;
+  }
+  .user-avatar-circle {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    font-size: 1.25rem !important;
+  }
+  .user-info-text {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    flex: 1 !important;
+  }
+  .user-info-text .user-name {
+    font-size: 1.05rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .user-info-text .user-email {
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Section Title Bar (Stops collision & awkward wrapping) */
+  .invoices-section-title-bar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.25rem !important;
+    margin: 1.15rem 0 0.85rem !important;
+  }
+  .invoices-section-title-bar h4 {
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    color: var(--color-navy) !important;
+  }
+  .invoices-section-title-bar span {
+    font-size: 0.72rem !important;
+    color: var(--color-text-secondary) !important;
+  }
+
+  /* Order Invoice Card Layout */
+  .order-invoice-card {
+    padding: 1rem 0.85rem !important;
+    border-radius: 12px !important;
+  }
+  .order-invoice-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+    margin-bottom: 0.85rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+  .order-invoice-id-block {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
+    flex-wrap: nowrap !important;
+  }
+  .order-invoice-tag {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    padding: 0.25rem 0.55rem !important;
+  }
+  .order-invoice-number {
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    letter-spacing: 0.3px !important;
+  }
+  .order-invoice-date {
+    font-size: 0.72rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  .order-status-pill {
+    font-size: 0.68rem !important;
+    padding: 0.25rem 0.65rem !important;
+    align-self: flex-start !important;
+  }
+
+  /* Product Items in Order Card */
+  .order-invoice-card-items {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    margin-bottom: 0.85rem !important;
+    width: 100% !important;
+  }
+  .order-item-chip {
+    width: 100% !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    padding: 0.6rem 0.65rem !important;
+    gap: 0.5rem !important;
+    box-sizing: border-box !important;
+  }
+  .order-item-qty {
+    flex-shrink: 0 !important;
+    font-size: 0.7rem !important;
+    margin-top: 2px !important;
+  }
+  .order-item-name {
+    flex: 1 !important;
+    font-size: 0.78rem !important;
+    line-height: 1.35 !important;
+    word-break: normal !important;
+  }
+  .order-item-price {
+    flex-shrink: 0 !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap !important;
+    margin-left: 0.4rem !important;
+  }
+
+  /* Order Footer & Action Buttons (Stacked with 100% width, no cutoff) */
+  .order-invoice-card-footer {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+    padding-top: 0.75rem !important;
+  }
+  .order-total-block {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+  .order-total-label {
+    font-size: 0.7rem !important;
+  }
+  .order-total-value {
+    font-size: 1.15rem !important;
+  }
+  .order-card-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+  .order-card-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Razorpay & Payment Gateway Modal */
+  .razorpay-box {
+    width: 95% !important;
+    margin: 0.5rem auto !important;
+    padding: 1.25rem 1rem !important;
+    border-radius: 14px !important;
+  }
+  .rzp-qr-frame {
+    padding: 0.75rem !important;
+  }
+  .rzp-qr-frame img {
+    max-width: 180px !important;
+    height: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Smallest Smartphone Displays (max-width: 480px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .site-header .container {
+    padding-left: 0.65rem !important;
+    padding-right: 0.65rem !important;
+  }
+  .brand-logo-img {
+    height: 34px !important;
+    max-width: 105px !important;
+  }
+  .header-actions {
+    gap: 0.22rem !important;
+  }
+  .header-icon-btn {
+    width: 34px !important;
+    height: 34px !important;
+  }
+  .header-icon-btn svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .category-circles-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.25rem 0.75rem !important;
+    max-width: 320px !important;
+    margin: 0 auto !important;
+  }
+  .category-circle-thumb {
+    width: 88px !important;
+    height: 88px !important;
+    margin: 0 auto 0.5rem !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Touchscreen Hover Immunity: Prevents sticky :hover states on tap
+   -------------------------------------------------------------------------- */
+@media (hover: none) {
+  .category-circle-item:hover .category-circle-thumb {
+    transform: none !important;
+    border-color: var(--color-border) !important;
+    box-shadow: 0 4px 16px rgba(28, 37, 54, 0.06) !important;
+  }
+  .category-circle-item:hover .category-circle-order-badge {
+    background: rgba(28, 37, 54, 0.75) !important;
+    transform: none !important;
+  }
+  .category-circle-item:hover .category-circle-thumb img {
+    transform: none !important;
+  }
+  .category-circle-item:hover .category-circle-name {
+    color: var(--color-text-primary) !important;
+  }
+  .category-circle-item:active .category-circle-thumb {
+    transform: scale(0.96) !important;
+    border-color: var(--color-accent) !important;
+  }
+
+  .btn-order-track:hover {
+    transform: none !important;
+  }
+}

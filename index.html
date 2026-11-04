@@ -594,19 +594,26 @@
   </section>
 
   <!-- =========================================================================
-       10. Customer Reviews ("What Our Customers Say")
+       10. Verified Customer Feedback & Reviews ("Give Your Feedback")
        ========================================================================= -->
-  <section class="reviews-section" aria-label="Customer Reviews">
+  <section class="reviews-section" id="customer-feedback-section" aria-label="Customer Feedback and Reviews">
     <div class="container">
-      <div class="section-header-row">
+      <div class="section-header-row" style="align-items:flex-end; flex-wrap:wrap; gap:1rem;">
         <div>
-          <span class="eyebrow-tag">WHAT OUR CUSTOMERS SAY</span>
-          <h2 class="section-title">Loved in Real Homes</h2>
+          <span class="eyebrow-tag">GENUINE CUSTOMER VOICES</span>
+          <h2 class="section-title">Verified Customer Feedback</h2>
+          <p style="color:var(--color-text-secondary); font-size:0.9rem; margin-top:0.35rem; margin-bottom:0;">
+            100% authentic experiences from verified contractors, electricians, and homeowners.
+          </p>
         </div>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-give-feedback" style="display:inline-flex; align-items:center; gap:0.45rem; padding:0.65rem 1.25rem;">
+          <span style="font-size:1.1rem; line-height:1;">⭐</span>
+          <span>Give Your Feedback</span>
+        </button>
       </div>
 
       <div class="reviews-grid" id="reviews-grid">
-        <!-- Rendered dynamically by home.js renderReviews() -->
+        <!-- Rendered dynamically by feedback.js renderCustomerFeedback() -->
       </div>
     </div>
   </section>

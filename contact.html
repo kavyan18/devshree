@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/" />
   <title>Contact Us &amp; Contractor Helpline — DEVSHREE Hardware</title>
   <meta name="description" content="Get in touch with Devshree Hardware & Trade Supplies. Store location in Rajkot, WhatsApp contractor trade desk, phone helpline, and support inquiry." />
   <link rel="icon" type="image/png" href="assets/images/logo.png" />
@@ -201,20 +202,39 @@
     </div>
   </main>
 
-  <script>
-    function handleContactSubmit(e) {
+  <script type="module">
+    import { validateValue, ContactInquirySchema } from './assets/js/schema-validator.js';
+
+    window.handleContactSubmit = function(e) {
       e.preventDefault();
       const name = document.getElementById('contact-name').value.trim();
       const phone = document.getElementById('contact-phone').value.trim();
-      const email = document.getElementById('contact-email').value.trim() || 'N/A';
+      const emailRaw = document.getElementById('contact-email').value.trim();
+      const email = emailRaw ? emailRaw : undefined;
       const category = document.getElementById('contact-category').value;
       const message = document.getElementById('contact-message').value.trim();
+
+      // Strict Schema Validation: Type, Length, Format
+      const payload = {
+        name,
+        phone,
+        email,
+        category: category || undefined,
+        message
+      };
+
+      const validation = validateValue(ContactInquirySchema, payload);
+      if (!validation.valid) {
+        const firstErr = validation.errors[0];
+        alert(`Validation Error: ${firstErr.message}`);
+        return; // REJECT: do not send
+      }
 
       const text = `*DEVSHREE WEBSITE INQUIRY*\n` +
         `━━━━━━━━━━━━━━━━\n` +
         `👤 *Name:* ${name}\n` +
         `📞 *Contact:* ${phone}\n` +
-        `✉️ *Email:* ${email}\n` +
+        `✉️ *Email:* ${email || 'N/A'}\n` +
         `🏷️ *Topic:* ${category}\n\n` +
         `📝 *Requirement:*\n${message}\n` +
         `━━━━━━━━━━━━━━━━\n` +
@@ -225,7 +245,7 @@
 
       document.getElementById('contact-success-msg').style.display = 'block';
       document.getElementById('contact-inquiry-form').reset();
-    }
+    };
   </script>
 
   <!-- Footer -->

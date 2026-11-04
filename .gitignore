@@ -1,27 +1,54 @@
-# Firebase cache & debug logs
+# ===============================================
+# DEVSHREE SECURE .GITIGNORE
+# Prevents any sensitive keys, tokens, environment
+# files, or internal artifacts from reaching Git.
+# ===============================================
+
+# 1. Environment Variables & Secrets (CRITICAL)
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.cert
+*.crt
+serviceAccount*.json
+firebase-adminsdk*.json
+
+# 2. Firebase cache & debug logs
 .firebase/
 firebase-debug.log*
 firestore-debug.log*
+ui-debug.log*
 
-# Old pre-redesign backup folder
+# 3. Old pre-redesign backup folder
 backup_pre_redesign/
 
-# Operating System files
+# 4. Operating System files
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# IDE & Editor files
+# 5. IDE & Editor files
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Vercel deployment cache
+# 6. Vercel deployment cache
 .vercel/
 
-# Dependencies (if added later)
+# 7. Dependencies & NPM logs
 node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Export zip & staging folder
+# 8. Export zip archives & staging mirrors
 devshree-website-github.zip
+devshree_live_store.zip
 github_ready_folder/
+devshree_live_store/

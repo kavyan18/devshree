@@ -705,6 +705,14 @@ body.admin-body {
   border-color: var(--admin-terracotta);
 }
 
+.admin-dropzone-box.admin-dropzone-dragover {
+  background-color: #EFE4DC;
+  border-color: var(--admin-terracotta);
+  border-style: solid;
+  box-shadow: 0 0 0 3px rgba(186, 73, 50, 0.15);
+  transform: scale(1.01);
+}
+
 .admin-cloud-icon {
   width: 40px;
   height: 40px;

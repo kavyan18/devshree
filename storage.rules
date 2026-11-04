@@ -14,22 +14,37 @@ service firebase.storage {
       );
     }
 
-    // Product images & media: Public read, admin write only
-    match /products/{allPaths=**} {
-      allow read: if true;
-      allow write: if isAdmin();
+    // Strict image validation: size <= 5MB, strict MIME type, no SVG/executable code
+    function isValidImage() {
+      return request.resource.size > 0 &&
+             request.resource.size <= 5 * 1024 * 1024 &&
+             request.resource.contentType.matches('image/(jpeg|png|webp)') &&
+             !request.resource.contentType.matches('image/svg.*');
     }
 
-    // Category banners & assets: Public read, admin write only
-    match /categories/{allPaths=**} {
+    // Product images: Public read, admin write only with strict validation
+    match /products/{fileName} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin() &&
+                      isValidImage() &&
+                      fileName.matches('^[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|webp)$');
+    }
+
+    // Category banners & assets: Public read, admin write only with strict validation
+    match /categories/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() &&
+                      isValidImage() &&
+                      fileName.matches('^[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|webp)$');
     }
 
     // Customer profile avatars / verification: Owned by authenticated user
-    match /users/{userId}/{allPaths=**} {
+    match /users/{userId}/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isAuthenticated() &&
+                      request.auth.uid == userId &&
+                      isValidImage() &&
+                      fileName.matches('^[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|webp)$');
     }
   }
 }

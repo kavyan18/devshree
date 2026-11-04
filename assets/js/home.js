@@ -4,8 +4,9 @@
  * mini-cart slide-over drawer, reviews, search, and interactions.
  */
 
-import { MOCK_CATEGORIES, MOCK_PRODUCTS, MOCK_REVIEWS, STORE_INFO } from './mock-data.js';
+import { MOCK_CATEGORIES, MOCK_PRODUCTS, STORE_INFO } from './mock-data.js';
 import { formatINR, calculateDiscount, escapeHTML, showToast, getStorage, setStorage } from './utils.js';
+import { renderCustomerFeedback, initFeedbackSystem } from './feedback.js';
 
 /**
  * Helper to get all available products combining localStorage cache (from admin / firestore) and mock data
@@ -81,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCategories();
   renderProductSections();
   renderReviews();
+  initFeedbackSystem();
   initQuickViewModal();
   initCartDrawer();
   initTrackingAndCheckoutModals();
@@ -1419,36 +1421,10 @@ function renderCartDrawerContent() {
 }
 
 /**
- * Render Customer Reviews
+ * Render Customer Reviews & Feedback
  */
 function renderReviews() {
-  const container = document.getElementById('reviews-grid');
-  if (!container) return;
-
-  container.innerHTML = MOCK_REVIEWS.map(rev => `
-    <article class="review-card">
-      <div class="review-stars">
-        ${renderStars(rev.stars)}
-      </div>
-      <p class="review-text">"${escapeHTML(rev.text)}"</p>
-      <div class="review-author">
-        <div class="review-avatar">${rev.name.charAt(0)}</div>
-        <div>
-          <h4 class="review-name">${escapeHTML(rev.name)}</h4>
-          <span class="review-role">${escapeHTML(rev.role)}</span>
-        </div>
-        ${rev.verified ? `
-          <span class="review-badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-            Verified Buyer
-          </span>
-        ` : ''}
-      </div>
-    </article>
-  `).join('');
+  renderCustomerFeedback('reviews-grid');
 }
 
 /**

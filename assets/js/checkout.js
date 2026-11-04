@@ -14,6 +14,11 @@ import {
   openWhatsAppChat, 
   getStoreOwnerPhone 
 } from './whatsapp-service.js';
+import { 
+  validateValue, 
+  DeliveryAddressSchema, 
+  CreateOrderSchema 
+} from './schema-validator.js';
 
 // Major Indian PIN code directory for instant auto-filling
 const PIN_CODE_MAP = {
@@ -230,27 +235,44 @@ function initStep1Listeners() {
     const gstin = document.getElementById('co-gstin')?.value.trim().toUpperCase();
     const notes = document.getElementById('co-notes')?.value.trim();
 
-    if (!name || !phone || !pincode || !city || !address) {
-      showToast('Please fill in all mandatory delivery address fields.', 'error');
-      return;
+    // Strict Schema Validation: Type, Length, Format
+    const addressPayload = {
+      name: name || undefined,
+      phone: phone || undefined,
+      pincode: pincode || undefined,
+      city: city || undefined,
+      address: address || undefined,
+      landmark: landmark || undefined,
+      gstin: gstin || undefined,
+      notes: notes || undefined
+    };
+
+    const validation = validateValue(DeliveryAddressSchema, addressPayload);
+    if (!validation.valid) {
+      const firstErr = validation.errors[0];
+      showToast(firstErr.message, 'error');
+
+      // Highlight the invalid form input
+      const fieldIdMap = {
+        name: 'co-name',
+        phone: 'co-phone',
+        pincode: 'co-pincode',
+        city: 'co-city',
+        address: 'co-address',
+        landmark: 'co-landmark',
+        gstin: 'co-gstin',
+        notes: 'co-notes'
+      };
+      const fieldEl = document.getElementById(fieldIdMap[firstErr.field]);
+      if (fieldEl) {
+        fieldEl.focus();
+        fieldEl.style.borderColor = 'var(--color-danger, #DC2626)';
+        setTimeout(() => { fieldEl.style.borderColor = ''; }, 3500);
+      }
+      return; // REJECT: do not proceed to step 2
     }
 
-    if (phone.length !== 10 || !/^\d{10}$/.test(phone)) {
-      showToast('Please enter a valid 10-digit Indian mobile number.', 'error');
-      return;
-    }
-
-    if (pincode.length !== 6 || !/^\d{6}$/.test(pincode)) {
-      showToast('Please enter a valid 6-digit postal PIN code.', 'error');
-      return;
-    }
-
-    if (gstin && gstin.length !== 15) {
-      showToast('GSTIN must be exactly 15 alphanumeric characters.', 'error');
-      return;
-    }
-
-    // Save temporary delivery address to session state
+    // Save strictly validated delivery address to session state
     window.__devshree_checkout_address = {
       name,
       phone: `+91 ${phone}`,
@@ -590,7 +612,7 @@ function initStep2Listeners() {
 }
 
 export const RAZORPAY_CONFIG = {
-  keyId: "rzp_test_51devshree001", // Client's Razorpay Key ID (configurable in Store Settings)
+  keyId: (typeof window !== 'undefined' && window.__DEVSHREE_RAZORPAY_KEY_ID) || getStorage('devshree_razorpay_key_id', '') || '',
   merchantName: "Devshree Hardware & Electricals",
   merchantVpa: "8866130409@axisbank",
   currency: "INR",
@@ -611,9 +633,9 @@ export function launchOfficialRazorpayCheckout() {
     return;
   }
 
-  const configuredKey = getStorage('devshree_razorpay_key_id', '').trim();
-  // If no custom key or if it's the unauthenticated dummy key, switch to instant direct gateway
-  if (!configuredKey || configuredKey === 'rzp_test_51devshree001') {
+  const configuredKey = (typeof window !== 'undefined' && window.__DEVSHREE_RAZORPAY_KEY_ID) || getStorage('devshree_razorpay_key_id', '').trim() || RAZORPAY_CONFIG.keyId;
+  // If no live key is configured, switch automatically to Devshree Instant Gateway
+  if (!configuredKey) {
     showToast('Opening Devshree Instant Payment Gateway (UPI / QR / Cards / NetBanking)...', 'info');
     openRazorpaySimulationModal();
     return;
@@ -948,6 +970,35 @@ async function executeOrderPlacement(paymentMethod, paymentStatus) {
   const totals = currentCheckoutTotals || getCartTotals() || { total: 0, subtotal: 0, shipping: 0 };
   const items = currentCheckoutItems || [];
 
+  // Strict Schema Validation before order submission
+  const orderPayload = {
+    items: items.map(i => ({
+      id: String(i.productId || i.id || 'dev-prod'),
+      name: String(i.name || i.productSnapshot?.name || 'Product'),
+      price: Number(i.price || i.productSnapshot?.price || 0),
+      quantity: Number(i.quantity || 1),
+      brand: (i.brand || i.productSnapshot?.brand) ? String(i.brand || i.productSnapshot?.brand) : undefined
+    })),
+    shippingAddress: {
+      name: address.name,
+      phone: (address.phone || '').replace(/^\+91\s*/, '').trim(),
+      pincode: address.pincode,
+      city: address.city,
+      state: address.state,
+      address: address.address,
+      landmark: address.landmark || undefined,
+      gstin: address.gstin || undefined,
+      notes: address.notes || undefined
+    },
+    paymentMethod: paymentMethod
+  };
+
+  const validation = validateValue(CreateOrderSchema, orderPayload);
+  if (!validation.valid) {
+    showToast(validation.errors[0]?.message || 'Order data failed schema validation.', 'error');
+    return;
+  }
+
   const orderData = {
     customerName: address.name || user?.displayName || 'Customer',
     customerEmail: user?.email || '',
@@ -1010,96 +1061,124 @@ function getStep3ConfirmationHtml() {
   const inv = window.__devshree_last_invoice || {};
 
   return `
-    <div class="checkout-step-pane" style="text-align:center;padding:2.5rem 1.5rem;">
-      <div class="order-success-icon-wrap">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2.5">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-          <polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </svg>
-      </div>
-
-      <h2 style="font-size:1.6rem;color:var(--color-navy);font-weight:800;margin-bottom:0.35rem;">
-        Order Placed Successfully!
-      </h2>
-      <p style="color:var(--color-text-secondary);font-size:0.95rem;max-width:520px;margin:0 auto 1.5rem;">
-        Thank you for purchasing with Devshree. Your order has been registered in our database and assigned for dispatch.
-      </p>
-
-      <div class="order-details-card">
-        <div class="order-details-grid">
-          <div>
-            <span style="font-size:0.75rem;color:var(--color-text-muted);text-transform:uppercase;">Invoice Number</span>
-            <div style="font-weight:800;color:var(--color-navy);font-size:1.05rem;">${escapeHTML(inv.invoiceNumber || '')}</div>
-          </div>
-          <div>
-            <span style="font-size:0.75rem;color:var(--color-text-muted);text-transform:uppercase;">Total Amount</span>
-            <div style="font-weight:800;color:var(--color-orange);font-size:1.05rem;">${formatINR(inv.total || 0)}</div>
-          </div>
-          <div>
-            <span style="font-size:0.75rem;color:var(--color-text-muted);text-transform:uppercase;">Payment Status</span>
-            <div style="font-weight:700;color:${inv.paymentStatus === 'Paid' ? '#16A34A' : 'var(--color-navy)'};font-size:0.9rem;">
-              ${escapeHTML(inv.paymentMethod || 'COD')} &bull; <strong>${escapeHTML(inv.paymentStatus || 'Pending')}</strong>
-            </div>
-          </div>
-          <div>
-            <span style="font-size:0.75rem;color:var(--color-text-muted);text-transform:uppercase;">Estimated Delivery</span>
-            <div style="font-weight:700;color:var(--color-success);font-size:0.9rem;">${escapeHTML(inv.estimatedDeliveryDate || 'Within 2-3 Days')}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Customer Receipt & Help Card -->
-      <div style="margin:1.5rem 0;text-align:left;">
-        <div class="checkout-wa-prompt-card" style="border-left:4px solid #10B981;background:#F0FDF4;padding:1.25rem;border-radius:12px;box-shadow:0 2px 8px rgba(16,185,129,0.08);">
-          <div class="checkout-wa-header" style="display:flex;align-items:flex-start;gap:12px;">
-            <div class="checkout-wa-icon" style="background:#DCFCE7;color:#16A34A;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.53c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.38-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.45 1.03 2.62.13.17 1.77 2.71 4.29 3.8.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1 1.02-.15 1.47-.83 1.68-1.16.21-.34.21-.63.15-.76-.07-.13-.25-.2-.5-.33z"/>
-              </svg>
-            </div>
-            <div class="checkout-wa-text" style="flex:1;">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-                <h4 style="color:#15803D;margin:0;font-size:1.05rem;font-weight:700;">Order Confirmation &amp; Updates</h4>
-                <span style="background:#DCFCE7;color:#15803D;font-size:0.75rem;padding:2px 8px;border-radius:12px;font-weight:700;">Dispatched Direct from Rajkot</span>
-              </div>
-              <p style="margin:0;font-size:0.875rem;color:var(--color-text-secondary);line-height:1.45;">
-                An automated order alert has been saved to the store management system for Invoice <strong>${escapeHTML(inv.invoiceNumber || '')}</strong>. You can save a copy of your receipt or contact our support desk below.
-              </p>
-            </div>
-          </div>
-          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1rem;">
-            <button type="button" class="btn-wa-pill" id="co-whatsapp-receipt-btn" style="background:#16A34A;color:#fff;font-size:0.92rem;font-weight:700;padding:0.65rem 1.35rem;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 6px rgba(22,163,74,0.25);">
-              <span>💬 Save Customer WhatsApp Receipt</span>
-            </button>
-            <button type="button" class="btn btn-outline" id="co-help-wa-btn" style="border:1.5px solid #16A34A;color:#15803D;background:#fff;font-size:0.92rem;font-weight:600;padding:0.65rem 1.25rem;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
-              <span>📞 Contact Support (+91 88661 30409)</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div style="display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-top:1.5rem;">
-        <button type="button" class="btn btn-primary" id="co-view-invoice-btn" style="padding:0.75rem 1.5rem;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 6 2 18 2 18 9"></polyline>
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-            <rect x="6" y="14" width="12" height="8"></rect>
+    <div class="checkout-step-pane checkout-confirmation-pane">
+      <!-- 1. Celebratory Success Hero -->
+      <div class="conf-hero-wrap">
+        <div class="conf-success-icon" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
-          View / Print GST Invoice
-        </button>
+        </div>
+        <span class="conf-badge-pill">✓ Order Confirmed</span>
+        <h2 class="conf-title">Thank You for Your Order!</h2>
+        <p class="conf-subtitle">
+          Your order has been registered and is being prepared for direct warehouse dispatch from Rajkot.
+        </p>
+      </div>
 
-        <button type="button" class="btn btn-outline" id="co-track-order-btn" style="padding:0.75rem 1.5rem;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <!-- 2. Order Details / Quick Receipt Card -->
+      <div class="conf-receipt-card">
+        <div class="conf-receipt-header">
+          <div class="conf-inv-block">
+            <span class="conf-label">Invoice Number</span>
+            <div class="conf-inv-value-row">
+              <span class="conf-inv-number" id="conf-inv-text">${escapeHTML(inv.invoiceNumber || 'INV-DEV')}</span>
+              <button type="button" class="conf-copy-btn" id="conf-copy-inv-btn" title="Copy Invoice Number" aria-label="Copy Invoice Number">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span class="conf-copy-text" id="conf-copy-text">Copy</span>
+              </button>
+            </div>
+          </div>
+          <div class="conf-total-block">
+            <span class="conf-label">Total Amount</span>
+            <div class="conf-total-value">${formatINR(inv.total || 0)}</div>
+          </div>
+        </div>
+
+        <div class="conf-receipt-divider"></div>
+
+        <div class="conf-receipt-grid">
+          <div class="conf-info-item">
+            <span class="conf-label">Payment Status</span>
+            <div class="conf-status-pill ${inv.paymentStatus === 'Paid' ? 'status-paid' : 'status-cod'}">
+              <span class="status-dot"></span>
+              <span>${escapeHTML(inv.paymentMethod || 'COD')} &bull; <strong>${escapeHTML(inv.paymentStatus || 'Pending')}</strong></span>
+            </div>
+          </div>
+          <div class="conf-info-item">
+            <span class="conf-label">Estimated Delivery</span>
+            <div class="conf-delivery-val">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+              <span>${escapeHTML(inv.estimatedDeliveryDate || 'Within 2-3 Days')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. WhatsApp Updates & Support Card (Mobile Responsive, Customer First) -->
+      <div class="conf-whatsapp-card">
+        <div class="conf-wa-header">
+          <div class="conf-wa-icon-bubble">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#FFFFFF">
+              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.53c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.38-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.45 1.03 2.62.13.17 1.77 2.71 4.29 3.8.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1 1.02-.15 1.47-.83 1.68-1.16.21-.34.21-.63.15-.76-.07-.13-.25-.2-.5-.33z"/>
+            </svg>
+          </div>
+          <div class="conf-wa-title-area">
+            <h4 class="conf-wa-title">WhatsApp Order Updates</h4>
+            <p class="conf-wa-desc">Get your GST Tax Invoice and live courier dispatch updates on WhatsApp.</p>
+          </div>
+        </div>
+
+        <div class="conf-wa-btn-group">
+          <button type="button" class="conf-btn-wa-primary" id="co-whatsapp-receipt-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.53c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.38-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.45 1.03 2.62.13.17 1.77 2.71 4.29 3.8.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1 1.02-.15 1.47-.83 1.68-1.16.21-.34.21-.63.15-.76-.07-.13-.25-.2-.5-.33z"/>
+            </svg>
+            <span>Send Receipt to WhatsApp</span>
+          </button>
+
+          <button type="button" class="conf-btn-wa-secondary" id="co-help-wa-btn">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>Chat with Support (+91 88661 30409)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. Primary Store Action Buttons (Clear Hierarchy) -->
+      <div class="conf-action-buttons">
+        <button type="button" class="conf-btn-primary" id="co-track-order-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="1" y="3" width="15" height="13"></rect>
             <polygon points="16 8 20 8 23 11 23 16 16 8"></polygon>
             <circle cx="5.5" cy="18.5" r="2.5"></circle>
             <circle cx="18.5" cy="18.5" r="2.5"></circle>
           </svg>
-          Track Order Live
+          <span>Track Order Live</span>
         </button>
 
-        <button type="button" class="btn btn-secondary" id="co-finish-btn" style="padding:0.75rem 1.5rem;">
-          Continue Shopping
+        <button type="button" class="conf-btn-secondary" id="co-view-invoice-btn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>View / Download GST Invoice</span>
+        </button>
+
+        <button type="button" class="conf-btn-ghost" id="co-finish-btn">
+          <span>Continue Shopping &rarr;</span>
         </button>
       </div>
     </div>
@@ -1111,6 +1190,24 @@ function getStep3ConfirmationHtml() {
  */
 function initStep3Listeners() {
   const inv = window.__devshree_last_invoice;
+
+  // Copy invoice number to clipboard
+  const copyBtn = document.getElementById('conf-copy-inv-btn');
+  const copyText = document.getElementById('conf-copy-text');
+  copyBtn?.addEventListener('click', async () => {
+    const invNum = inv?.invoiceNumber || document.getElementById('conf-inv-text')?.textContent || '';
+    if (!invNum) return;
+    try {
+      await navigator.clipboard.writeText(invNum);
+      if (copyText) copyText.textContent = 'Copied!';
+      showToast('Invoice number copied to clipboard!', 'success');
+      setTimeout(() => {
+        if (copyText) copyText.textContent = 'Copy';
+      }, 2000);
+    } catch (_) {
+      showToast('Invoice number: ' + invNum, 'info');
+    }
+  });
 
   // Customer's personal WhatsApp copy / receipt
   document.getElementById('co-whatsapp-receipt-btn')?.addEventListener('click', () => {

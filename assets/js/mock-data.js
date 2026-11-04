@@ -793,32 +793,8 @@ export const MOCK_PRODUCTS = [
   }
 ];
 
-export const MOCK_REVIEWS = [
-  {
-    id: 'rev-01',
-    name: 'Rajesh Sharma',
-    role: 'Licensed Electrical Contractor, Ahmedabad',
-    stars: 5,
-    text: 'Procured Polycab wiring bundles and Schneider MCBs for a 12-unit residential project. The 100% genuine ISI verified materials arrived on schedule with proper GST input invoices. Devshree is our go-to partner.',
-    verified: true
-  },
-  {
-    id: 'rev-02',
-    name: 'Manoj Patel',
-    role: 'Civil Contractor & Homebuilder, Gandhinagar',
-    stars: 5,
-    text: 'Sourcing Astral CPVC and Finolex ball valves in bulk has never been this transparent. Prices are consistently competitive compared to local wholesale yards, and packaging prevents transit dents.',
-    verified: true
-  },
-  {
-    id: 'rev-03',
-    name: 'Anjali Desai',
-    role: 'Independent Interior Designer, Vadodara',
-    stars: 5,
-    text: 'Ordered Asian Paints Apex Ultima along with Dorset brass hardware. The product descriptions on the site gave exact coverage specifications which helped calculate our client requirement accurately.',
-    verified: true
-  }
-];
+// Real Customer Feedback is now managed dynamically via feedback.js & Cloud Firestore
+export const MOCK_REVIEWS = [];
 
 export const STORE_INFO = {
   name: 'Devshree Hardware & Electricals',

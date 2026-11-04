@@ -1,0 +1,21 @@
+{
+  "name": "devshree-hardware-ecommerce",
+  "version": "2.4.0",
+  "description": "Devshree Hardware & Tools B2B/B2C E-Commerce Platform with Smart Rate Limiting",
+  "type": "module",
+  "scripts": {
+    "test": "node test/schema-validator.test.js && node test/rate-limiter.test.js && node test/client-rate-limiter.test.js && node test/error-handler.test.js && node test/file-validator.test.js && node test/feedback.test.js"
+  },
+  "keywords": [
+    "ecommerce",
+    "hardware",
+    "rate-limiting",
+    "exponential-backoff",
+    "security"
+  ],
+  "author": "Devshree Hardware",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "dotenv": "^18.0.9"
+  }
+}
