@@ -233,6 +233,15 @@ async function runTests() {
     };
     assert(validateValue(CreateOrderSchema, validOrder).valid, 'Valid complete order passes schema');
 
+    // Order with Cash on Delivery (COD) full label
+    const codOrder = JSON.parse(JSON.stringify(validOrder));
+    codOrder.paymentMethod = 'Cash on Delivery (COD)';
+    assert(validateValue(CreateOrderSchema, codOrder).valid, 'Order with "Cash on Delivery (COD)" passes schema');
+
+    // Order with short COD
+    codOrder.paymentMethod = 'COD';
+    assert(validateValue(CreateOrderSchema, codOrder).valid, 'Order with "COD" passes schema');
+
     // Order with zero quantity
     const zeroQtyOrder = JSON.parse(JSON.stringify(validOrder));
     zeroQtyOrder.items[0].quantity = 0;
@@ -320,3 +329,4 @@ runTests().catch(err => {
   console.error('Test execution failed:', err);
   process.exit(1);
 });
+

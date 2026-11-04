@@ -970,6 +970,23 @@ async function executeOrderPlacement(paymentMethod, paymentStatus) {
   const totals = currentCheckoutTotals || getCartTotals() || { total: 0, subtotal: 0, shipping: 0 };
   const items = currentCheckoutItems || [];
 
+  // Normalize payment method to canonical schema enum
+  let canonicalPaymentMethod = 'Cash on Delivery (COD)';
+  const rawMethod = String(paymentMethod || '').trim();
+  if (/cod|cash/i.test(rawMethod)) {
+    canonicalPaymentMethod = 'Cash on Delivery (COD)';
+  } else if (/upi|qr/i.test(rawMethod)) {
+    canonicalPaymentMethod = 'Online UPI / QR';
+  } else if (/card/i.test(rawMethod)) {
+    canonicalPaymentMethod = 'Card';
+  } else if (/net|bank/i.test(rawMethod)) {
+    canonicalPaymentMethod = 'Net Banking';
+  } else if (/razorpay/i.test(rawMethod)) {
+    canonicalPaymentMethod = 'Online UPI / QR';
+  } else {
+    canonicalPaymentMethod = rawMethod || 'Cash on Delivery (COD)';
+  }
+
   // Strict Schema Validation before order submission
   const orderPayload = {
     items: items.map(i => ({
@@ -990,7 +1007,7 @@ async function executeOrderPlacement(paymentMethod, paymentStatus) {
       gstin: address.gstin || undefined,
       notes: address.notes || undefined
     },
-    paymentMethod: paymentMethod
+    paymentMethod: canonicalPaymentMethod
   };
 
   const validation = validateValue(CreateOrderSchema, orderPayload);
