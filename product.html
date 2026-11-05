@@ -515,12 +515,12 @@
         return;
       }
 
-      // Try fetching from Firestore catalog, fallback to MOCK_PRODUCTS
+      // Try fetching from Firestore catalog
       let allProducts = [];
       try {
         allProducts = await fetchProducts();
       } catch (e) {
-        allProducts = MOCK_PRODUCTS;
+        allProducts = [];
       }
 
       currentProduct = allProducts.find(p => String(p.id) === String(prodId));

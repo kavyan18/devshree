@@ -65,9 +65,12 @@ export function addToCart(productId, quantity = 1, snapshot = null) {
     } catch (_) {}
   }
 
-  // 2. Fallback to MOCK_PRODUCTS
+  // 2. Fallback to MOCK_PRODUCTS only if not marked deleted
   if (!product && productId) {
-    product = MOCK_PRODUCTS.find(p => String(p.id) === String(productId));
+    const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
+    if (!deletedIds.has(String(productId))) {
+      product = MOCK_PRODUCTS.find(p => String(p.id) === String(productId));
+    }
   }
 
   // 3. Fallback to scraping the product card on the active DOM if present

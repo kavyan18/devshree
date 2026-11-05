@@ -61,6 +61,7 @@ export async function fetchCategories() {
  */
 export async function fetchProducts(options = {}) {
   let products = [];
+  const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
 
   if (isConfigured && db) {
     try {
@@ -73,6 +74,7 @@ export async function fetchProducts(options = {}) {
       const snap = await getDocs(q);
       if (!snap.empty) {
         snap.forEach(d => {
+          if (deletedIds.has(String(d.id))) return;
           const data = d.data();
           let createdAt = data.createdAt;
           if (createdAt && typeof createdAt.toDate === 'function') {
@@ -81,29 +83,27 @@ export async function fetchProducts(options = {}) {
           products.push({ id: d.id, ...data, ...(createdAt ? { createdAt } : {}) });
         });
 
-        // Merge with MOCK_PRODUCTS so base items are always available alongside cloud products
-        const map = new Map();
-        products.forEach(p => map.set(String(p.id), p));
-        MOCK_PRODUCTS.forEach(p => {
-          if (!map.has(String(p.id))) {
-            map.set(String(p.id), p);
-          }
-        });
-        products = Array.from(map.values());
-        setStorage(CACHE_PRODUCTS_KEY, products);
+        // Firestore is the sole source of truth: do NOT re-insert deleted demo products
+        if (!options.categoryId) {
+          setStorage(CACHE_PRODUCTS_KEY, products);
+        }
+      } else {
+        if (!options.categoryId) {
+          setStorage(CACHE_PRODUCTS_KEY, []);
+        }
       }
     } catch (err) {
       console.warn('[Devshree] Error fetching products from Firestore, using fallback:', err);
     }
   }
 
-  // If Firestore returned no products or errored, use cached or mock products
+  // If Firestore returned no products or errored, use cached or mock products (offline only)
   if (!Array.isArray(products) || products.length === 0) {
     const cached = getStorage(CACHE_PRODUCTS_KEY, null);
     if (Array.isArray(cached) && cached.length > 0) {
-      products = [...cached];
-    } else {
-      products = [...MOCK_PRODUCTS];
+      products = cached.filter(p => !deletedIds.has(String(p.id)));
+    } else if (!isConfigured) {
+      products = MOCK_PRODUCTS.filter(p => !deletedIds.has(String(p.id)));
     }
   }
 
@@ -184,6 +184,11 @@ export async function fetchProducts(options = {}) {
  * @returns {Promise<Object|null>}
  */
 export async function getProductById(productId) {
+  const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
+  if (deletedIds.has(String(productId))) {
+    return null;
+  }
+
   if (isConfigured && db) {
     try {
       const docRef = doc(db, 'products', productId);
@@ -191,6 +196,8 @@ export async function getProductById(productId) {
       if (snap.exists()) {
         return { id: snap.id, ...snap.data() };
       }
+      // If Firestore is active and document doesn't exist, it was deleted!
+      return null;
     } catch (err) {
       console.warn('[Devshree] Error reading product by ID from Firestore:', err);
     }
@@ -200,10 +207,13 @@ export async function getProductById(productId) {
   const cached = getStorage(CACHE_PRODUCTS_KEY, []);
   if (Array.isArray(cached) && cached.length > 0) {
     const found = cached.find(p => String(p.id) === String(productId));
-    if (found) return found;
+    if (found && !deletedIds.has(String(found.id))) return found;
   }
 
-  return MOCK_PRODUCTS.find(p => String(p.id) === String(productId)) || null;
+  if (!isConfigured) {
+    return MOCK_PRODUCTS.find(p => String(p.id) === String(productId) && !deletedIds.has(String(p.id))) || null;
+  }
+  return null;
 }
 
 /**

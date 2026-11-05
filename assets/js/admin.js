@@ -745,6 +745,12 @@ async function removeProduct(prodId) {
       }
     }
 
+    const deletedIds = getStorage('devshree_deleted_product_ids', []);
+    if (!deletedIds.includes(prodId)) {
+      deletedIds.push(prodId);
+      setStorage('devshree_deleted_product_ids', deletedIds);
+    }
+
     allProducts = allProducts.filter(p => p.id !== prodId);
     syncProductsCache();
     updateKpis();
@@ -1704,15 +1710,18 @@ async function loadDashboardData() {
       if (o.invoiceNumber) knownOrderInvoices.add(o.invoiceNumber);
     });
 
-    // If Firestore products exist, use them, otherwise combine reference default products with mock data or local cache
+    // If Firestore products exist, use them as sole source of truth
+    const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
     if (products && products.length > 0) {
-      allProducts = products;
+      allProducts = products.filter(p => !deletedIds.has(String(p.id)));
     } else {
       const cached = getStorage(CACHE_PRODUCTS_KEY, null);
       if (cached && Array.isArray(cached) && cached.length > 0) {
-        allProducts = cached;
+        allProducts = cached.filter(p => !deletedIds.has(String(p.id)));
+      } else if (!isConfigured) {
+        allProducts = [...MOCK_PRODUCTS].filter(p => !deletedIds.has(String(p.id)));
       } else {
-        allProducts = [...REFERENCE_DEFAULT_PRODUCTS, ...MOCK_PRODUCTS];
+        allProducts = [];
       }
     }
     syncProductsCache();
@@ -1722,11 +1731,14 @@ async function loadDashboardData() {
     renderOrdersTable();
   } catch (err) {
     console.error('[Admin] Error loading records:', err);
+    const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
     const cached = getStorage(CACHE_PRODUCTS_KEY, null);
     if (cached && Array.isArray(cached) && cached.length > 0) {
-      allProducts = cached;
+      allProducts = cached.filter(p => !deletedIds.has(String(p.id)));
+    } else if (!isConfigured) {
+      allProducts = [...MOCK_PRODUCTS].filter(p => !deletedIds.has(String(p.id)));
     } else {
-      allProducts = [...REFERENCE_DEFAULT_PRODUCTS, ...MOCK_PRODUCTS];
+      allProducts = [];
     }
     syncProductsCache();
     updateKpis();

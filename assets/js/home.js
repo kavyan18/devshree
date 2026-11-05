@@ -55,21 +55,14 @@ import { setupOrderNotificationsListener } from './order-notifications.js';
  * Helper to get all available products combining localStorage cache (from admin / firestore) and mock data
  */
 function getAllAvailableProducts() {
+  const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
   try {
     const cached = getStorage('devshree_cached_products', null);
-    if (Array.isArray(cached) && cached.length > 0) {
-      const map = new Map();
-      // Put cached (newly created/updated) products first
-      cached.forEach(p => map.set(String(p.id), p));
-      MOCK_PRODUCTS.forEach(p => {
-        if (!map.has(String(p.id))) {
-          map.set(String(p.id), p);
-        }
-      });
-      return Array.from(map.values());
+    if (Array.isArray(cached)) {
+      return cached.filter(p => !deletedIds.has(String(p.id)));
     }
   } catch (_) {}
-  return [...MOCK_PRODUCTS];
+  return MOCK_PRODUCTS.filter(p => !deletedIds.has(String(p.id)));
 }
 
 /**
