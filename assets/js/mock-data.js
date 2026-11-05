@@ -802,8 +802,8 @@ export const STORE_INFO = {
   tagline: 'Everything You Need to Build Better',
   phone: '+91 88661 30409',
   phoneAlt: '+91 88661 30409',
-  email: 'support@devshree.in',
-  salesEmail: 'sales@devshree.in',
+  email: '',
+  salesEmail: '',
   address: 'B-13, Jainam Apartment, Opposite Nageshwar Derasar, Jamnagar Road, Rajkot - 360006, Gujarat',
   gstin: '24BRVPB8736M1Z3',
   hours: {

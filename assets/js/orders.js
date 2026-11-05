@@ -538,7 +538,7 @@ export function openInvoiceViewer(invoice) {
           <div class="flipkart-invoice-logo-row">
             <img src="assets/images/devshree-bill-logo.png" alt="Devshree - The Hardware Gallery" class="flipkart-invoice-logo" />
             <span class="flipkart-invoice-contact">
-              Contact us: 1800 420 1111 || support@devshree.in
+              Contact us: +91 88661 30409
             </span>
           </div>
           <div class="flipkart-invoice-seller-line">
