@@ -1542,13 +1542,13 @@ function initUserDropdown() {
 
   document.getElementById('admin-quick-sync-btn')?.addEventListener('click', async () => {
     try {
-      showToast('Syncing database...', 'info');
+      showToast('Syncing database with Cloud Firestore...', 'info');
       await seedFirestoreCatalog();
-      showToast('Catalog synced with Cloud Firestore!', 'success');
+      showToast('Catalog successfully synced with Cloud Firestore!', 'success');
       await loadDashboardData();
     } catch (e) {
-      console.warn(e);
-      showToast('Sync completed with local catalog.', 'success');
+      console.warn('[Admin] Quick sync error:', e);
+      showToast(`Cloud sync error: ${e.message || 'Please check connection'}`, 'warning');
     }
   });
 }

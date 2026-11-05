@@ -229,8 +229,8 @@ export async function isCatalogSeeded() {
  */
 export async function seedFirestoreCatalog() {
   if (!isConfigured || !db) {
-    showToast('Catalog database service is initializing. Running in offline demo mode.', 'info');
-    throw new Error('Database service not initialized');
+    showToast('Database connection is initializing or offline. Please refresh the page.', 'warning');
+    throw new Error('Database connection not established');
   }
 
   showToast('Starting catalog sync to Cloud Firestore...', 'info');
