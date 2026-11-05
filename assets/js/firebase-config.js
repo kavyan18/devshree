@@ -63,13 +63,13 @@ try {
 } catch (_) {}
 
 export const firebaseConfig = {
-  apiKey: runtimeConfig.apiKey || envConfig.FIREBASE_API_KEY || storedConfig.apiKey || "YOUR_FIREBASE_API_KEY",
+  apiKey: runtimeConfig.apiKey || envConfig.FIREBASE_API_KEY || storedConfig.apiKey || "AIzaSyAsMbGnNSh5yCiJnS9XDd16o34C6oqdhpc",
   authDomain: runtimeConfig.authDomain || envConfig.FIREBASE_AUTH_DOMAIN || storedConfig.authDomain || "devshree-2dfae.firebaseapp.com",
   projectId: runtimeConfig.projectId || envConfig.FIREBASE_PROJECT_ID || storedConfig.projectId || "devshree-2dfae",
   storageBucket: runtimeConfig.storageBucket || envConfig.FIREBASE_STORAGE_BUCKET || storedConfig.storageBucket || "devshree-2dfae.firebasestorage.app",
   messagingSenderId: runtimeConfig.messagingSenderId || envConfig.FIREBASE_MESSAGING_SENDER_ID || storedConfig.messagingSenderId || "140419631249",
-  appId: runtimeConfig.appId || envConfig.FIREBASE_APP_ID || storedConfig.appId || "YOUR_FIREBASE_APP_ID",
-  measurementId: runtimeConfig.measurementId || envConfig.FIREBASE_MEASUREMENT_ID || storedConfig.measurementId || ""
+  appId: runtimeConfig.appId || envConfig.FIREBASE_APP_ID || storedConfig.appId || "1:140419631249:web:3e123bc405c5736a375730",
+  measurementId: runtimeConfig.measurementId || envConfig.FIREBASE_MEASUREMENT_ID || storedConfig.measurementId || "G-83EBMNKBGJ"
 };
 
 // Check if user has pasted real credentials or is still using placeholders

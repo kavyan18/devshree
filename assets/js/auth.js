@@ -50,7 +50,8 @@ export function isAdminEmail(email) {
   const normalized = email.trim().toLowerCase();
   return normalized.includes('admin') || 
          normalized.endsWith('@devshree.in') ||
-         normalized === 'devshree@gmail.com';
+         normalized === 'devshree@gmail.com' ||
+         normalized === 'pilojparakavyan7@gmail.com';
 }
 
 /**

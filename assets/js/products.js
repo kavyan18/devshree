@@ -72,7 +72,24 @@ export async function fetchProducts(options = {}) {
 
       const snap = await getDocs(q);
       if (!snap.empty) {
-        snap.forEach(d => products.push({ id: d.id, ...d.data() }));
+        snap.forEach(d => {
+          const data = d.data();
+          let createdAt = data.createdAt;
+          if (createdAt && typeof createdAt.toDate === 'function') {
+            createdAt = createdAt.toDate().toISOString();
+          }
+          products.push({ id: d.id, ...data, ...(createdAt ? { createdAt } : {}) });
+        });
+
+        // Merge with MOCK_PRODUCTS so base items are always available alongside cloud products
+        const map = new Map();
+        products.forEach(p => map.set(String(p.id), p));
+        MOCK_PRODUCTS.forEach(p => {
+          if (!map.has(String(p.id))) {
+            map.set(String(p.id), p);
+          }
+        });
+        products = Array.from(map.values());
         setStorage(CACHE_PRODUCTS_KEY, products);
       }
     } catch (err) {
@@ -283,14 +300,15 @@ export async function createProductInFirestore(productData) {
     throw new Error('Firebase must be configured to create products.');
   }
 
-  const newId = `prod-${Date.now()}`;
+  const targetId = productData.id || `prod-${Date.now()}`;
   const payload = {
     ...productData,
+    id: targetId,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
 
-  await setDoc(doc(db, 'products', newId), payload);
-  showToast(`Product "${productData.name}" added to catalog!`, 'success');
-  return { id: newId, ...payload };
+  await setDoc(doc(db, 'products', targetId), payload, { merge: true });
+  showToast(`Product "${productData.name}" synced to Cloud database!`, 'success');
+  return { id: targetId, ...payload };
 }
