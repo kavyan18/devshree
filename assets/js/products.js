@@ -129,14 +129,32 @@ export async function fetchProducts(options = {}) {
       products.sort((a, b) => (b.rating || 0) - (a.rating || 0));
       break;
     case 'newest':
-      products.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+      products.sort((a, b) => {
+        if (a.createdAt && b.createdAt) {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
+      });
       break;
     case 'bestseller':
       products.sort((a, b) => (b.isBestseller ? 1 : 0) - (a.isBestseller ? 1 : 0));
       break;
     default:
-      // 'featured' / default: prioritize featured and bestsellers
-      products.sort((a, b) => ((b.isFeatured || b.featured || b.isBestseller) ? 1 : 0) - ((a.isFeatured || a.featured || a.isBestseller) ? 1 : 0));
+      // 'featured' / default: prioritize newly added/custom products, then featured and bestsellers
+      products.sort((a, b) => {
+        // Newly created items (e.g. from admin) go directly to the top
+        const aIsNewCustom = (a.createdAt && String(a.id || '').startsWith('prod-') && !String(a.id).startsWith('prod-10'));
+        const bIsNewCustom = (b.createdAt && String(b.id || '').startsWith('prod-') && !String(b.id).startsWith('prod-10'));
+        if (aIsNewCustom !== bIsNewCustom) return bIsNewCustom ? 1 : -1;
+
+        if (aIsNewCustom && bIsNewCustom && a.createdAt && b.createdAt) {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+
+        const aScore = ((a.isFeatured || a.featured || a.isBestseller || a.isNew) ? 1 : 0);
+        const bScore = ((b.isFeatured || b.featured || b.isBestseller || b.isNew) ? 1 : 0);
+        return bScore - aScore;
+      });
       break;
   }
 

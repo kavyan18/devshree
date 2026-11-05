@@ -59,12 +59,45 @@ function getAllAvailableProducts() {
     const cached = getStorage('devshree_cached_products', null);
     if (Array.isArray(cached) && cached.length > 0) {
       const map = new Map();
-      MOCK_PRODUCTS.forEach(p => map.set(String(p.id), p));
+      // Put cached (newly created/updated) products first
       cached.forEach(p => map.set(String(p.id), p));
+      MOCK_PRODUCTS.forEach(p => {
+        if (!map.has(String(p.id))) {
+          map.set(String(p.id), p);
+        }
+      });
       return Array.from(map.values());
     }
   } catch (_) {}
   return [...MOCK_PRODUCTS];
+}
+
+/**
+ * Handle mobile catalog synchronization via query string or hash
+ */
+function checkCatalogSyncUrl() {
+  try {
+    const url = new URL(window.location.href);
+    const syncParam = url.searchParams.get('devshree_sync_catalog') || (url.hash.includes('devshree_sync_catalog=') ? new URLSearchParams(url.hash.substring(1)).get('devshree_sync_catalog') : null);
+    if (syncParam) {
+      const jsonStr = decodeURIComponent(escape(atob(syncParam)));
+      const incomingProducts = JSON.parse(jsonStr);
+      if (Array.isArray(incomingProducts) && incomingProducts.length > 0) {
+        const existing = getStorage('devshree_cached_products', []);
+        const map = new Map();
+        existing.forEach(p => map.set(String(p.id), p));
+        incomingProducts.forEach(p => map.set(String(p.id), p));
+        const combined = Array.from(map.values());
+        setStorage('devshree_cached_products', combined);
+        showToast(`Store catalog synced! ${incomingProducts.length} product(s) added to your mobile store.`, 'success');
+
+        url.searchParams.delete('devshree_sync_catalog');
+        window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
+      }
+    }
+  } catch (err) {
+    console.warn('[Devshree] Catalog sync parameter error:', err);
+  }
 }
 
 let currentCatalogOptions = {
@@ -74,6 +107,7 @@ let currentCatalogOptions = {
 };
 
 function initDevshreeHome() {
+  checkCatalogSyncUrl();
   initHeaderAndNavigation();
   initSearchUI();
   initAuthUI();

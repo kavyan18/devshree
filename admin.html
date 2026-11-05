@@ -548,6 +548,22 @@
             <h2 class="admin-section-title" style="margin-bottom:0;">Your Products</h2>
 
             <div class="admin-table-filters">
+              <!-- Sync & Backup buttons -->
+              <button type="button" class="btn-admin-outline" id="btn-sync-mobile-modal" title="Sync products across devices (mobile/desktop)" style="color:#047857;border-color:#A7F3D0;font-weight:700;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                  <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                </svg>
+                <span>📱 Sync to Mobile</span>
+              </button>
+              <button type="button" class="btn-admin-outline" id="btn-export-products-json" title="Download catalog JSON backup">
+                <span>Export 📥</span>
+              </button>
+              <button type="button" class="btn-admin-outline" id="btn-import-products-json" title="Import catalog JSON backup">
+                <span>Import 📤</span>
+              </button>
+              <input type="file" id="admin-import-file-input" accept=".json" style="display:none;" />
+
               <!-- Search by Name or Code -->
               <div class="admin-search-wrapper">
                 <svg class="admin-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1067,6 +1083,73 @@
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
           <span>Confirm Cancellation</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Cross-Device Mobile Catalog Sync Modal -->
+  <div class="modal-backdrop" id="admin-sync-modal" role="dialog" aria-modal="true" style="display:none;">
+    <div class="admin-cancel-modal-box" style="max-width:540px;">
+      <div class="admin-cancel-modal-header" style="background:#F0FDF4;border-bottom:1px solid #BBF7D0;">
+        <div class="admin-cancel-icon-circle" style="background:#DCFCE7;color:#16A34A;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
+        </div>
+        <div>
+          <h3 style="font-size:1.15rem;font-weight:800;color:#14532D;margin:0;">Sync Catalog to Mobile Phone</h3>
+          <p style="font-size:0.8rem;color:#166534;margin:2px 0 0 0;">Transfer newly added products from your laptop to your mobile phone store</p>
+        </div>
+        <button type="button" class="modal-close-btn" id="admin-sync-modal-close" aria-label="Close dialog" style="margin-left:auto;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="admin-cancel-modal-body" style="padding:1.25rem;">
+        <!-- Why this happens box -->
+        <div style="background:#FEF9C3;border:1px solid #FEF08A;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:#713F12;line-height:1.5;">
+          <strong>Why didn't my mobile phone show the new product?</strong><br/>
+          Your laptop browser stores added products in its local storage (offline mode). Because your mobile phone is a separate device, it needs a 1-click sync link, or live Cloud Firestore credentials to synchronize automatically.
+        </div>
+
+        <!-- Option 1: WhatsApp 1-Click Sync Link -->
+        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+            <strong style="font-size:0.875rem;color:#0F172A;">Option 1: Send 1-Click Sync to WhatsApp</strong>
+            <span style="font-size:0.75rem;background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:12px;font-weight:700;">Fastest</span>
+          </div>
+          <p style="font-size:0.8rem;color:#64748B;margin-bottom:0.75rem;">
+            Send a sync link to your WhatsApp. When you tap the link on your phone, all added products are instantly loaded into your mobile store!
+          </p>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button type="button" class="btn-terracotta" id="btn-sync-send-whatsapp" style="background:#16A34A;display:inline-flex;align-items:center;gap:6px;padding:0.6rem 1rem;font-size:0.825rem;">
+              <span>💬 Send to WhatsApp (+91 88661 30409)</span>
+            </button>
+            <button type="button" class="btn-admin-outline" id="btn-sync-copy-link" style="font-size:0.825rem;">
+              <span>📋 Copy Sync Link</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Option 2: Cloud Firestore (Automatic 24/7) -->
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:1rem;">
+          <strong style="font-size:0.875rem;color:#14532D;display:block;margin-bottom:0.35rem;">
+            Option 2: 100% Automatic Real-Time Cloud Sync
+          </strong>
+          <p style="font-size:0.8rem;color:#166534;line-height:1.5;margin-bottom:0;">
+            To have products show up on all mobile phones and customer devices automatically without any link, link your free Firebase project credentials in <code style="background:#DCFCE7;padding:1px 4px;border-radius:3px;">assets/js/firebase-config.js</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="admin-cancel-modal-footer">
+        <button type="button" class="btn-admin-outline" id="admin-sync-modal-done-btn">
+          Close
         </button>
       </div>
     </div>

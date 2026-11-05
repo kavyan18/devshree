@@ -117,11 +117,12 @@ let knownOrderIds = new Set();
 let knownOrderInvoices = new Set();
 let isInitialOrdersSnapshot = true;
 
-document.addEventListener('DOMContentLoaded', () => {
+function initDevshreeAdmin() {
   initAdminNavigation();
   initPriceCalculation();
   initProductForm();
   initTableFilters();
+  initSyncAndBackupUI();
   initOrdersControls();
   initAdminGate();
   initUserDropdown();
@@ -152,7 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDevshreeAdmin);
+} else {
+  initDevshreeAdmin();
+}
 
 /**
  * 1. Sidebar Navigation (Tabs switching)
@@ -746,6 +753,130 @@ async function removeProduct(prodId) {
   } catch (err) {
     showSafeErrorToast(err, 'Unable to remove product. Please try again.');
   }
+}
+
+/**
+ * Cross-Device Catalog Synchronization & Export/Import Controls
+ */
+function initSyncAndBackupUI() {
+  const syncModal = document.getElementById('admin-sync-modal');
+  const openSyncBtn = document.getElementById('btn-sync-mobile-modal');
+  const closeSyncBtn = document.getElementById('admin-sync-modal-close');
+  const doneSyncBtn = document.getElementById('admin-sync-modal-done-btn');
+  const waSyncBtn = document.getElementById('btn-sync-send-whatsapp');
+  const copySyncBtn = document.getElementById('btn-sync-copy-link');
+
+  const exportBtn = document.getElementById('btn-export-products-json');
+  const importBtn = document.getElementById('btn-import-products-json');
+  const importFileInput = document.getElementById('admin-import-file-input');
+
+  const openSync = () => {
+    if (syncModal) syncModal.style.display = 'flex';
+  };
+  const closeSync = () => {
+    if (syncModal) syncModal.style.display = 'none';
+  };
+
+  openSyncBtn?.addEventListener('click', openSync);
+  closeSyncBtn?.addEventListener('click', closeSync);
+  doneSyncBtn?.addEventListener('click', closeSync);
+  syncModal?.addEventListener('click', (e) => {
+    if (e.target === syncModal) closeSync();
+  });
+
+  const getCatalogSyncLink = () => {
+    // Collect custom items
+    const custom = allProducts.filter(p => !MOCK_PRODUCTS.some(m => m.id === p.id));
+    const items = custom.length > 0 ? custom : allProducts.slice(0, 10);
+
+    // Sanitize large base64 data URLs for URL length safety
+    const light = items.map(p => {
+      const copy = { ...p };
+      if (copy.image && copy.image.startsWith('data:') && copy.image.length > 1500) {
+        copy.image = DEFAULT_BULB_IMG;
+      }
+      return copy;
+    });
+
+    const json = JSON.stringify(light);
+    const b64 = btoa(unescape(encodeURIComponent(json)));
+    const targetUrl = new URL(window.location.href);
+    targetUrl.pathname = targetUrl.pathname.replace(/admin\.html.*$/, 'index.html');
+    targetUrl.search = `?devshree_sync_catalog=${b64}`;
+    targetUrl.hash = '';
+    return targetUrl.toString();
+  };
+
+  waSyncBtn?.addEventListener('click', () => {
+    try {
+      const link = getCatalogSyncLink();
+      const phone = getStoreOwnerPhone() || '918866130409';
+      const msg = `Devshree Catalog Sync for Mobile:\n\nOpen this link on your phone to load all custom products into your mobile store:\n${link}`;
+      openWhatsAppChat(phone, msg);
+    } catch (err) {
+      showToast('Unable to build sync link: ' + (err?.message || err), 'error');
+    }
+  });
+
+  copySyncBtn?.addEventListener('click', () => {
+    try {
+      const link = getCatalogSyncLink();
+      navigator.clipboard?.writeText(link).then(() => {
+        showToast('Mobile sync link copied to clipboard!', 'success');
+      }).catch(() => {
+        prompt('Copy this sync link and open on your mobile phone:', link);
+      });
+    } catch (err) {
+      showToast('Unable to copy link: ' + (err?.message || err), 'error');
+    }
+  });
+
+  // Export Catalog JSON
+  exportBtn?.addEventListener('click', () => {
+    try {
+      const blob = new Blob([JSON.stringify(allProducts, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `devshree-catalog-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${allProducts.length} products to JSON backup!`, 'success');
+    } catch (err) {
+      showToast('Export failed: ' + (err?.message || err), 'error');
+    }
+  });
+
+  // Import Catalog JSON
+  importBtn?.addEventListener('click', () => {
+    importFileInput?.click();
+  });
+
+  importFileInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const imported = JSON.parse(event.target.result);
+        if (!Array.isArray(imported)) {
+          throw new Error('File must contain an array of products');
+        }
+        allProducts = imported;
+        syncProductsCache();
+        updateKpis();
+        renderProductsTable();
+        showToast(`Imported ${imported.length} products successfully!`, 'success');
+      } catch (parseErr) {
+        showToast('Invalid catalog JSON file: ' + parseErr.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+    importFileInput.value = '';
+  });
 }
 
 /**
