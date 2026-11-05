@@ -80,9 +80,14 @@ export async function fetchProducts(options = {}) {
     }
   }
 
-  // If Firestore returned no products or errored, use mock products
-  if (products.length === 0) {
-    products = getStorage(CACHE_PRODUCTS_KEY, MOCK_PRODUCTS);
+  // If Firestore returned no products or errored, use cached or mock products
+  if (!Array.isArray(products) || products.length === 0) {
+    const cached = getStorage(CACHE_PRODUCTS_KEY, null);
+    if (Array.isArray(cached) && cached.length > 0) {
+      products = [...cached];
+    } else {
+      products = [...MOCK_PRODUCTS];
+    }
   }
 
   // Apply in-memory filtering (robust against missing Firestore composite indexes)

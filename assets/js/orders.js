@@ -830,9 +830,6 @@ export async function cancelOrder(orderId, reason = 'Cancelled by customer', can
   };
   return await updateOrderStatus(orderId, 'Cancelled', extra);
 }
-  };
-  return await updateOrderStatus(orderId, 'Cancelled', extra);
-}
 
 /**
  * Open and render the Live Order Tracking Modal

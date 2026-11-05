@@ -7,22 +7,6 @@
 import { MOCK_CATEGORIES, MOCK_PRODUCTS, STORE_INFO } from './mock-data.js';
 import { formatINR, calculateDiscount, escapeHTML, showToast, getStorage, setStorage } from './utils.js';
 import { renderCustomerFeedback, initFeedbackSystem } from './feedback.js';
-
-/**
- * Helper to get all available products combining localStorage cache (from admin / firestore) and mock data
- */
-function getAllAvailableProducts() {
-  try {
-    const cached = getStorage('devshree_cached_products', []);
-    if (Array.isArray(cached) && cached.length > 0) {
-      const map = new Map();
-      MOCK_PRODUCTS.forEach(p => map.set(String(p.id), p));
-      cached.forEach(p => map.set(String(p.id), p));
-      return Array.from(map.values());
-    }
-  } catch (_) {}
-  return MOCK_PRODUCTS;
-}
 import { 
   addToCart, 
   getCart, 
@@ -67,13 +51,29 @@ import {
 } from './products.js';
 import { setupOrderNotificationsListener } from './order-notifications.js';
 
+/**
+ * Helper to get all available products combining localStorage cache (from admin / firestore) and mock data
+ */
+function getAllAvailableProducts() {
+  try {
+    const cached = getStorage('devshree_cached_products', null);
+    if (Array.isArray(cached) && cached.length > 0) {
+      const map = new Map();
+      MOCK_PRODUCTS.forEach(p => map.set(String(p.id), p));
+      cached.forEach(p => map.set(String(p.id), p));
+      return Array.from(map.values());
+    }
+  } catch (_) {}
+  return [...MOCK_PRODUCTS];
+}
+
 let currentCatalogOptions = {
   categoryId: '',
   sortBy: 'featured',
   inStockOnly: false
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+function initDevshreeHome() {
   initHeaderAndNavigation();
   initSearchUI();
   initAuthUI();
@@ -90,7 +90,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initCartBadge();
   initWishlistBadge();
   setupOrderNotificationsListener();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDevshreeHome);
+} else {
+  initDevshreeHome();
+}
 
 /**
  * Initialize Header, Mobile Drawer, and Search

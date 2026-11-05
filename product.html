@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <base href="/" />
   <title id="page-title">Product Details — DEVSHREE Hardware &amp; Trade Supplies</title>
   <meta name="description" id="page-meta-desc" content="Detailed technical specifications, trade pricing, and verified contractor reviews for Devshree hardware products." />
   <link rel="icon" type="image/png" href="assets/images/logo.png" />
@@ -698,10 +697,16 @@
       window.location.href = 'index.html';
     });
 
-    window.addEventListener('DOMContentLoaded', () => {
+    function initPDPPage() {
       loadPDP();
       initFeedbackSystem();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', initPDPPage);
+    } else {
+      initPDPPage();
+    }
   </script>
 
   <!-- Floating WhatsApp Quick Support Launcher -->
