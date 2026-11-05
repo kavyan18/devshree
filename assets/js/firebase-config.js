@@ -73,9 +73,14 @@ export const firebaseConfig = {
 };
 
 // Check if user has pasted real credentials or is still using placeholders
-export const isConfigured =
+export const isConfigured = Boolean(
+  firebaseConfig.apiKey &&
+  !firebaseConfig.apiKey.startsWith("YOUR_") &&
   firebaseConfig.apiKey !== "YOUR_API_KEY" &&
-  firebaseConfig.projectId !== "your-project-id";
+  firebaseConfig.apiKey !== "YOUR_FIREBASE_API_KEY" &&
+  firebaseConfig.projectId &&
+  firebaseConfig.projectId !== "your-project-id"
+);
 
 let app = null;
 let auth = null;

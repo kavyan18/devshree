@@ -17,7 +17,8 @@ import {
   uploadBytesResumable,
   getDownloadURL,
   setDoc,
-  getDoc
+  getDoc,
+  isConfigured
 } from './firebase-config.js';
 import { 
   getCurrentUser, 
@@ -392,37 +393,53 @@ function initProductForm() {
       // 1. Multi-layer validation (size, extension, MIME, magic bytes) & Canvas re-encoding
       const { sanitizedBlob, dataUrl, safeFileName, mimeType } = await sanitizeAndOptimizeImage(file);
 
-      let imageUrl = null;
+      // 2. IMMEDIATELY update UI preview & hidden form input with sanitized dataUrl
+      // This guarantees the image is inserted and displayed instantly without hanging on cloud network
+      if (previewImg) previewImg.src = dataUrl;
+      if (hiddenImgInput) hiddenImgInput.value = dataUrl;
 
-      // 2. Upload the SANITIZED binary blob to isolated Firebase Storage if connected
-      if (storage) {
+      showToast('Product photo uploaded & optimized successfully!', 'success');
+
+      // 3. Background Cloud Storage upload (non-blocking with timeout) if storage is configured
+      if (isConfigured && storage) {
         try {
           const storagePath = `products/${safeFileName}`;
           const isolation = verifyStorageIsolation(storagePath);
           if (!isolation.isIsolated) {
-            throw new Error(isolation.reason || 'Storage path violates isolation policy');
+            console.warn('[Admin] Storage isolation policy:', isolation.reason);
+            return;
           }
 
           const fileRef = ref(storage, storagePath);
-          const snapshot = await uploadBytesResumable(fileRef, sanitizedBlob, {
-            contentType: mimeType,
-            cacheControl: 'public, max-age=31536000'
-          });
-          imageUrl = await getDownloadURL(snapshot.ref);
-          console.log('[Admin] Sanitized image uploaded to isolated Cloud Storage:', imageUrl);
+          
+          // Use Promise.race with a 4-second timeout so it never hangs or blocks the UI
+          const uploadPromise = (async () => {
+            const snapshot = await uploadBytesResumable(fileRef, sanitizedBlob, {
+              contentType: mimeType,
+              cacheControl: 'public, max-age=31536000'
+            });
+            return await getDownloadURL(snapshot.ref);
+          })();
+
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Cloud storage upload timeout (4s)')), 4000)
+          );
+
+          const cloudUrl = await Promise.race([uploadPromise, timeoutPromise]);
+          if (cloudUrl) {
+            // Upgrade hidden input and preview to permanent cloud URL
+            if (hiddenImgInput && hiddenImgInput.value === dataUrl) {
+              hiddenImgInput.value = cloudUrl;
+            }
+            if (previewImg && previewImg.src === dataUrl) {
+              previewImg.src = cloudUrl;
+            }
+            console.log('[Admin] Sanitized image upgraded to isolated Cloud Storage URL:', cloudUrl);
+          }
         } catch (storageErr) {
-          console.warn('[Admin] Cloud Storage upload fallback to client sanitized DataURL:', storageErr);
+          console.warn('[Admin] Cloud Storage background upload bypassed (using sanitized local image):', storageErr?.message || storageErr);
         }
       }
-
-      // 3. Fallback to client-side sanitized DataURL
-      if (!imageUrl) {
-        imageUrl = dataUrl;
-      }
-
-      if (previewImg) previewImg.src = imageUrl;
-      if (hiddenImgInput) hiddenImgInput.value = imageUrl;
-      showToast('Product photo verified, sanitized & uploaded successfully!', 'success');
     } catch (err) {
       showSafeErrorToast(err, 'Unable to process image. Please verify file format (JPG, PNG, WebP under 5MB) and try again.');
     }
