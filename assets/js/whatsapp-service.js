@@ -200,6 +200,31 @@ We sincerely apologize for any inconvenience caused. 🛠️`;
 }
 
 /**
+ * 4b. Build Customer Order Cancellation Request WhatsApp Message
+ */
+export function buildCustomerCancellationRequestWhatsAppMessage(order, reason = '') {
+  const invNum = order.invoiceNumber || order.id || 'INV-DEV';
+  const custName = order.customerName || 'Customer';
+  const reasonText = reason || 'Customer requested order cancellation';
+
+  return `🚫 *ORDER CANCELLATION NOTIFICATION — DEVSHREE HARDWARE*
+━━━━━━━━━━━━━━━━━━━━━━━━
+Hello Devshree Team,
+
+I have cancelled my order on your portal and am requesting confirmation & refund:
+
+📋 *Order Details:*
+• *Invoice Number:* ${invNum}
+• *Customer Name:* ${custName}
+• *Date:* ${new Date(order.createdAtIso || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+• *Payment Mode:* ${order.paymentMethod || 'Cash on Delivery (COD)'}
+• *Amount:* ${formatINR(order.total || 0)}
+• *Reason:* ${reasonText}
+
+Please confirm order cancellation and reverse payment if prepaid. Thank you! 🛠️`;
+}
+
+/**
  * 5. Build Compact 160-Character SMS Text
  */
 export function buildOrderSmsText(order) {
@@ -211,13 +236,40 @@ export function buildOrderSmsText(order) {
 }
 
 /**
- * 6. Direct WhatsApp Chat Launcher
+ * 6. Direct Universal WhatsApp Chat Launcher
+ * Uses official Meta wa.me Click-to-Chat deep links with popup-blocker resilience
  */
 export function openWhatsAppChat(phone, message) {
   const cleanPhone = cleanIndianPhone(phone);
-  const encodedText = encodeURIComponent(message);
-  const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
+  const encodedText = encodeURIComponent(message || '');
+  // wa.me is the universal format across iOS, Android, and Desktop
+  const url = cleanPhone 
+    ? `https://wa.me/${cleanPhone}?text=${encodedText}`
+    : `https://wa.me/?text=${encodedText}`;
+
+  // 1. Attempt standard window.open
+  let newWin = null;
+  try {
+    newWin = window.open(url, '_blank', 'noopener,noreferrer');
+  } catch (err) {
+    console.warn('[WhatsApp] Direct window.open failed:', err);
+  }
+
+  // 2. If blocked by browser popup blocker or returned null (e.g. inside async callbacks)
+  if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+    try {
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => a.remove(), 250);
+    } catch (_) {
+      // 3. Fallback: navigate directly
+      window.location.assign(url);
+    }
+  }
 }
 
 /**
@@ -229,8 +281,8 @@ export function getStoreOwnerWhatsAppUrl(order) {
   const ownerPhone = getStoreOwnerPhone(); // 918866130409
   const message = buildStoreOwnerOrderWhatsAppMessage(order);
   const cleanPhone = cleanIndianPhone(ownerPhone);
-  const encodedText = encodeURIComponent(message);
-  return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
+  const encodedText = encodeURIComponent(message || '');
+  return `https://wa.me/${cleanPhone}?text=${encodedText}`;
 }
 
 /**

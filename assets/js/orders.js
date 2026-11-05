@@ -21,6 +21,11 @@ import { getCurrentUser } from './auth.js';
 import { formatINR, getStorage, setStorage, showToast, escapeHTML } from './utils.js';
 import { STORE_INFO } from './mock-data.js';
 import { triggerOrderNotification, isCurrentContextAdmin } from './order-notifications.js';
+import { 
+  openWhatsAppChat, 
+  getStoreOwnerPhone, 
+  buildCustomerCancellationRequestWhatsAppMessage 
+} from './whatsapp-service.js';
 
 /**
  * Generate and persist an invoice for the authenticated user
@@ -282,6 +287,14 @@ export async function openUserInvoicesModal() {
               </svg>
               View Official GST Bill
             </button>
+            ${!status.includes('cancel') && !status.includes('deliver') ? `
+              <button type="button" class="btn btn-outline btn-sm btn-order-cancel" data-cancel-invoice-id="${inv.invoiceNumber}" style="color:#DC2626;border-color:#FCA5A5;font-weight:600;" title="Cancel this order">
+                Cancel Order 🚫
+              </button>
+            ` : ''}
+            <button type="button" class="btn btn-outline btn-sm btn-order-wa" data-wa-invoice-id="${inv.invoiceNumber}" style="color:#166534;border-color:#86EFAC;font-weight:600;" title="Help on WhatsApp">
+              💬 WhatsApp
+            </button>
           </div>
         </div>
       </div>
@@ -321,6 +334,48 @@ export async function openUserInvoicesModal() {
       modal.classList.remove('active');
       document.body.style.overflow = '';
       openOrderTrackingModal(invNum);
+    });
+  });
+
+  // Bind Customer Cancel Order Click
+  container.querySelectorAll('[data-cancel-invoice-id]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const invNum = btn.dataset.cancelInvoiceId;
+      const targetInv = invoices.find(i => i.invoiceNumber === invNum);
+      if (!confirm(`Are you sure you want to cancel order ${invNum}?\n\nIf you have already paid via UPI or Card, a full refund will be processed immediately.`)) {
+        return;
+      }
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Cancelling...';
+        await cancelOrder(invNum, 'Customer requested cancellation via portal', 'Customer');
+        showToast(`Order ${invNum} has been cancelled successfully.`, 'success');
+
+        // Refresh user invoices view
+        await openUserInvoicesModal();
+
+        // Prompt to notify WhatsApp trade desk
+        const ownerPhone = getStoreOwnerPhone();
+        const msg = buildCustomerCancellationRequestWhatsAppMessage(targetInv || { invoiceNumber: invNum });
+        openWhatsAppChat(ownerPhone, msg);
+      } catch (err) {
+        console.error('[Orders] Error cancelling customer order:', err);
+        showToast('Unable to cancel order. Please contact support.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Cancel Order 🚫';
+      }
+    });
+  });
+
+  // Bind Customer WhatsApp Help Click
+  container.querySelectorAll('[data-wa-invoice-id]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const invNum = btn.dataset.waInvoiceId;
+      const ownerPhone = getStoreOwnerPhone();
+      const msg = `Hello Devshree Hardware, I need support regarding my order: ${invNum}.`;
+      openWhatsAppChat(ownerPhone, msg);
     });
   });
 }
@@ -710,22 +765,29 @@ export async function fetchAllOrders() {
 export async function updateOrderStatus(orderId, newStatus, extraData = {}) {
   // 1. Sync to master local orders
   const masterOrders = getStorage('devshree_all_orders', []);
-  const idx = masterOrders.findIndex(o => o.id === orderId || o.invoiceNumber === orderId);
+  const idx = masterOrders.findIndex(o => (orderId && o.id === orderId) || (orderId && o.invoiceNumber === orderId));
+  let targetUserId = null;
   if (idx !== -1) {
     masterOrders[idx].orderStatus = newStatus;
     Object.assign(masterOrders[idx], extraData);
     setStorage('devshree_all_orders', masterOrders);
+    targetUserId = masterOrders[idx].userId;
   }
 
-  // 2. Sync to user specific order history
+  // 2. Sync to user-specific order history (both current user and order creator)
   const user = getCurrentUser();
-  if (user) {
-    const userInvoices = getStorage(`devshree_invoices_${user.uid}`, []);
-    const uIdx = userInvoices.findIndex(o => o.id === orderId || o.invoiceNumber === orderId);
+  const uidsToSync = new Set();
+  if (user?.uid) uidsToSync.add(user.uid);
+  if (targetUserId) uidsToSync.add(targetUserId);
+
+  for (const uid of uidsToSync) {
+    const key = `devshree_invoices_${uid}`;
+    const userInvoices = getStorage(key, []);
+    const uIdx = userInvoices.findIndex(o => (orderId && o.id === orderId) || (orderId && o.invoiceNumber === orderId));
     if (uIdx !== -1) {
       userInvoices[uIdx].orderStatus = newStatus;
       Object.assign(userInvoices[uIdx], extraData);
-      setStorage(`devshree_invoices_${user.uid}`, userInvoices);
+      setStorage(key, userInvoices);
     }
   }
 
@@ -736,23 +798,38 @@ export async function updateOrderStatus(orderId, newStatus, extraData = {}) {
       await updateDoc(docRef, { orderStatus: newStatus, ...extraData, updatedAt: serverTimestamp() });
       return true;
     } catch (err) {
-      console.error("[Devshree] Error updating order status in Firestore:", err);
+      // If doc not found directly by doc ID, query by invoiceNumber
+      try {
+        const q = query(collection(db, "orders"), where("invoiceNumber", "==", orderId));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const matchedDoc = snap.docs[0];
+          await updateDoc(matchedDoc.ref, { orderStatus: newStatus, ...extraData, updatedAt: serverTimestamp() });
+          return true;
+        }
+      } catch (qErr) {
+        console.warn("[Devshree] Error updating order status in Firestore by invoiceNumber:", qErr);
+      }
     }
   }
   return true;
 }
 
 /**
- * Cancel an order (Admin cancellation)
+ * Cancel an order (Admin or Customer cancellation)
  * @param {string} orderId
  * @param {string} [reason]
+ * @param {string} [cancelledBy]
  * @returns {Promise<boolean>}
  */
-export async function cancelOrder(orderId, reason = 'Cancelled by store administrator') {
+export async function cancelOrder(orderId, reason = 'Cancelled by customer', cancelledBy = 'Customer') {
   const extra = {
     cancelledAt: new Date().toISOString(),
     cancellationReason: reason,
-    cancelledBy: 'Admin'
+    cancelledBy: cancelledBy
+  };
+  return await updateOrderStatus(orderId, 'Cancelled', extra);
+}
   };
   return await updateOrderStatus(orderId, 'Cancelled', extra);
 }
@@ -1051,6 +1128,14 @@ async function renderTrackingResults(orderId) {
           </svg>
           View Official GST Tax Bill
         </button>
+        ${!isCancelled && !status.includes('deliver') ? `
+          <button type="button" class="btn btn-outline" id="tracking-cancel-order-btn" style="color:#DC2626;border-color:#FCA5A5;font-weight:600;">
+            Cancel Order 🚫
+          </button>
+        ` : ''}
+        <button type="button" class="btn btn-outline" id="tracking-wa-support-btn" style="color:#166534;border-color:#86EFAC;font-weight:600;">
+          💬 WhatsApp Support
+        </button>
       </div>
     </div>
   `;
@@ -1074,5 +1159,35 @@ async function renderTrackingResults(orderId) {
     document.getElementById('track-order-modal')?.classList.remove('active');
     document.body.style.overflow = '';
     openInvoiceViewer(order);
+  });
+
+  // Bind Cancel Order button in Tracking View
+  document.getElementById('tracking-cancel-order-btn')?.addEventListener('click', async () => {
+    const invNum = order.invoiceNumber || order.id;
+    if (!confirm(`Are you sure you want to cancel order ${invNum}?\n\nIf you have already paid via UPI or Card, a full refund will be processed immediately.`)) {
+      return;
+    }
+    try {
+      await cancelOrder(invNum, 'Customer requested cancellation via Tracking', 'Customer');
+      order.orderStatus = 'Cancelled';
+      order.cancellationReason = 'Customer requested cancellation via Tracking';
+      showToast(`Order ${invNum} has been cancelled successfully.`, 'success');
+      renderTrackingResults(order);
+
+      const ownerPhone = getStoreOwnerPhone();
+      const msg = buildCustomerCancellationRequestWhatsAppMessage(order);
+      openWhatsAppChat(ownerPhone, msg);
+    } catch (err) {
+      console.error('[Tracking] Cancel error:', err);
+      showToast('Unable to cancel order. Please try again.', 'error');
+    }
+  });
+
+  // Bind WhatsApp Support button in Tracking View
+  document.getElementById('tracking-wa-support-btn')?.addEventListener('click', () => {
+    const invNum = order.invoiceNumber || order.id;
+    const ownerPhone = getStoreOwnerPhone();
+    const msg = `Hello Devshree Hardware, I have a tracking query regarding order: ${invNum}.`;
+    openWhatsAppChat(ownerPhone, msg);
   });
 }

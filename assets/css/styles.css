@@ -7999,3 +7999,78 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0.75rem 1rem;
   }
 }
+
+/* ==========================================================================
+   27. Floating WhatsApp Quick Support Button
+   ========================================================================== */
+.devshree-floating-wa {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 58px;
+  height: 58px;
+  background: #25D366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(37, 211, 102, 0.45);
+  z-index: 1200;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease;
+}
+
+.devshree-floating-wa:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 26px rgba(37, 211, 102, 0.6);
+  background: #20BA5A;
+}
+
+.devshree-floating-wa:active {
+  transform: scale(0.95);
+}
+
+.devshree-floating-wa svg {
+  width: 34px;
+  height: 34px;
+  fill: #FFFFFF;
+}
+
+.floating-wa-tooltip {
+  position: absolute;
+  right: 70px;
+  background: #252720;
+  color: #FFFFFF;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.devshree-floating-wa:hover .floating-wa-tooltip {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@media (max-width: 640px) {
+  .devshree-floating-wa {
+    bottom: 20px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+  }
+  .devshree-floating-wa svg {
+    width: 30px;
+    height: 30px;
+  }
+  .floating-wa-tooltip {
+    display: none;
+  }
+}

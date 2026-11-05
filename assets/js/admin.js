@@ -1177,14 +1177,14 @@ function renderOrdersTable(data = null) {
         </td>
         <td style="text-align:right;">
           <div style="display:inline-flex;gap:0.4rem;align-items:center;justify-content:flex-end;">
-            <button type="button" class="btn-table-whatsapp" data-wa-invoice="${order.invoiceNumber}" title="Send WhatsApp Update">
+            <button type="button" class="btn-table-whatsapp" data-wa-invoice="${order.invoiceNumber || ''}" data-order-id="${order.id || ''}" title="Send WhatsApp Update">
               <span>WhatsApp 📲</span>
             </button>
-            <button type="button" class="btn-table-edit" data-view-invoice="${order.invoiceNumber}">
+            <button type="button" class="btn-table-edit" data-view-invoice="${order.invoiceNumber || ''}" data-order-id="${order.id || ''}">
               <span>Invoice</span>
             </button>
             ${!isCancelled ? `
-              <button type="button" class="btn-table-cancel-order" data-cancel-invoice="${order.invoiceNumber}" title="Cancel this customer order">
+              <button type="button" class="btn-table-cancel-order" data-cancel-invoice="${order.invoiceNumber || ''}" data-order-id="${order.id || ''}" title="Cancel this customer order">
                 <span>Cancel 🚫</span>
               </button>
             ` : `
@@ -1223,32 +1223,42 @@ function renderOrdersTable(data = null) {
   });
 
   // Cancel order button
-  tbody.querySelectorAll('[data-cancel-invoice]').forEach(btn => {
-    btn.addEventListener('click', () => {
+  tbody.querySelectorAll('.btn-table-cancel-order').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const invNum = btn.dataset.cancelInvoice;
-      const target = allOrders.find(o => o.invoiceNumber === invNum);
+      const orderId = btn.dataset.orderId;
+      const target = allOrders.find(o => (invNum && o.invoiceNumber === invNum) || (orderId && o.id === orderId));
       if (target) {
         openAdminCancelModal(target);
+      } else {
+        console.warn('[Admin] Could not find order to cancel for:', invNum, orderId);
       }
     });
   });
 
   // WhatsApp dispatch modal
-  tbody.querySelectorAll('[data-wa-invoice]').forEach(btn => {
-    btn.addEventListener('click', () => {
+  tbody.querySelectorAll('.btn-table-whatsapp').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const invNum = btn.dataset.waInvoice;
-      const target = allOrders.find(o => o.invoiceNumber === invNum);
+      const orderId = btn.dataset.orderId;
+      const target = allOrders.find(o => (invNum && o.invoiceNumber === invNum) || (orderId && o.id === orderId));
       if (target) {
         openWhatsAppDispatchModal(target, 'owner');
+      } else {
+        console.warn('[Admin] Could not find order for WhatsApp modal:', invNum, orderId);
       }
     });
   });
 
   // Invoice view
   tbody.querySelectorAll('[data-view-invoice]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const invNum = btn.dataset.viewInvoice;
-      const target = allOrders.find(o => o.invoiceNumber === invNum);
+      const orderId = btn.dataset.orderId;
+      const target = allOrders.find(o => (invNum && o.invoiceNumber === invNum) || (orderId && o.id === orderId));
       if (target) openInvoiceViewer(target);
     });
   });
@@ -1333,12 +1343,20 @@ function initAdminCancelModal() {
 
     try {
       const orderId = targetOrderToCancel.id || targetOrderToCancel.invoiceNumber;
-      await cancelOrder(orderId, reason);
+      await cancelOrder(orderId, reason, 'Admin');
 
       targetOrderToCancel.orderStatus = 'Cancelled';
       targetOrderToCancel.cancellationReason = reason;
 
       const orderRef = targetOrderToCancel;
+
+      // Sync order status inside allOrders array
+      const match = allOrders.find(o => (orderRef.id && o.id === orderRef.id) || (orderRef.invoiceNumber && o.invoiceNumber === orderRef.invoiceNumber));
+      if (match) {
+        match.orderStatus = 'Cancelled';
+        match.cancellationReason = reason;
+      }
+
       closeModal();
       renderOrdersTable();
       updateKpis();

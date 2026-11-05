@@ -55,6 +55,7 @@ export function escapeHTML(str) {
  * @returns {any}
  */
 export function getStorage(key, defaultValue = null) {
+  if (typeof localStorage === 'undefined') return defaultValue;
   try {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : defaultValue;
@@ -70,6 +71,7 @@ export function getStorage(key, defaultValue = null) {
  * @param {any} value
  */
 export function setStorage(key, value) {
+  if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (err) {

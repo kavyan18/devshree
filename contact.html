@@ -241,7 +241,19 @@
         `Sent via Devshree Official Portal`;
 
       const waUrl = `https://wa.me/918866130409?text=${encodeURIComponent(text)}`;
-      window.open(waUrl, '_blank');
+      let win = null;
+      try {
+        win = window.open(waUrl, '_blank', 'noopener,noreferrer');
+      } catch (_) {}
+      if (!win || win.closed || typeof win.closed === 'undefined') {
+        const a = document.createElement('a');
+        a.href = waUrl;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => a.remove(), 250);
+      }
 
       document.getElementById('contact-success-msg').style.display = 'block';
       document.getElementById('contact-inquiry-form').reset();
