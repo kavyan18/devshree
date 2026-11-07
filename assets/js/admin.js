@@ -38,6 +38,11 @@ import {
   triggerOrderNotification, 
   sendTestOrderNotification 
 } from './order-notifications.js';
+import { 
+  getMaintenanceConfig, 
+  setMaintenanceMode, 
+  fetchRemoteMaintenanceConfig 
+} from './maintenance.js';
 import { openWhatsAppDispatchModal, openWhatsAppChat, buildOrderCancellationWhatsAppMessage, getStoreOwnerPhone, setStoreOwnerPhone } from './whatsapp-service.js';
 
 const CACHE_PRODUCTS_KEY = 'devshree_cached_products';
@@ -128,6 +133,7 @@ function initDevshreeAdmin() {
   initUserDropdown();
   initAdminNotificationCenter();
   initAdminSettings();
+  initMaintenanceAdminUI();
   initAdminCancelModal();
 
   // Check if verified active admin session exists
@@ -1875,6 +1881,166 @@ function initAdminSettings() {
       setTimeout(() => { if (adminCredsStatus) adminCredsStatus.style.display = 'none'; }, 3000);
     }
     showToast('Admin login credentials updated successfully! Use these for future sign-ins.', 'success');
+  });
+}
+
+/**
+ * 11B. Maintenance Mode Admin Controller
+ * Synchronizes the topbar pill, toggle switch, and settings form with Firestore & localStorage
+ */
+function initMaintenanceAdminUI() {
+  const topbarBtn = document.getElementById('btn-admin-topbar-maintenance');
+  const topbarText = document.getElementById('admin-topbar-mode-text');
+  const toggleCheckbox = document.getElementById('maintenance-mode-toggle');
+  const statusBadge = document.getElementById('maintenance-status-badge');
+  const headlineInput = document.getElementById('maintenance-headline-input');
+  const messageInput = document.getElementById('maintenance-message-input');
+  const etaInput = document.getElementById('maintenance-eta-input');
+  const phoneInput = document.getElementById('maintenance-phone-input');
+  const saveBtn = document.getElementById('btn-save-maintenance-settings');
+  const previewBtn = document.getElementById('btn-preview-maintenance');
+  const saveStatus = document.getElementById('maintenance-save-status');
+
+  function updateUI(cfg) {
+    const isMaintenance = Boolean(cfg && cfg.enabled);
+
+    // 1. Topbar status pill
+    if (topbarBtn) {
+      if (isMaintenance) {
+        topbarBtn.className = 'admin-mode-pill maintenance';
+        if (topbarText) topbarText.textContent = '⚠️ Maintenance ON';
+        topbarBtn.setAttribute('title', 'Maintenance Mode is ACTIVE — Click to turn OFF');
+      } else {
+        topbarBtn.className = 'admin-mode-pill live';
+        if (topbarText) topbarText.textContent = 'Store Online';
+        topbarBtn.setAttribute('title', 'Store is ONLINE — Click to turn ON Maintenance');
+      }
+    }
+
+    // 2. Settings toggle checkbox
+    if (toggleCheckbox) {
+      toggleCheckbox.checked = isMaintenance;
+    }
+
+    // 3. Settings status badge
+    if (statusBadge) {
+      if (isMaintenance) {
+        statusBadge.textContent = 'Maintenance Mode Active';
+        statusBadge.style.background = '#FFEDD5';
+        statusBadge.style.color = '#9A3412';
+      } else {
+        statusBadge.textContent = 'Store Live';
+        statusBadge.style.background = '#DCFCE7';
+        statusBadge.style.color = '#166534';
+      }
+    }
+
+    // 4. Form inputs
+    if (cfg) {
+      if (headlineInput && cfg.headline) headlineInput.value = cfg.headline;
+      if (messageInput && cfg.message) messageInput.value = cfg.message;
+      if (etaInput && typeof cfg.estimatedTime === 'string') etaInput.value = cfg.estimatedTime;
+      if (phoneInput && cfg.contactPhone) phoneInput.value = cfg.contactPhone;
+    }
+  }
+
+  // Load from local cache immediately
+  let currentCfg = getMaintenanceConfig();
+  updateUI(currentCfg);
+
+  // Background fetch remote config from Firestore for multi-device sync
+  fetchRemoteMaintenanceConfig().then(fresh => {
+    if (fresh) {
+      currentCfg = fresh;
+      updateUI(currentCfg);
+    }
+  }).catch(() => {});
+
+  // 1-Click Topbar Pill Toggle Handler
+  topbarBtn?.addEventListener('click', async () => {
+    const isCurrentlyOn = Boolean(currentCfg && currentCfg.enabled);
+    const targetState = !isCurrentlyOn;
+
+    const confirmMsg = targetState
+      ? 'Turn ON Maintenance Mode?\n\nRegular visitors will see the maintenance screen with disconnected cable artwork while you update the store.\nYou can still view the store and admin panel.'
+      : 'Turn OFF Maintenance Mode and make the store live for all customers?';
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const updated = await setMaintenanceMode(targetState);
+      currentCfg = updated;
+      updateUI(updated);
+      showToast(
+        targetState ? 'Maintenance mode turned ON. Store is now in maintenance.' : 'Maintenance mode turned OFF. Store is now LIVE!',
+        targetState ? 'warning' : 'success'
+      );
+    } catch (err) {
+      showToast('Error updating maintenance mode: ' + (err.message || 'Unknown error'), 'error');
+    }
+  });
+
+  // Settings Switch Toggle Change Handler
+  toggleCheckbox?.addEventListener('change', async () => {
+    const targetState = toggleCheckbox.checked;
+    try {
+      const updated = await setMaintenanceMode(targetState, {
+        headline: headlineInput?.value.trim() || undefined,
+        message: messageInput?.value.trim() || undefined,
+        estimatedTime: etaInput?.value.trim() || '',
+        contactPhone: phoneInput?.value.trim() || undefined
+      });
+      currentCfg = updated;
+      updateUI(updated);
+      showToast(
+        targetState ? 'Maintenance mode enabled!' : 'Maintenance mode disabled. Store is live!',
+        targetState ? 'warning' : 'success'
+      );
+    } catch (err) {
+      toggleCheckbox.checked = !targetState;
+      showToast('Failed to toggle maintenance mode', 'error');
+    }
+  });
+
+  // Save Settings Form Button Handler
+  saveBtn?.addEventListener('click', async () => {
+    const headline = headlineInput?.value.trim() || 'The site is currently down for maintenance';
+    const message = messageInput?.value.trim() || "We apologize for any inconveniences caused. We've almost done.";
+    const estimatedTime = etaInput?.value.trim() || '';
+    const contactPhone = phoneInput?.value.trim() || '+91 8866130409';
+    const enabled = Boolean(toggleCheckbox ? toggleCheckbox.checked : (currentCfg && currentCfg.enabled));
+
+    try {
+      const updated = await setMaintenanceMode(enabled, {
+        headline,
+        message,
+        estimatedTime,
+        contactPhone
+      });
+      currentCfg = updated;
+      updateUI(updated);
+
+      if (saveStatus) {
+        saveStatus.style.display = 'inline';
+        setTimeout(() => { if (saveStatus) saveStatus.style.display = 'none'; }, 3000);
+      }
+      showToast('Maintenance settings saved successfully!', 'success');
+    } catch (err) {
+      showToast('Failed to save maintenance settings: ' + (err.message || 'Unknown error'), 'error');
+    }
+  });
+
+  // Preview Button Handler
+  previewBtn?.addEventListener('click', () => {
+    window.open('maintenance.html?preview=1', '_blank');
+  });
+
+  // Listen to cross-component maintenance changes
+  window.addEventListener('devshree:maintenance-changed', (e) => {
+    if (e.detail) {
+      currentCfg = e.detail;
+      updateUI(currentCfg);
+    }
   });
 }
 

@@ -135,6 +135,12 @@
       </div>
 
       <div class="admin-topbar-right">
+        <!-- Store Maintenance Mode 1-Click Status Pill -->
+        <button type="button" class="admin-mode-pill live" id="btn-admin-topbar-maintenance" title="Store Status — Click to toggle Maintenance Mode">
+          <span class="mode-pill-dot"></span>
+          <span class="mode-pill-text" id="admin-topbar-mode-text">Store Online</span>
+        </button>
+
         <!-- Real-Time Order Notifications Bell -->
         <div class="admin-notif-dropdown" id="admin-notif-dropdown">
           <button type="button" class="admin-notif-trigger-btn" id="admin-notif-btn" aria-label="Order Notifications" title="Live Order Notifications & Alerts">
@@ -909,6 +915,95 @@
                   </button>
                 </div>
 
+              </div>
+            </form>
+          </div>
+
+          <!-- Store Maintenance Mode Control Card -->
+          <div class="admin-form-card" style="border-left:4px solid #EA580C;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.75rem;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <h2 class="admin-section-title" style="margin:0;">🛠️ Store Maintenance Mode</h2>
+                <span class="badge" id="maintenance-status-badge" style="background:#DCFCE7;color:#166534;padding:4px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;">
+                  Store Live
+                </span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:0.85rem;font-weight:600;color:var(--admin-text-main);">Maintenance Mode:</span>
+                <label class="switch-toggle" title="Toggle Maintenance Mode ON/OFF">
+                  <input type="checkbox" id="maintenance-mode-toggle">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <p style="font-size:0.85rem;color:var(--admin-text-secondary);margin-bottom:1.25rem;">
+              Turn on maintenance mode whenever you want to make changes to products, prices, or store pages. Regular visitors will see your custom maintenance screen with disconnected cable artwork and support contact info. As an administrator, you will always have access to this portal and can preview your store changes.
+            </p>
+
+            <form id="admin-maintenance-settings-form" onsubmit="return false;">
+              <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                <div class="form-group">
+                  <label class="admin-numbered-label" for="maintenance-headline-input">Maintenance Headline</label>
+                  <input type="text" class="admin-input" id="maintenance-headline-input" value="The site is currently down for maintenance" />
+                  <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                    Main announcement displayed to visitors.
+                  </small>
+                </div>
+
+                <div class="form-group">
+                  <label class="admin-numbered-label" for="maintenance-eta-input">Estimated Return / Uptime (Optional)</label>
+                  <input type="text" class="admin-input" id="maintenance-eta-input" placeholder="e.g. Back in 30 minutes / Today at 6:00 PM" />
+                  <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                    Shows an estimated time badge so customers know when to return.
+                  </small>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom:1rem;">
+                <label class="admin-numbered-label" for="maintenance-message-input">Maintenance Subtitle / Apology Message</label>
+                <textarea class="admin-input" id="maintenance-message-input" rows="2" style="resize:vertical;">We apologize for any inconveniences caused. We've almost done.</textarea>
+                <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                  Polite reassurance message below the main headline.
+                </small>
+              </div>
+
+              <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+                <div class="form-group">
+                  <label class="admin-numbered-label" for="maintenance-phone-input">Customer Support Phone for Maintenance</label>
+                  <input type="tel" class="admin-input" id="maintenance-phone-input" value="+91 8866130409" />
+                  <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                    Direct calling and WhatsApp support number shown on the maintenance footer.
+                  </small>
+                </div>
+
+                <div class="form-group" style="display:flex;flex-direction:column;justify-content:center;">
+                  <span style="font-size:0.8rem;color:var(--admin-text-secondary);">Artwork Preview:</span>
+                  <div style="font-size:0.8rem;color:#0284C7;margin-top:6px;display:flex;align-items:center;gap:6px;">
+                    <span>🔌 Responsive Vector Disconnected Cables (Blue &amp; Green)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                <button type="button" class="btn-terracotta" id="btn-save-maintenance-settings" style="padding:0.75rem 1.5rem;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                  </svg>
+                  <span>Save Maintenance Settings</span>
+                </button>
+
+                <button type="button" class="btn-admin-outline" id="btn-preview-maintenance" style="padding:0.75rem 1.25rem;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <span>Preview Maintenance Screen</span>
+                </button>
+
+                <span id="maintenance-save-status" style="font-size:0.8rem;color:#16A34A;display:none;font-weight:700;">✓ Settings Saved!</span>
               </div>
             </form>
           </div>

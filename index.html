@@ -24,6 +24,12 @@
 
   <!-- Razorpay Official Checkout SDK -->
   <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+
+  <!-- Store Maintenance Mode Active Interceptor -->
+  <script type="module">
+    import { initMaintenanceGuard } from './assets/js/maintenance.js?v=2.7.0';
+    initMaintenanceGuard();
+  </script>
 </head>
 <body>
 
