@@ -1,4 +1,5 @@
 /**
+/**
  * DEVSHREE — STORE MAINTENANCE MODE CONTROLLER
  * 
  * Allows store owner to put the website into maintenance mode while making changes.
@@ -193,7 +194,7 @@ export function generateMaintenanceHtml(config) {
   const safeMessage = escapeHTML(config.message || DEFAULT_MAINTENANCE_CONFIG.message);
   const safeEstTime = config.estimatedTime ? escapeHTML(config.estimatedTime) : '';
   const safePhone = escapeHTML(config.contactPhone || '+91 8866130409');
-  const safeEmail = config.contactEmail ? escapeHTML(config.contactEmail) : '';
+  const safeEmail = escapeHTML(config.contactEmail || 'support@devshree.in');
   const cleanPhoneLink = safePhone.replace(/[^\d+]/g, '');
 
   return `
@@ -723,3 +724,4 @@ export function injectMaintenanceStyles() {
 
   document.head.appendChild(styleEl);
 }
+

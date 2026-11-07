@@ -48,10 +48,31 @@ let pendingPostAuthAction = null;
 export function isAdminEmail(email) {
   if (!email || typeof email !== 'string') return false;
   const normalized = email.trim().toLowerCase();
-  return normalized.includes('admin') || 
+  const configuredAdminEmail = (getStorage('devshree_admin_email', 'admin@devshree.in') || 'admin@devshree.in').trim().toLowerCase();
+  return normalized === configuredAdminEmail ||
+         normalized.includes('admin') || 
          normalized.endsWith('@devshree.in') ||
          normalized === 'devshree@gmail.com' ||
          normalized === 'pilojparakavyan7@gmail.com';
+}
+
+/**
+ * Persist administrator session across sessionStorage and localStorage
+ * @param {string} email
+ */
+export function setAdminSessionStorage(email) {
+  if (typeof window === 'undefined') return;
+  const adminEmail = (email || 'admin@devshree.in').trim().toLowerCase();
+  const sessionData = {
+    email: adminEmail,
+    authenticated: true,
+    loggedInAt: new Date().toISOString()
+  };
+  try {
+    sessionStorage.setItem('devshree_admin_session_auth', JSON.stringify(sessionData));
+  } catch (_) {}
+  setStorage('devshree_admin_session_auth', sessionData);
+  setStorage('devshree_admin_session', sessionData);
 }
 
 /**
@@ -132,10 +153,14 @@ export async function registerCustomer(name, email, phone, password) {
       recordAuthSuccess(email);
 
       if (isAdmin) {
+        setAdminSessionStorage(email);
         showToast(`Admin account registered! Opening Devshree Admin Console...`, 'success');
-        setTimeout(() => {
-          window.location.href = 'admin.html';
-        }, 750);
+        const onAdminPage = typeof window !== 'undefined' && window.location && window.location.pathname.toLowerCase().includes('admin');
+        if (!onAdminPage) {
+          setTimeout(() => {
+            window.location.href = 'admin.html';
+          }, 750);
+        }
       } else {
         showToast(`Welcome to Devshree, ${name}! Your account is ready.`, 'success');
       }
@@ -160,10 +185,14 @@ export async function registerCustomer(name, email, phone, password) {
     notifyAuthChange(demoUser);
 
     if (isAdmin) {
+      setAdminSessionStorage(email);
       showToast(`Admin account registered (Demo Mode)! Opening Admin Console...`, 'success');
-      setTimeout(() => {
-        window.location.href = 'admin.html';
-      }, 750);
+      const onAdminPage = typeof window !== 'undefined' && window.location && window.location.pathname.toLowerCase().includes('admin');
+      if (!onAdminPage) {
+        setTimeout(() => {
+          window.location.href = 'admin.html';
+        }, 750);
+      }
     } else {
       showToast(`Account created (Demo Mode). Welcome, ${name}!`, 'success');
     }
@@ -218,8 +247,12 @@ export async function loginCustomer(email, password, suppressToast = false) {
         notifyAuthChange(userObj);
 
         if (userObj.role === 'admin') {
+          setAdminSessionStorage(normEmail);
           showToast(`Welcome back, Administrator! Opening Admin Console...`, 'success');
-          setTimeout(() => { window.location.href = 'admin.html'; }, 600);
+          const onAdminPage = typeof window !== 'undefined' && window.location && window.location.pathname.toLowerCase().includes('admin');
+          if (!onAdminPage) {
+            setTimeout(() => { window.location.href = 'admin.html'; }, 600);
+          }
         } else {
           showToast(`Welcome back, ${userObj.displayName}!`, 'success');
         }
@@ -240,10 +273,14 @@ export async function loginCustomer(email, password, suppressToast = false) {
 
       const isAdmin = await checkIsUserAdmin(user);
       if (isAdmin) {
+        setAdminSessionStorage(user.email || normEmail);
         showToast(`Welcome back, Administrator! Opening Admin Console...`, 'success');
-        setTimeout(() => {
-          window.location.href = 'admin.html';
-        }, 750);
+        const onAdminPage = typeof window !== 'undefined' && window.location && window.location.pathname.toLowerCase().includes('admin');
+        if (!onAdminPage) {
+          setTimeout(() => {
+            window.location.href = 'admin.html';
+          }, 750);
+        }
       } else {
         showToast(`Welcome back, ${user.displayName || normEmail}!`, 'success');
       }
@@ -259,11 +296,15 @@ export async function loginCustomer(email, password, suppressToast = false) {
           role: 'admin'
         };
         setStorage(LOCAL_USER_KEY, adminUser);
+        setAdminSessionStorage(normEmail);
         notifyAuthChange(adminUser);
         showToast(`Admin access verified! Opening Admin Console...`, 'success');
-        setTimeout(() => {
-          window.location.href = 'admin.html';
-        }, 600);
+        const onAdminPage = typeof window !== 'undefined' && window.location && window.location.pathname.toLowerCase().includes('admin');
+        if (!onAdminPage) {
+          setTimeout(() => {
+            window.location.href = 'admin.html';
+          }, 600);
+        }
         return adminUser;
       }
       // Record failed attempt and compute exponential backoff
@@ -290,10 +331,14 @@ export async function loginCustomer(email, password, suppressToast = false) {
     notifyAuthChange(demoUser);
 
     if (isAdmin) {
+      setAdminSessionStorage(normEmail);
       showToast(`Signed in as Admin (Demo Mode)! Opening Admin Console...`, 'success');
-      setTimeout(() => {
-        window.location.href = 'admin.html';
-      }, 750);
+      const onAdminPage = typeof window !== 'undefined' && window.location && window.location.pathname.toLowerCase().includes('admin');
+      if (!onAdminPage) {
+        setTimeout(() => {
+          window.location.href = 'admin.html';
+        }, 750);
+      }
     } else {
       showToast(`Signed in as ${demoUser.displayName} (Demo Mode).`, 'success');
     }
@@ -330,10 +375,14 @@ export async function loginWithGoogle() {
       }
 
       if (isAdmin) {
+        setAdminSessionStorage(user.email);
         showToast(`Signed in as Admin with Google! Opening Admin Console...`, 'success');
-        setTimeout(() => {
-          window.location.href = 'admin.html';
-        }, 750);
+        const onAdminPage = typeof window !== 'undefined' && window.location && window.location.pathname.toLowerCase().includes('admin');
+        if (!onAdminPage) {
+          setTimeout(() => {
+            window.location.href = 'admin.html';
+          }, 750);
+        }
       } else {
         showToast(`Signed in with Google as ${user.displayName || user.email}!`, 'success');
       }
@@ -356,6 +405,8 @@ export async function logoutCustomer() {
   // 1. Purge all local user storage
   try {
     localStorage.removeItem(LOCAL_USER_KEY);
+    localStorage.removeItem('devshree_admin_session_auth');
+    localStorage.removeItem('devshree_admin_session');
   } catch (e) {
     console.warn('[Devshree Auth] Error clearing localStorage:', e);
   }

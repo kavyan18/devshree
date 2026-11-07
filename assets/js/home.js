@@ -1653,12 +1653,9 @@ function initAuthUI() {
       const user = await loginCustomer(email, password);
       closeAuthModal();
       loginForm.reset();
-      const isAdmin = user && (user.role === 'admin' || (user.email && (user.email.toLowerCase().includes('admin') || user.email.toLowerCase() === 'devshree@gmail.com')));
+      const isAdmin = user && (user.role === 'admin' || isAdminEmail(user.email));
       if (isAdmin) {
         showToast('Admin access verified! Opening Admin Console...', 'success');
-        setTimeout(() => {
-          window.location.href = 'admin.html';
-        }, 500);
       }
     } catch (err) {
       console.warn('[Devshree] Login attempt failed:', err);
