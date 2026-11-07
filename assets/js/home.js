@@ -6,7 +6,7 @@
 
 import { MOCK_CATEGORIES, MOCK_PRODUCTS, STORE_INFO } from './mock-data.js';
 import { formatINR, calculateDiscount, escapeHTML, showToast, getStorage, setStorage } from './utils.js';
-import { renderCustomerFeedback, initFeedbackSystem } from './feedback.js';
+import { renderCustomerFeedback, initFeedbackSystem, openFeedbackModal } from './feedback.js';
 import { 
   addToCart, 
   getCart, 
@@ -744,12 +744,22 @@ function createProductCardHtml(product) {
           </a>
         </h3>
 
-        <div class="product-rating">
-          <div class="rating-stars" aria-label="${product.rating} out of 5 stars">
-            ${renderStars(product.rating)}
-          </div>
-          <span class="rating-score">${product.rating}</span>
-          <span class="rating-count">(${product.reviewCount})</span>
+        <div class="product-rating product-rating-clean" data-product-rating-box="${product.id}">
+          ${(product.reviewCount && product.reviewCount > 0 && product.rating > 0) ? `
+            <div class="rating-stars" aria-label="${product.rating} out of 5 stars">
+              ${renderStars(product.rating)}
+            </div>
+            <span class="rating-score">${Number(product.rating).toFixed(1)}</span>
+            <span class="rating-count">(${product.reviewCount})</span>
+            <button type="button" class="btn-product-review-trigger" data-review-product-id="${product.id}" data-review-product-name="${escapeHTML(product.name)}" title="Add your review">
+              + Review
+            </button>
+          ` : `
+            <span class="rating-no-reviews">☆ No reviews yet</span>
+            <button type="button" class="btn-product-review-trigger" data-review-product-id="${product.id}" data-review-product-name="${escapeHTML(product.name)}" title="Be the first to review this product">
+              ✍️ Review
+            </button>
+          `}
         </div>
 
         <div class="product-price-block">
@@ -884,6 +894,16 @@ function bindProductCardEvents(container) {
       e.stopPropagation();
       const pid = btn.dataset.productId;
       if (pid) openQuickView(pid);
+    });
+  });
+
+  container.querySelectorAll('.btn-product-review-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const pid = btn.dataset.reviewProductId;
+      const pname = btn.dataset.reviewProductName || '';
+      openFeedbackModal(pid, pname);
     });
   });
 }
@@ -1128,9 +1148,16 @@ async function openQuickView(productId) {
 
         <div class="modal-rating-stock-row">
           <div class="modal-stars-rating">
-            <div class="rating-stars">${renderStars(product.rating || 4.8)}</div>
-            <span class="rating-score">${product.rating || 4.8}</span>
-            <span class="rating-count">(${product.reviewCount || 24} verified buyer reviews)</span>
+            ${(product.reviewCount && product.reviewCount > 0 && product.rating > 0) ? `
+              <div class="rating-stars">${renderStars(product.rating)}</div>
+              <span class="rating-score">${Number(product.rating).toFixed(1)}</span>
+              <span class="rating-count">(${product.reviewCount} customer review${product.reviewCount === 1 ? '' : 's'})</span>
+            ` : `
+              <span class="rating-no-reviews" style="color:var(--color-text-secondary); font-size:0.85rem;">☆ No customer reviews yet</span>
+            `}
+            <button type="button" class="btn btn-outline btn-xs btn-modal-write-review" data-prod-id="${product.id}" data-prod-name="${escapeHTML(product.name)}" style="margin-left:8px; padding:3px 10px; font-size:0.78rem; border-radius:12px; cursor:pointer;">
+              ✍️ Review Product
+            </button>
           </div>
           <div class="modal-stock-indicator ${stockLimit <= 5 ? 'low' : 'in'}">
             <span class="stock-pulse-dot"></span>
@@ -1245,6 +1272,13 @@ async function openQuickView(productId) {
     modal.classList.remove('active');
     document.body.style.overflow = '';
     handleInstantCheckout();
+  });
+
+  body.querySelector('.btn-modal-write-review')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    openFeedbackModal(product.id, product.name);
   });
 
   const modalWishBtn = document.getElementById('modal-wishlist-toggle');
@@ -1494,6 +1528,28 @@ function initAuthUI() {
 
   window.addEventListener('devshree:auth-state-changed', (e) => {
     updateAccountModalProfile(e.detail?.user || null);
+  });
+
+  window.addEventListener('devshree:review-submitted', (e) => {
+    const { productId, rating, reviewCount } = e.detail || {};
+    if (!productId) return;
+    document.querySelectorAll(`[data-product-rating-box="${productId}"]`).forEach(box => {
+      box.innerHTML = `
+        <div class="rating-stars" aria-label="${rating} out of 5 stars">
+          ${renderStars(rating)}
+        </div>
+        <span class="rating-score">${Number(rating).toFixed(1)}</span>
+        <span class="rating-count">(${reviewCount})</span>
+        <button type="button" class="btn-product-review-trigger" data-review-product-id="${productId}" data-review-product-name="" title="Add your review">
+          + Review
+        </button>
+      `;
+      box.querySelector('.btn-product-review-trigger')?.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        openFeedbackModal(productId);
+      });
+    });
   });
 
   // Account button in header

@@ -287,10 +287,13 @@
 
         <!-- Rating & Stock Strip -->
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-bottom:1px solid var(--color-border); padding-bottom:1rem;">
-          <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem;">
-            <span style="color:#F59E0B; font-size:1.1rem;">★★★★★</span>
-            <strong id="pdp-rating">4.8</strong>
-            <span style="color:var(--color-text-secondary); font-size:0.85rem;" id="pdp-review-count">(Customer Feedback)</span>
+          <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem;" id="pdp-rating-strip">
+            <span id="pdp-stars-display" style="color:#F59E0B; font-size:1.1rem;">☆☆☆☆☆</span>
+            <strong id="pdp-rating" style="display:none;">0.0</strong>
+            <span style="color:var(--color-text-secondary); font-size:0.85rem;" id="pdp-review-count">No customer reviews yet</span>
+            <button type="button" class="btn btn-outline btn-xs" id="pdp-top-write-review-btn" style="margin-left:6px; padding:3px 10px; font-size:0.78rem; border-radius:12px; cursor:pointer;">
+              ✍️ Write Review
+            </button>
           </div>
 
           <div style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600; color:#047857; background:#ECFDF5; padding:4px 10px; border-radius:20px;">
@@ -618,6 +621,45 @@
         </tr>
       `).join('');
 
+      // Real Customer Rating & Reviews
+      const reviewCount = parseInt(p.reviewCount, 10) || 0;
+      const ratingVal = parseFloat(p.rating) || 0;
+      const starsDisplay = document.getElementById('pdp-stars-display');
+      const ratingEl = document.getElementById('pdp-rating');
+      const reviewCountEl = document.getElementById('pdp-review-count');
+
+      if (reviewCount > 0 && ratingVal > 0) {
+        let starsStr = '';
+        const rounded = Math.round(ratingVal);
+        for (let i = 1; i <= 5; i++) {
+          starsStr += i <= rounded ? '★' : '☆';
+        }
+        if (starsDisplay) starsDisplay.textContent = starsStr;
+        if (ratingEl) {
+          ratingEl.textContent = ratingVal.toFixed(1);
+          ratingEl.style.display = 'inline';
+        }
+        if (reviewCountEl) {
+          reviewCountEl.textContent = `(${reviewCount} Customer Review${reviewCount === 1 ? '' : 's'})`;
+        }
+      } else {
+        if (starsDisplay) starsDisplay.textContent = '☆☆☆☆☆';
+        if (ratingEl) {
+          ratingEl.textContent = '';
+          ratingEl.style.display = 'none';
+        }
+        if (reviewCountEl) {
+          reviewCountEl.textContent = 'No customer reviews yet';
+        }
+      }
+
+      const topWriteBtn = document.getElementById('pdp-top-write-review-btn');
+      if (topWriteBtn) {
+        topWriteBtn.onclick = () => {
+          openFeedbackModal(p.id, p.name);
+        };
+      }
+
       // WhatsApp Share button
       document.getElementById('btn-share-whatsapp').onclick = () => {
         const text = `Take a look at this ${p.name} on Devshree Hardware: ${window.location.href}`;
@@ -632,6 +674,15 @@
 
       updateCartBadge();
     }
+
+    window.addEventListener('devshree:review-submitted', (e) => {
+      if (currentProduct && String(e.detail?.productId) === String(currentProduct.id)) {
+        currentProduct.rating = e.detail.rating;
+        currentProduct.reviewCount = e.detail.reviewCount;
+        renderPDP(currentProduct);
+        renderCustomerFeedback('pdp-reviews-list', currentProduct.id);
+      }
+    });
 
     function formatCatName(catId) {
       switch(catId) {

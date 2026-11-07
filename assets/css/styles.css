@@ -1862,6 +1862,39 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-text-secondary);
 }
 
+.product-rating.product-rating-clean {
+  justify-content: space-between;
+}
+
+.rating-no-reviews {
+  font-size: 0.74rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.btn-product-review-trigger {
+  background: #FFF;
+  border: 1px dashed var(--color-primary);
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  line-height: 1.2;
+}
+
+.btn-product-review-trigger:hover {
+  background: var(--color-primary-light);
+  border-style: solid;
+  transform: translateY(-1px);
+}
+
 .product-price-block {
   display: flex;
   align-items: baseline;

@@ -142,7 +142,83 @@ export async function submitCustomerFeedback(formData) {
   existing.unshift(feedbackRecord);
   setStorage(STORAGE_FEEDBACK_KEY, existing);
 
+  // 6. If feedback is for a specific product, update product's real rating & review count
+  if (cleanData.productId) {
+    try {
+      const allForProduct = await fetchCustomerFeedback(cleanData.productId);
+      const { averageRating, reviewCount } = computeProductRating(allForProduct, cleanData.productId);
+
+      // Update in Cloud Firestore
+      if (typeof window !== 'undefined') {
+        try {
+          const fb = await import('./firebase-config.js');
+          if (fb.db && fb.doc && fb.updateDoc) {
+            await fb.updateDoc(fb.doc(fb.db, 'products', cleanData.productId), {
+              rating: averageRating,
+              reviewCount: reviewCount,
+              updatedAt: fb.serverTimestamp ? fb.serverTimestamp() : new Date().toISOString()
+            });
+            console.log(`[Feedback] Real rating updated for ${cleanData.productId}: ${averageRating}★ (${reviewCount} reviews)`);
+          }
+        } catch (dbErr) {
+          console.warn('[Feedback] Could not update product rating in Firestore:', dbErr);
+        }
+      }
+
+      // Update local products cache
+      const cachedProducts = getStorage('devshree_cached_products', []);
+      if (Array.isArray(cachedProducts)) {
+        const prodMatch = cachedProducts.find(p => String(p.id) === String(cleanData.productId));
+        if (prodMatch) {
+          prodMatch.rating = averageRating;
+          prodMatch.reviewCount = reviewCount;
+          setStorage('devshree_cached_products', cachedProducts);
+        }
+      }
+
+      // Dispatch real-time event for UI components to update immediately
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('devshree:review-submitted', {
+          detail: {
+            productId: cleanData.productId,
+            rating: averageRating,
+            reviewCount: reviewCount,
+            feedback: feedbackRecord
+          }
+        }));
+      }
+    } catch (calcErr) {
+      console.warn('[Feedback] Failed recalculating product rating:', calcErr);
+    }
+  }
+
   return feedbackRecord;
+}
+
+/**
+ * Compute real average star rating and review count from authentic customer feedback
+ * @param {Array} feedbackList
+ * @param {string|null} [productId=null]
+ * @returns {{ averageRating: number, reviewCount: number }}
+ */
+export function computeProductRating(feedbackList = [], productId = null) {
+  if (!Array.isArray(feedbackList) || feedbackList.length === 0) {
+    return { averageRating: 0, reviewCount: 0 };
+  }
+  const matching = productId 
+    ? feedbackList.filter(f => String(f.productId) === String(productId))
+    : feedbackList;
+
+  if (matching.length === 0) {
+    return { averageRating: 0, reviewCount: 0 };
+  }
+
+  const total = matching.reduce((sum, f) => sum + (parseInt(f.stars, 10) || 5), 0);
+  const avg = Number((total / matching.length).toFixed(1));
+  return {
+    averageRating: avg,
+    reviewCount: matching.length
+  };
 }
 
 /**

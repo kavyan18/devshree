@@ -588,8 +588,8 @@ function initProductForm() {
           isBestseller,
           isNew,
           isFeatured,
-          rating: 4.8,
-          reviewCount: 1,
+          rating: 0,
+          reviewCount: 0,
           createdAt: new Date().toISOString()
         };
 

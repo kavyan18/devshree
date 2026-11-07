@@ -19,7 +19,7 @@ import {
   validateOrReject,
   ValidationError
 } from '../lib/schema-validator.js';
-import { renderRatingStars } from '../assets/js/feedback.js';
+import { renderRatingStars, computeProductRating } from '../assets/js/feedback.js';
 
 let passed = 0;
 let failed = 0;
@@ -129,6 +129,23 @@ async function runTests() {
   assert(stars3.split('empty').length - 1 === 2, 'Renders exactly 2 empty star elements for rating 3');
 
   // --------------------------------------------------------------------------
+  console.log('\n--- 4. AUTHENTIC CUSTOMER RATING CALCULATION (NO DEMO RATINGS) ---');
+  // --------------------------------------------------------------------------
+  const emptyRes = computeProductRating([], 'prod-test');
+  assertEqual(emptyRes.averageRating, 0, 'Zero rating when no reviews exist');
+  assertEqual(emptyRes.reviewCount, 0, 'Zero review count when no reviews exist');
+
+  const sampleReviews = [
+    { productId: 'prod-tandam-01', stars: 5, comment: 'Exceptional finish and very sturdy.' },
+    { productId: 'prod-tandam-01', stars: 4, comment: 'Very smooth movement, easy to fit.' },
+    { productId: 'other-prod', stars: 1, comment: 'Wrong item received' }
+  ];
+
+  const tandemRes = computeProductRating(sampleReviews, 'prod-tandam-01');
+  assertEqual(tandemRes.averageRating, 4.5, 'Computes accurate average rating from customer reviews (5 + 4 = 4.5)');
+  assertEqual(tandemRes.reviewCount, 2, 'Counts only genuine reviews for specific product');
+
+  // --------------------------------------------------------------------------
   console.log('\n======================================================');
   console.log(`🏁 TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);
   console.log('======================================================\n');
@@ -139,3 +156,4 @@ async function runTests() {
 }
 
 runTests();
+
