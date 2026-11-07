@@ -511,11 +511,15 @@
     import { addToCart, getCartCount, getCartTotals } from './assets/js/cart.js';
     import { fetchProducts } from './assets/js/products.js';
     import { renderCustomerFeedback, openFeedbackModal, initFeedbackSystem } from './assets/js/feedback.js';
+    import { initMaintenanceGuard } from './assets/js/maintenance.js?v=2.7.0';
 
     let currentProduct = null;
     let selectedQuantity = 1;
 
     async function loadPDP() {
+      const isMaint = await initMaintenanceGuard();
+      if (isMaint) return;
+
       const params = new URLSearchParams(window.location.search);
       const prodId = params.get('id');
 

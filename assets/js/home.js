@@ -50,6 +50,7 @@ import {
   isCatalogSeeded 
 } from './products.js';
 import { setupOrderNotificationsListener } from './order-notifications.js';
+import { initMaintenanceGuard } from './maintenance.js';
 
 /**
  * Helper to get all available products combining localStorage cache (from admin / firestore) and mock data
@@ -99,7 +100,12 @@ let currentCatalogOptions = {
   inStockOnly: false
 };
 
-function initDevshreeHome() {
+async function initDevshreeHome() {
+  const isMaintenanceBlocked = await initMaintenanceGuard();
+  if (isMaintenanceBlocked) {
+    return;
+  }
+
   checkCatalogSyncUrl();
   initHeaderAndNavigation();
   initSearchUI();

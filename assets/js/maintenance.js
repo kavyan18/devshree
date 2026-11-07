@@ -1,5 +1,4 @@
 /**
-/**
  * DEVSHREE — STORE MAINTENANCE MODE CONTROLLER
  * 
  * Allows store owner to put the website into maintenance mode while making changes.
@@ -194,12 +193,34 @@ export function generateMaintenanceHtml(config) {
   const safeMessage = escapeHTML(config.message || DEFAULT_MAINTENANCE_CONFIG.message);
   const safeEstTime = config.estimatedTime ? escapeHTML(config.estimatedTime) : '';
   const safePhone = escapeHTML(config.contactPhone || '+91 8866130409');
-  const safeEmail = escapeHTML(config.contactEmail || 'support@devshree.in');
+  const safeEmail = config.contactEmail ? escapeHTML(config.contactEmail) : '';
   const cleanPhoneLink = safePhone.replace(/[^\d+]/g, '');
+  const isAdmin = checkIsAdminActive();
 
   return `
     <div class="maintenance-page-wrapper" id="devshree-maintenance-root">
       <div class="maintenance-card">
+        ${isAdmin ? `
+          <!-- Administrator Quick Control Bar -->
+          <div class="maintenance-admin-toolbar" id="maintenance-admin-quick-bar">
+            <div class="maintenance-admin-toolbar-text">
+              <span class="maintenance-admin-dot"></span>
+              <span><strong>Administrator Mode:</strong> Store Maintenance is currently active.</span>
+            </div>
+            <div class="maintenance-admin-toolbar-btns">
+              <a href="index.html?admin_preview=1" class="maintenance-admin-action-btn preview-btn" title="View live storefront as administrator">
+                👁️ Preview Live Store
+              </a>
+              <button type="button" class="maintenance-admin-action-btn disable-btn" id="btn-quick-disable-maintenance" title="Turn off maintenance mode now">
+                🔓 Turn OFF Maintenance
+              </button>
+              <a href="admin.html" class="maintenance-admin-action-btn admin-btn" title="Open administrator console">
+                ⚙️ Admin Console
+              </a>
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Top Brand Header -->
         <header class="maintenance-header">
           <div class="maintenance-brand">
@@ -272,17 +293,87 @@ export function generateMaintenanceHtml(config) {
 }
 
 /**
+ * Safely runs a callback once the DOM body is ready
+ * @param {Function} fn
+ */
+function ensureDOMReady(fn) {
+  if (typeof document === 'undefined') return;
+  if (document.body) {
+    fn();
+  } else {
+    document.addEventListener('DOMContentLoaded', fn, { once: true });
+  }
+}
+
+/**
  * Checks if current user has an active, verified admin session
  * @returns {boolean}
  */
 export function checkIsAdminActive() {
   try {
     const authState = getStorage('devshree_admin_session', null);
-    if (authState && authState.authenticated === true) {
-      return true;
+    if (authState && authState.authenticated === true) return true;
+  } catch (_) {}
+
+  try {
+    const authSess = getStorage('devshree_admin_session_auth', null);
+    if (authSess && authSess.email) return true;
+  } catch (_) {}
+
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      const sess = sessionStorage.getItem('devshree_admin_session_auth');
+      if (sess && JSON.parse(sess)?.email) return true;
     }
   } catch (_) {}
+
+  try {
+    const user = getStorage('devshree_current_user', null);
+    if (user && (user.role === 'admin' || (user.email && user.email.toLowerCase().includes('admin')))) return true;
+  } catch (_) {}
+
   return false;
+}
+
+/**
+ * Real-time listener for Cloud Firestore store_config changes
+ * Allows immediate, sub-second sync across all devices
+ * @param {Function} onUpdate
+ * @returns {Function} unsubscribe function
+ */
+export function listenRemoteMaintenanceConfig(onUpdate) {
+  if (typeof window === 'undefined') return () => {};
+  let unsub = () => {};
+
+  import('./firebase-config.js').then(fb => {
+    if (fb.db && fb.doc && fb.onSnapshot) {
+      try {
+        const docRef = fb.doc(fb.db, 'settings', 'store_config');
+        unsub = fb.onSnapshot(docRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            let config = getMaintenanceConfig();
+            if (data && typeof data.maintenance === 'object') {
+              config = { ...config, ...data.maintenance };
+            } else if (typeof data.maintenanceMode === 'boolean') {
+              config.enabled = data.maintenanceMode;
+              if (data.maintenanceHeadline) config.headline = data.maintenanceHeadline;
+              if (data.maintenanceMessage) config.message = data.maintenanceMessage;
+              if (data.maintenanceEstimatedTime) config.estimatedTime = data.maintenanceEstimatedTime;
+            }
+            setStorage(MAINTENANCE_STORAGE_KEY, config);
+            if (onUpdate) onUpdate(config);
+          }
+        }, (err) => {
+          console.warn('[Maintenance] Firestore realtime notice:', err);
+        });
+      } catch (e) {
+        console.warn('[Maintenance] Realtime setup error:', e);
+      }
+    }
+  }).catch(() => {});
+
+  return () => { try { unsub(); } catch (_) {} };
 }
 
 /**
@@ -299,29 +390,58 @@ export async function initMaintenanceGuard() {
     return false;
   }
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdminPreview = urlParams.get('admin_preview') === '1' || urlParams.get('preview') === 'store';
+
   // 1. Initial check with local cache for instant render without flash
   let config = getMaintenanceConfig();
 
-  // 2. Fetch remote config in background / async
-  fetchRemoteMaintenanceConfig().then(remoteConfig => {
-    if (remoteConfig.enabled !== config.enabled) {
-      window.location.reload();
+  if (config.enabled) {
+    if (checkIsAdminActive() && isAdminPreview) {
+      ensureDOMReady(() => renderAdminMaintenanceModeBanner(config));
+      return false;
+    }
+    ensureDOMReady(() => renderMaintenanceScreen(config));
+  }
+
+  // 2. Real-time Cloud Firestore synchronization across devices
+  listenRemoteMaintenanceConfig((fresh) => {
+    if (!fresh) return;
+    const wasEnabled = config.enabled;
+    config = fresh;
+
+    if (fresh.enabled) {
+      if (checkIsAdminActive() && isAdminPreview) {
+        ensureDOMReady(() => renderAdminMaintenanceModeBanner(fresh));
+      } else {
+        ensureDOMReady(() => renderMaintenanceScreen(fresh));
+      }
+    } else if (wasEnabled && !fresh.enabled) {
+      // Maintenance turned OFF! If on maintenance screen, restore live store!
+      if (document.getElementById('devshree-maintenance-root')) {
+        window.location.href = 'index.html';
+      } else {
+        const bar = document.getElementById('devshree-admin-maintenance-bar');
+        if (bar) bar.remove();
+      }
+    }
+  });
+
+  // Background fetch to guarantee cache sync
+  fetchRemoteMaintenanceConfig().then(fresh => {
+    if (fresh && fresh.enabled !== config.enabled) {
+      config = fresh;
+      if (fresh.enabled) {
+        if (checkIsAdminActive() && isAdminPreview) {
+          ensureDOMReady(() => renderAdminMaintenanceModeBanner(fresh));
+        } else {
+          ensureDOMReady(() => renderMaintenanceScreen(fresh));
+        }
+      }
     }
   }).catch(() => {});
 
-  if (!config.enabled) {
-    return false;
-  }
-
-  // If visitor is verified admin, allow access but display top admin banner
-  if (checkIsAdminActive()) {
-    renderAdminMaintenanceModeBanner(config);
-    return false;
-  }
-
-  // Regular Visitor: Intercept and render Maintenance Screen
-  renderMaintenanceScreen(config);
-  return true;
+  return Boolean(config.enabled && !(checkIsAdminActive() && isAdminPreview));
 }
 
 /**
@@ -329,17 +449,30 @@ export async function initMaintenanceGuard() {
  * @param {Object} config
  */
 function renderMaintenanceScreen(config) {
-  document.title = `${config.headline || 'Site Under Maintenance'} — DEVSHREE Hardware`;
+  if (typeof document === 'undefined') return;
 
-  // Inject maintenance styles if not already present
+  document.title = `${config.headline || 'Site Under Maintenance'} — DEVSHREE Hardware`;
   injectMaintenanceStyles();
 
-  // Replace body contents cleanly
+  if (!document.body) {
+    ensureDOMReady(() => renderMaintenanceScreen(config));
+    return;
+  }
+
   const existingRoot = document.getElementById('devshree-maintenance-root');
   if (!existingRoot) {
     document.body.innerHTML = generateMaintenanceHtml(config);
     document.body.classList.add('in-maintenance-mode');
   }
+
+  // Bind quick turn off button on the maintenance screen
+  document.getElementById('btn-quick-disable-maintenance')?.addEventListener('click', async () => {
+    if (confirm('Turn OFF maintenance mode now and make store live for all visitors?')) {
+      await setMaintenanceMode(false);
+      showToast('Maintenance mode turned OFF. Store is now live!', 'success');
+      setTimeout(() => { window.location.href = 'index.html'; }, 300);
+    }
+  });
 }
 
 /**
@@ -426,6 +559,76 @@ export function injectMaintenanceStyles() {
     @keyframes fadeInScale {
       from { opacity: 0; transform: scale(0.97) translateY(10px); }
       to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .maintenance-admin-toolbar {
+      background: #7C2D12;
+      color: #FFFFFF;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .maintenance-admin-toolbar-text {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .maintenance-admin-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #FB923C;
+      box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.35);
+      animation: pulseAlert 1.5s infinite;
+      display: inline-block;
+    }
+
+    .maintenance-admin-toolbar-btns {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .maintenance-admin-action-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .maintenance-admin-action-btn.preview-btn {
+      background: #EA580C;
+      color: #FFFFFF;
+    }
+    .maintenance-admin-action-btn.preview-btn:hover {
+      background: #C2410C;
+    }
+
+    .maintenance-admin-action-btn.disable-btn {
+      background: #FFFFFF;
+      color: #7C2D12;
+    }
+    .maintenance-admin-action-btn.disable-btn:hover {
+      background: #FEE2E2;
+    }
+
+    .maintenance-admin-action-btn.admin-btn {
+      background: rgba(255,255,255,0.18);
+      color: #FFFFFF;
+    }
+    .maintenance-admin-action-btn.admin-btn:hover {
+      background: rgba(255,255,255,0.3);
     }
 
     .maintenance-header {
