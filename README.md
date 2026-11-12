@@ -152,6 +152,28 @@ Right-click on `index.html` in VS Code and select **"Open with Live Server"**.
 
 ---
 
+### Stage 6: Architectural Hardware Expansion, PDF Lookbooks, and PWA (Completed)
+- [x] **Promotional Autoscrolling Offers Carousel**:
+  - Live animated hero banner highlighting festive promotions, machine discounts, and contractor packs with smooth continuous autoscrolling.
+  - Fully customizable via the Admin Console with instant live synchronization.
+- [x] **8 Core Architectural Hardware Categories**:
+  - Plywood & Blockboard; MDF, HDHMR & PVC Boards; Laminates & Liners; Panels & Mouldings; Adhesive; Kitchen Hardware; Cabinet Hardware; Nails, Screws & Accessories.
+- [x] **Regular Hardware Deals Section**:
+  - Prominent homepage shelf for trade discounts with admin badge toggle (`#prod-is-regular-deal`).
+- [x] **PDF Catalogs & Digital Lookbooks**:
+  - Official shade cards and specification PDFs (Action Tesa, Greenlam, Pidilite, Godrej, CenturyLaminates).
+  - Built-in in-browser PDF modal viewer, direct download, and one-click WhatsApp client sharing.
+  - Admin PDF catalog management with instant file size and cover preview calculation.
+- [x] **Instant 0ms Image Upload & Fallback Engine**:
+  - Instant client preview with `URL.createObjectURL`, automatic input clearing, and direct URL paste input (`#prod-image-url`).
+- [x] **Progressive Web App (PWA) & Schema.org SEO**:
+  - `manifest.json` for home screen installability on Android and iOS.
+  - `HardwareStore` Schema.org JSON-LD microdata for Google rich snippet display.
+- [x] **Pincode Delivery & Service Estimator**:
+  - Interactive 6-digit Indian PIN code checker with next-day Gujarat dispatch and national surface courier estimates.
+
+---
+
 ## 🔑 How to Configure Environment Variables & Real Firebase
 
 1. Copy `.env.example` to `.env`:

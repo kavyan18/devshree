@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title id="page-title">Product Details — DEVSHREE Hardware &amp; Trade Supplies</title>
   <meta name="description" id="page-meta-desc" content="Detailed technical specifications, trade pricing, and verified contractor reviews for Devshree hardware products." />
+  <meta name="theme-color" content="#C2623B" />
+  <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" href="assets/images/logo.png" />
 
   <!-- Google Fonts -->
@@ -389,6 +391,24 @@
           </div>
         </div>
 
+        <!-- Pincode Delivery & Service Estimator -->
+        <div class="pdp-delivery-check-card" style="background:#FAF8F5;border:1px solid #ECE7DF;border-radius:var(--radius-md);padding:1.1rem;margin-top:1rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.55rem;">
+            <span style="font-size:0.8rem;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.04em;display:flex;align-items:center;gap:6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+              Delivery &amp; Service Check
+            </span>
+            <span style="font-size:0.75rem;color:#16A34A;font-weight:700;">● Express Dispatch</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" id="pdp-pincode-input" placeholder="Enter 6-digit PIN code (e.g. 380015)" maxlength="6" style="flex:1;padding:0.55rem 0.85rem;border:1px solid #D6CFC4;border-radius:6px;font-size:0.85rem;font-family:var(--font-mono);" />
+            <button type="button" class="btn btn-outline btn-sm" id="pdp-btn-check-pin" style="font-weight:700;padding:0.55rem 1rem;">
+              Check
+            </button>
+          </div>
+          <div id="pdp-pincode-result" style="margin-top:0.6rem;font-size:0.825rem;display:none;line-height:1.5;"></div>
+        </div>
+
         <!-- Product Overview / Description -->
         <div style="border-top:1px solid var(--color-border); padding-top:1.5rem;">
           <h3 style="font-size:1.15rem; font-weight:700; color:var(--color-text-primary); margin-bottom:0.75rem;">
@@ -759,9 +779,43 @@
       window.location.href = 'index.html';
     });
 
+    function initPdpPincodeChecker() {
+      const pinInput = document.getElementById('pdp-pincode-input');
+      const checkBtn = document.getElementById('pdp-btn-check-pin');
+      const resultBox = document.getElementById('pdp-pincode-result');
+
+      function evaluatePincode() {
+        const pin = (pinInput?.value || '').trim();
+        if (!/^\d{6}$/.test(pin)) {
+          if (resultBox) {
+            resultBox.style.display = 'block';
+            resultBox.style.color = '#DC2626';
+            resultBox.innerHTML = '⚠️ Please enter a valid 6-digit Indian PIN code.';
+          }
+          return;
+        }
+        const isGujarat = pin.startsWith('38') || pin.startsWith('39') || pin.startsWith('36');
+        if (resultBox) {
+          resultBox.style.display = 'block';
+          resultBox.style.color = '#15803D';
+          if (isGujarat) {
+            resultBox.innerHTML = `<strong>✓ Next-Day Dispatch:</strong> Available for PIN <strong>${pin}</strong> (Express Ahmedabad / Gujarat transit). Free shipping on orders above ₹1,999.`;
+          } else {
+            resultBox.innerHTML = `<strong>✓ Standard Dispatch:</strong> Available for PIN <strong>${pin}</strong> (Delivered in 3–5 business days via surface courier).`;
+          }
+        }
+      }
+
+      checkBtn?.addEventListener('click', evaluatePincode);
+      pinInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') evaluatePincode();
+      });
+    }
+
     function initPDPPage() {
       loadPDP();
       initFeedbackSystem();
+      initPdpPincodeChecker();
     }
 
     if (document.readyState === 'loading') {
