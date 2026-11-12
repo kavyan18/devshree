@@ -536,7 +536,8 @@
         allProducts = [];
       }
 
-      currentProduct = allProducts.find(p => String(p.id) === String(prodId));
+      currentProduct = allProducts.find(p => String(p.id) === String(prodId)) ||
+                       MOCK_PRODUCTS.find(p => String(p.id) === String(prodId));
 
       if (!currentProduct) {
         showNotFound();

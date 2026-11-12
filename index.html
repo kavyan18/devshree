@@ -71,35 +71,76 @@
           <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" class="brand-logo-img" />
         </a>
 
-        <!-- Desktop Navigation Bar -->
-        <nav class="header-nav" aria-label="Primary Navigation">
+        <!-- Header Integrated Search Bar (Categories Removed from Header, Replaced with Search Bar) -->
+        <div class="header-search-wrapper" id="header-search-wrapper">
+          <form class="search-master-form header-search-bar-form" id="master-search-form" role="search" autocomplete="off">
+            <span class="search-lens-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+
+            <input 
+              type="search" 
+              id="master-search-input" 
+              name="q" 
+              class="search-master-input" 
+              placeholder="Search products, brands (Havells, Astral, Asian Paints), or SKU..." 
+              aria-label="Search by product name, brand, or SKU"
+              aria-autocomplete="list"
+              aria-controls="search-dropdown-panel"
+              aria-expanded="false"
+              spellcheck="false"
+            />
+
+            <!-- Clear text button (✕) -->
+            <button 
+              type="button" 
+              class="search-clear-btn" 
+              id="search-clear-btn" 
+              aria-label="Clear search input" 
+              title="Clear text"
+              style="display:none;"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+
+            <!-- Quick shortcut badge (Ctrl+K) -->
+            <div class="search-shortcut-badge" title="Press Ctrl+K or / to search" aria-hidden="true">
+              <span>⌘K</span>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="search-master-submit-btn" id="master-search-submit-btn" aria-label="Execute search">
+              <span>Search</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </form>
+
+          <!-- Live Instant Suggestions & Discovery Dropdown -->
+          <div class="search-dropdown-panel header-search-dropdown" id="search-dropdown-panel" role="region" aria-label="Search suggestions" style="display:none;">
+            <!-- Dynamically populated by initSearchUI() in home.js -->
+          </div>
+        </div>
+
+        <!-- Clean Desktop Nav (Categories removed, essential links retained) -->
+        <nav class="header-nav header-nav-compact" aria-label="Primary Navigation">
           <a href="index.html" class="nav-link active">Home</a>
-          <a href="#bestsellers-section" class="nav-link has-caret">Shop</a>
-          <a href="#bestsellers-section" class="nav-link" data-category-filter="cat-hardware">Hardware</a>
-          <a href="#bestsellers-section" class="nav-link" data-category-filter="cat-electrical">Electrical</a>
-          <a href="#bestsellers-section" class="nav-link" data-category-filter="cat-plumbing">Plumbing</a>
-          <a href="#bestsellers-section" class="nav-link" data-category-filter="cat-paints">Paints</a>
           <a href="#story-section" class="nav-link">About</a>
           <a href="contact.html" class="nav-link">Contact</a>
         </nav>
 
-        <!-- Search Bar (Accessible Popover / Header Filter) -->
-        <form class="search-form sr-only" id="header-search-form" role="search">
-          <select id="header-cat-select" name="category">
-            <option value="">All Categories</option>
-            <option value="cat-hardware">Hardware</option>
-            <option value="cat-electrical">Electrical</option>
-            <option value="cat-plumbing">Plumbing</option>
-            <option value="cat-paints">Paints</option>
-          </select>
-          <input type="search" id="header-search-input" name="q" placeholder="Search Products" />
-          <button type="submit">Search</button>
-        </form>
-
-        <!-- Action Items (Search, Account, Wishlist, Cart) -->
+        <!-- Action Items (Account, Wishlist, Cart) -->
         <div class="header-actions">
-          <!-- Search Trigger Button -->
-          <button type="button" class="header-icon-btn" id="header-search-toggle-btn" aria-label="Search Products" title="Search catalog (Ctrl+K)">
+          <!-- Search Trigger Button (Hidden fallback) -->
+          <button type="button" class="header-icon-btn" id="header-search-toggle-btn" aria-label="Search Products" title="Search catalog (Ctrl+K)" style="display:none;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -136,101 +177,6 @@
     </div>
   </header>
 
-  <!-- =========================================================================
-       2. Master Search & Discovery Hub (Instant Autocomplete & Filter)
-       ========================================================================= -->
-  <section class="site-search-section" id="site-search-section" aria-label="Product Search and Discovery">
-    <div class="container">
-      <div class="search-master-wrapper">
-        <form class="search-master-form" id="master-search-form" role="search" autocomplete="off">
-          
-          <!-- Category Selector Dropdown -->
-          <div class="search-cat-dropdown-wrap">
-            <div class="search-cat-trigger" id="search-cat-trigger">
-              <span class="search-cat-icon" aria-hidden="true">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                </svg>
-              </span>
-              <span class="search-cat-label" id="search-cat-label">All Categories</span>
-              <svg class="search-cat-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </div>
-            
-            <select id="search-cat-select" name="category" class="search-cat-native-select" aria-label="Filter Search by Category">
-              <option value="">All Categories</option>
-              <option value="cat-hardware">Hardware</option>
-              <option value="cat-electrical">Electrical</option>
-              <option value="cat-plumbing">Plumbing</option>
-              <option value="cat-paints">Paints</option>
-            </select>
-          </div>
-
-          <div class="search-input-divider" aria-hidden="true"></div>
-
-          <!-- Master Search Input with Icons -->
-          <div class="search-input-wrapper">
-            <span class="search-lens-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </span>
-
-            <input 
-              type="search" 
-              name="q" 
-              id="master-search-input"
-              class="search-master-input" 
-              placeholder="Search Products" 
-              autocomplete="off"
-              spellcheck="false"
-              aria-label="Search products, brands, or SKU"
-              aria-autocomplete="list"
-              aria-controls="search-dropdown-panel"
-              aria-expanded="false"
-            />
-
-            <!-- Clear text button (✕) -->
-            <button 
-              type="button" 
-              class="search-clear-btn" 
-              id="search-clear-btn" 
-              aria-label="Clear search input" 
-              title="Clear text"
-              style="display:none;"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-
-            <!-- Quick shortcut badge (Ctrl+K) -->
-            <div class="search-shortcut-badge" title="Press Ctrl+K or / to search" aria-hidden="true">
-              <span>⌘K</span>
-            </div>
-          </div>
-
-          <!-- Submit Button -->
-          <button type="submit" class="search-master-submit-btn" id="master-search-submit-btn" aria-label="Execute search">
-            <span>Search</span>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </button>
-        </form>
-
-        <!-- Live Instant Suggestions & Discovery Dropdown -->
-        <div class="search-dropdown-panel" id="search-dropdown-panel" role="region" aria-label="Search suggestions" style="display:none;">
-          <!-- Dynamically populated by initSearchUI() in home.js -->
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- Mobile Navigation Drawer -->
   <div class="mobile-drawer-overlay" id="mobile-drawer-overlay"></div>
   <aside class="mobile-drawer" id="mobile-drawer" aria-label="Mobile Navigation Drawer">
@@ -264,64 +210,485 @@
   </aside>
 
   <!-- =========================================================================
-       3. Hero Section (Editorial Scandinavian Showcase)
+       3. Offers Auto-Scrolling Bar (Banner Carousel)
        ========================================================================= -->
-  <section class="hero-section" aria-label="Hero Showcase">
+  <section class="offers-carousel-section" id="offers-carousel-section" aria-label="Special Offers and Promotions">
     <div class="container">
-      <div class="hero-grid">
-        <div class="hero-content">
-          <span class="eyebrow-tag">NATURAL SPACES. BETTER LIVING.</span>
-
-          <h1 class="hero-title">
-            Better Spaces<br />Begin with<br />Better Materials.
-          </h1>
-
-          <p class="hero-desc">
-            Thoughtfully selected electrical, hardware, plumbing, and paint essentials that bring safety, durability, and refined craftsmanship into your space.
-          </p>
-
-          <div class="hero-actions">
-            <a href="#bestsellers-section" class="btn btn-primary btn-hero">
-              Shop Products &rarr;
-            </a>
-            <a href="#categories-section" class="hero-secondary-link">
-              Explore Categories
-            </a>
-          </div>
-
-          <!-- Social Proof / Metrics Row -->
-          <div class="hero-stats-row">
-            <div class="hero-stat-item">
-              <span class="hero-stat-value">10K+</span>
-              <span class="hero-stat-label">Happy Spaces</span>
+      <div class="offers-carousel-container" id="offers-carousel-container">
+        <!-- Carousel Track with slides -->
+        <div class="offers-carousel-track" id="offers-carousel-track">
+          <!-- Slide 1: Festive Power Tools & Machinery -->
+          <article class="offer-slide offer-slide-1" data-slide-index="0">
+            <div class="offer-slide-backdrop">
+              <img src="assets/images/cat_hardware.jpg" alt="Industrial Power Tools and Hardware" class="offer-slide-bg-img" />
+              <div class="offer-slide-overlay"></div>
             </div>
-            <div class="hero-stat-divider"></div>
-            <div class="hero-stat-item">
-              <span class="hero-stat-value">4.8★</span>
-              <span class="hero-stat-label">Average Rating</span>
+            <div class="offer-slide-content">
+              <div class="offer-badge-row">
+                <span class="offer-tag-badge">Festive pricing</span>
+                <span class="offer-tag-spec">Up to 40% off</span>
+              </div>
+              <h2 class="offer-slide-title">Heavy-Duty Power Tools &amp; Industrial Machines</h2>
+              <p class="offer-slide-desc">Bosch, Stanley &amp; Taparia professional drills, angle grinders &amp; precision sets with official manufacturer warranty.</p>
+              <div class="offer-slide-perks">
+                <span class="offer-perk">Instant dispatch</span>
+                <span class="offer-perk">ISI marked</span>
+                <span class="offer-perk">UPI &amp; COD available</span>
+              </div>
+              <div class="offer-slide-actions">
+                <a href="#bestsellers-section" class="btn btn-offer-cta" data-category-filter="cat-hardware">
+                  Shop Power Tools
+                </a>
+                <span class="offer-subtext">Starting from ₹849*</span>
+              </div>
             </div>
-            <div class="hero-stat-divider"></div>
-            <div class="hero-stat-item">
-              <span class="hero-stat-value">100%</span>
-              <span class="hero-stat-label">Genuine Supplies</span>
+          </article>
+
+          <!-- Slide 2: Contractor Copper Wires & Modular Switches -->
+          <article class="offer-slide offer-slide-2" data-slide-index="1">
+            <div class="offer-slide-backdrop">
+              <img src="assets/images/cat_electrical.jpg" alt="Electrical Wires and Switches" class="offer-slide-bg-img" />
+              <div class="offer-slide-overlay"></div>
             </div>
-          </div>
+            <div class="offer-slide-content">
+              <div class="offer-badge-row">
+                <span class="offer-tag-badge">Contractor special</span>
+                <span class="offer-tag-spec">15% GST input rebate</span>
+              </div>
+              <h2 class="offer-slide-title">Polycab &amp; Finolex Certified Pure Copper Wires</h2>
+              <p class="offer-slide-desc">Flame retardant concealed wiring bundles, Havells designer switchboards &amp; MCB protection.</p>
+              <div class="offer-slide-perks">
+                <span class="offer-perk">Bulk rates</span>
+                <span class="offer-perk">Official tax invoice</span>
+                <span class="offer-perk">Free delivery over ₹1,999</span>
+              </div>
+              <div class="offer-slide-actions">
+                <a href="#bestsellers-section" class="btn btn-offer-cta" data-category-filter="cat-electrical">
+                  Explore Electrical Deals
+                </a>
+                <span class="offer-subtext">From ₹1,420 / 90m Coil</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Slide 3: Asian Paints Luxury & Weatherproof Finishes -->
+          <article class="offer-slide offer-slide-3" data-slide-index="2">
+            <div class="offer-slide-backdrop">
+              <img src="assets/images/cat_paints.jpg" alt="Wall Paints and Luxury Emulsions" class="offer-slide-bg-img" />
+              <div class="offer-slide-overlay"></div>
+            </div>
+            <div class="offer-slide-content">
+              <div class="offer-badge-row">
+                <span class="offer-tag-badge">Interior &amp; exterior</span>
+                <span class="offer-tag-spec">Up to 30% off</span>
+              </div>
+              <h2 class="offer-slide-title">Asian Paints Royale Luxury &amp; Apex Weatherproof</h2>
+              <p class="offer-slide-desc">Silky interior sheens, waterproof exterior acrylic coats, primers &amp; smooth wall putties.</p>
+              <div class="offer-slide-perks">
+                <span class="offer-perk">10-year weatherproof</span>
+                <span class="offer-perk">Machine color tinting</span>
+                <span class="offer-perk">High stain resistance</span>
+              </div>
+              <div class="offer-slide-actions">
+                <a href="#bestsellers-section" class="btn btn-offer-cta" data-category-filter="cat-paints">
+                  Shop Paints
+                </a>
+                <span class="offer-subtext">Tins starting at ₹420*</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Slide 4: Supreme CPVC Plumbing & Chrome Sanitary -->
+          <article class="offer-slide offer-slide-4" data-slide-index="3">
+            <div class="offer-slide-backdrop">
+              <img src="assets/images/cat_plumbing.jpg" alt="Plumbing and Brass Sanitary" class="offer-slide-bg-img" />
+              <div class="offer-slide-overlay"></div>
+            </div>
+            <div class="offer-slide-content">
+              <div class="offer-badge-row">
+                <span class="offer-tag-badge">Plumbing systems</span>
+                <span class="offer-tag-spec">Up to 35% off</span>
+              </div>
+              <h2 class="offer-slide-title">Supreme CPVC Pipes &amp; Brass Quarter-Turn Faucets</h2>
+              <p class="offer-slide-desc">High-pressure SDR-11 pipes, leak-proof solvent cements &amp; solid chrome-plated bib taps.</p>
+              <div class="offer-slide-perks">
+                <span class="offer-perk">Zero-leak joint technology</span>
+                <span class="offer-perk">Hot &amp; cold water rated</span>
+                <span class="offer-perk">Technical sizing support</span>
+              </div>
+              <div class="offer-slide-actions">
+                <a href="#bestsellers-section" class="btn btn-offer-cta" data-category-filter="cat-plumbing">
+                  Shop Plumbing
+                </a>
+                <span class="offer-subtext">Starting at ₹310*</span>
+              </div>
+            </div>
+          </article>
         </div>
 
-        <!-- Hero Visual Showcase -->
-        <div class="hero-visual-frame">
-          <img 
-            src="assets/images/devshree_storefront.jpg" 
-            alt="Devshri The Hardware Gallery store front" 
-            loading="eager"
-          />
+        <!-- Carousel Navigation Controls (Desktop) -->
+        <button type="button" class="offers-carousel-nav offers-carousel-prev" id="offers-carousel-prev" aria-label="Previous Offer Slide">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button type="button" class="offers-carousel-nav offers-carousel-next" id="offers-carousel-next" aria-label="Next Offer Slide">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+
+        <!-- Pagination Dots (Matching Flipkart/Reference Photo: [ • • • ▬▬ • • ]) -->
+        <div class="offers-carousel-dots" id="offers-carousel-dots" aria-label="Slide Indicator Dots">
+          <button type="button" class="offers-dot active" data-slide-to="0" aria-label="Slide 1"></button>
+          <button type="button" class="offers-dot" data-slide-to="1" aria-label="Slide 2"></button>
+          <button type="button" class="offers-dot" data-slide-to="2" aria-label="Slide 3"></button>
+          <button type="button" class="offers-dot" data-slide-to="3" aria-label="Slide 4"></button>
         </div>
       </div>
     </div>
   </section>
 
   <!-- =========================================================================
-       4. Trust and Service Benefits (Slim 4-Col Row)
+       5. Under-Autoscrolling Bar: Regular & Product Rail Shelf (Reference Photo Purple Card)
+       ========================================================================= -->
+  <section class="deals-shelf-section" id="deals-product-rail-section" aria-label="Special Deals and Featured Product Rail">
+    <div class="container">
+      <div class="deals-shelf-card">
+        <div class="deals-shelf-header">
+          <div class="deals-shelf-title-wrap">
+            <h2 class="deals-shelf-title">Best Value Picks &amp; Regular Hardware Deals</h2>
+            <p class="deals-shelf-subtitle">Hand-picked essentials for contractors &amp; homeowners with verified discounts</p>
+          </div>
+          <a href="#bestsellers-section" class="deals-shelf-view-all">
+            <span>Explore All</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+        </div>
+
+        <!-- Horizontal Swipeable Rail of Product Cards -->
+        <div class="deals-rail-wrapper">
+          <div class="deals-rail-track" id="deals-rail-track">
+            <!-- Dynamically populated by home.js renderDealsRail() -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       5B. Official Brand PDF Catalogs & Spec Sheets (Under Second Bar)
+       ========================================================================= -->
+  <section class="home-pdf-catalogs-section" id="home-pdf-catalogs-section" aria-label="Official Brand PDF Catalogs">
+    <div class="container">
+      <div class="pdf-catalogs-header">
+        <div class="pdf-catalogs-title-wrap">
+          <h2 class="pdf-catalogs-title">Brand Catalogs &amp; PDF Lookbooks</h2>
+          <p class="pdf-catalogs-subtitle">Browse official manufacturer shade cards, interior design brochures &amp; technical datasheets</p>
+        </div>
+
+        <div class="pdf-catalogs-header-actions">
+          <div class="pdf-catalogs-nav-btns" aria-label="Catalog Navigation">
+            <button type="button" class="pdf-nav-btn pdf-nav-prev" id="pdf-catalogs-prev" aria-label="Previous Catalogs">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button type="button" class="pdf-nav-btn pdf-nav-next" id="pdf-catalogs-next" aria-label="Next Catalogs">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+          <a href="catalogs.html" class="pdf-catalogs-view-all">
+            <span>View All (9)</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Horizontal Scrollable Track of Catalog Cards -->
+      <div class="pdf-catalogs-track-wrapper">
+        <div class="pdf-catalogs-track" id="home-pdf-catalogs-track">
+          
+          <!-- Catalog 1: Acrysoft Genoa -->
+          <article class="pdf-catalog-card" data-catalog-id="cat-acrysoft-genoa">
+            <div class="pdf-card-cover-wrap">
+              <img src="assets/images/catalogs/catalog_acrysoft_genoa.jpg" alt="Acrysoft Genoa Matt Acrylic Laminates" class="pdf-card-cover-img" loading="lazy" />
+              <span class="pdf-brand-badge">Acrysoft</span>
+              <span class="pdf-type-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#FFF" stroke-width="2"></polyline></svg>
+                PDF
+              </span>
+            </div>
+            <div class="pdf-card-body">
+              <span class="pdf-card-cat">Laminates &amp; Liners</span>
+              <h3 class="pdf-card-title">Acrysoft Genoa Matt Acrylic Laminates</h3>
+              <p class="pdf-card-desc">Anti-fingerprint super matte acrylic surfaces designed for luxury interior cabinetry.</p>
+              <div class="pdf-card-meta">
+                <span class="pdf-meta-pill">3 Pages</span>
+                <span class="pdf-meta-pill">5.4 KB</span>
+              </div>
+              <div class="pdf-card-actions">
+                <a href="assets/catalogs/acrysoft-genoa-matt-acrylic-laminates.pdf" target="_blank" rel="noopener noreferrer" class="btn-pdf-view" data-view-pdf="assets/catalogs/acrysoft-genoa-matt-acrylic-laminates.pdf" data-title="Acrysoft Genoa Matt Acrylic Laminates" data-filename="Acrysoft-Genoa-Matt-Acrylic-Laminates-2026.pdf">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>View PDF</span>
+                </a>
+                <a href="assets/catalogs/acrysoft-genoa-matt-acrylic-laminates.pdf" download="Acrysoft-Genoa-Matt-Acrylic-Laminates-2026.pdf" class="btn-pdf-download" title="Download Acrysoft Genoa PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Catalog 2: Action Tesa High Gloss -->
+          <article class="pdf-catalog-card" data-catalog-id="cat-action-tesa-highgloss">
+            <div class="pdf-card-cover-wrap">
+              <img src="assets/images/catalogs/catalog_action_tesa_highgloss.jpg" alt="Action Tesa Prelam Acrylic High Gloss Board" class="pdf-card-cover-img" loading="lazy" />
+              <span class="pdf-brand-badge">Action Tesa</span>
+              <span class="pdf-type-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#FFF" stroke-width="2"></polyline></svg>
+                PDF
+              </span>
+            </div>
+            <div class="pdf-card-body">
+              <span class="pdf-card-cat">MDF, HDHMR &amp; Boards</span>
+              <h3 class="pdf-card-title">Action Tesa Prelam Acrylic High Gloss Board</h3>
+              <p class="pdf-card-desc">Innovation That Shines: Ultra high-gloss pre-laminated boards with mirror finish.</p>
+              <div class="pdf-card-meta">
+                <span class="pdf-meta-pill">4 Pages</span>
+                <span class="pdf-meta-pill">7.1 KB</span>
+              </div>
+              <div class="pdf-card-actions">
+                <a href="assets/catalogs/action-tesa-prelam-acrylic-high-gloss-board.pdf" target="_blank" rel="noopener noreferrer" class="btn-pdf-view" data-view-pdf="assets/catalogs/action-tesa-prelam-acrylic-high-gloss-board.pdf" data-title="Action Tesa Prelam Acrylic High Gloss Board" data-filename="Action-Tesa-Prelam-Acrylic-High-Gloss-Board.pdf">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>View PDF</span>
+                </a>
+                <a href="assets/catalogs/action-tesa-prelam-acrylic-high-gloss-board.pdf" download="Action-Tesa-Prelam-Acrylic-High-Gloss-Board.pdf" class="btn-pdf-download" title="Download Action Tesa High Gloss PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Catalog 3: Action Tesa MDF -->
+          <article class="pdf-catalog-card" data-catalog-id="cat-action-tesa-mdf">
+            <div class="pdf-card-cover-wrap">
+              <img src="assets/images/catalogs/catalog_action_tesa_mdf.jpg" alt="Action Tesa Prelam MDF" class="pdf-card-cover-img" loading="lazy" />
+              <span class="pdf-brand-badge">Action Tesa</span>
+              <span class="pdf-type-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#FFF" stroke-width="2"></polyline></svg>
+                PDF
+              </span>
+            </div>
+            <div class="pdf-card-body">
+              <span class="pdf-card-cat">MDF, HDHMR &amp; Boards</span>
+              <h3 class="pdf-card-title">Action Tesa Prelam MDF Boards</h3>
+              <p class="pdf-card-desc">Moisture-resistant prelaminated MDF with synchronized timber grains and high density.</p>
+              <div class="pdf-card-meta">
+                <span class="pdf-meta-pill">3 Pages</span>
+                <span class="pdf-meta-pill">5.3 KB</span>
+              </div>
+              <div class="pdf-card-actions">
+                <a href="assets/catalogs/action-tesa-prelam-mdf-boards.pdf" target="_blank" rel="noopener noreferrer" class="btn-pdf-view" data-view-pdf="assets/catalogs/action-tesa-prelam-mdf-boards.pdf" data-title="Action Tesa Prelam MDF" data-filename="Action-Tesa-Prelam-MDF-Boards.pdf">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>View PDF</span>
+                </a>
+                <a href="assets/catalogs/action-tesa-prelam-mdf-boards.pdf" download="Action-Tesa-Prelam-MDF-Boards.pdf" class="btn-pdf-download" title="Download Action Tesa MDF PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Catalog 4: Action Tesa Particle Boards -->
+          <article class="pdf-catalog-card" data-catalog-id="cat-action-tesa-particle">
+            <div class="pdf-card-cover-wrap">
+              <img src="assets/images/catalogs/catalog_action_tesa_particle.jpg" alt="Action Tesa Prelam Particle Boards" class="pdf-card-cover-img" loading="lazy" />
+              <span class="pdf-brand-badge">Action Tesa</span>
+              <span class="pdf-type-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#FFF" stroke-width="2"></polyline></svg>
+                PDF
+              </span>
+            </div>
+            <div class="pdf-card-body">
+              <span class="pdf-card-cat">MDF, HDHMR &amp; Boards</span>
+              <h3 class="pdf-card-title">Action Tesa Prelam Particle Boards</h3>
+              <p class="pdf-card-desc">Commercial &amp; interior grade prelaminated particle boards for modular wardrobe carcass.</p>
+              <div class="pdf-card-meta">
+                <span class="pdf-meta-pill">3 Pages</span>
+                <span class="pdf-meta-pill">5.4 KB</span>
+              </div>
+              <div class="pdf-card-actions">
+                <a href="assets/catalogs/action-tesa-prelam-particle-boards.pdf" target="_blank" rel="noopener noreferrer" class="btn-pdf-view" data-view-pdf="assets/catalogs/action-tesa-prelam-particle-boards.pdf" data-title="Action Tesa Prelam Particle Boards" data-filename="Action-Tesa-Prelam-Particle-Boards.pdf">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>View PDF</span>
+                </a>
+                <a href="assets/catalogs/action-tesa-prelam-particle-boards.pdf" download="Action-Tesa-Prelam-Particle-Boards.pdf" class="btn-pdf-download" title="Download Action Tesa Particle Boards PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Catalog 5: Advance 1.25mm SPC Laminates -->
+          <article class="pdf-catalog-card" data-catalog-id="cat-advance-spc">
+            <div class="pdf-card-cover-wrap">
+              <img src="assets/images/catalogs/catalog_advance_spc.jpg" alt="Advance 1.25mm SPC Laminates" class="pdf-card-cover-img" loading="lazy" />
+              <span class="pdf-brand-badge">Advance</span>
+              <span class="pdf-type-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#FFF" stroke-width="2"></polyline></svg>
+                PDF
+              </span>
+            </div>
+            <div class="pdf-card-body">
+              <span class="pdf-card-cat">Laminates &amp; Liners</span>
+              <h3 class="pdf-card-title">Advance 1.25mm SPC Decorative Laminates</h3>
+              <p class="pdf-card-desc">Stone plastic composite decorative surfaces with 90-degree bendability and zero-crack.</p>
+              <div class="pdf-card-meta">
+                <span class="pdf-meta-pill">4 Pages</span>
+                <span class="pdf-meta-pill">7.0 KB</span>
+              </div>
+              <div class="pdf-card-actions">
+                <a href="assets/catalogs/advance-1-25mm-spc-laminates.pdf" target="_blank" rel="noopener noreferrer" class="btn-pdf-view" data-view-pdf="assets/catalogs/advance-1-25mm-spc-laminates.pdf" data-title="Advance 1.25mm SPC Laminates" data-filename="Advance-1.25mm-SPC-Laminates.pdf">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>View PDF</span>
+                </a>
+                <a href="assets/catalogs/advance-1-25mm-spc-laminates.pdf" download="Advance-1.25mm-SPC-Laminates.pdf" class="btn-pdf-download" title="Download Advance SPC PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Catalog 6: CenturyLaminates Lookbook 2026 -->
+          <article class="pdf-catalog-card" data-catalog-id="cat-century-lookbook">
+            <div class="pdf-card-cover-wrap">
+              <img src="assets/images/catalogs/catalog_century_lookbook.jpg" alt="CenturyLaminates Lookbook 2026" class="pdf-card-cover-img" loading="lazy" />
+              <span class="pdf-brand-badge">CenturyPly</span>
+              <span class="pdf-type-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#FFF" stroke-width="2"></polyline></svg>
+                PDF
+              </span>
+            </div>
+            <div class="pdf-card-body">
+              <span class="pdf-card-cat">Laminates &amp; Liners</span>
+              <h3 class="pdf-card-title">CenturyLaminates Lookbook 2026</h3>
+              <p class="pdf-card-desc">Official 2026 lookbook showcasing Lucida high-gloss, Silk Tuff and Veeners timber patterns.</p>
+              <div class="pdf-card-meta">
+                <span class="pdf-meta-pill">5 Pages</span>
+                <span class="pdf-meta-pill">6.9 KB</span>
+              </div>
+              <div class="pdf-card-actions">
+                <a href="assets/catalogs/century-laminates-lookbook-2026.pdf" target="_blank" rel="noopener noreferrer" class="btn-pdf-view" data-view-pdf="assets/catalogs/century-laminates-lookbook-2026.pdf" data-title="CenturyLaminates Lookbook 2026" data-filename="Century-Laminates-Lookbook-2026.pdf">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>View PDF</span>
+                </a>
+                <a href="assets/catalogs/century-laminates-lookbook-2026.pdf" download="Century-Laminates-Lookbook-2026.pdf" class="btn-pdf-download" title="Download CenturyLaminates PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Catalog 7: Godrej Architectural Hardware -->
+          <article class="pdf-catalog-card" data-catalog-id="cat-godrej-hardware">
+            <div class="pdf-card-cover-wrap">
+              <img src="assets/images/catalogs/catalog_godrej_hardware.jpg" alt="Godrej Architectural Hardware" class="pdf-card-cover-img" loading="lazy" />
+              <span class="pdf-brand-badge">Godrej</span>
+              <span class="pdf-type-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#FFF" stroke-width="2"></polyline></svg>
+                PDF
+              </span>
+            </div>
+            <div class="pdf-card-body">
+              <span class="pdf-card-cat">Cabinet &amp; Door Hardware</span>
+              <h3 class="pdf-card-title">Godrej Architectural Hardware &amp; Locks</h3>
+              <p class="pdf-card-desc">Solid brass &amp; SS architectural door controls, mortise locksets, and euro profile cylinders.</p>
+              <div class="pdf-card-meta">
+                <span class="pdf-meta-pill">4 Pages</span>
+                <span class="pdf-meta-pill">7.0 KB</span>
+              </div>
+              <div class="pdf-card-actions">
+                <a href="assets/catalogs/godrej-architectural-hardware.pdf" target="_blank" rel="noopener noreferrer" class="btn-pdf-view" data-view-pdf="assets/catalogs/godrej-architectural-hardware.pdf" data-title="Godrej Architectural Hardware" data-filename="Godrej-Architectural-Hardware.pdf">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>View PDF</span>
+                </a>
+                <a href="assets/catalogs/godrej-architectural-hardware.pdf" download="Godrej-Architectural-Hardware.pdf" class="btn-pdf-download" title="Download Godrej Hardware PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Catalog 8: Greenlam Architectural Surfaces -->
+          <article class="pdf-catalog-card" data-catalog-id="cat-greenlam-surfaces">
+            <div class="pdf-card-cover-wrap">
+              <img src="assets/images/catalogs/catalog_greenlam_surfaces.jpg" alt="Greenlam Architectural Surfaces Collection" class="pdf-card-cover-img" loading="lazy" />
+              <span class="pdf-brand-badge">Greenlam</span>
+              <span class="pdf-type-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#FFF" stroke-width="2"></polyline></svg>
+                PDF
+              </span>
+            </div>
+            <div class="pdf-card-body">
+              <span class="pdf-card-cat">Laminates &amp; Liners</span>
+              <h3 class="pdf-card-title">Greenlam Architectural Surfaces</h3>
+              <p class="pdf-card-desc">International luxury decorative laminates, anti-bacterial surfaces &amp; tactile textures.</p>
+              <div class="pdf-card-meta">
+                <span class="pdf-meta-pill">6 Pages</span>
+                <span class="pdf-meta-pill">8.6 KB</span>
+              </div>
+              <div class="pdf-card-actions">
+                <a href="assets/catalogs/greenlam-architectural-surfaces.pdf" target="_blank" rel="noopener noreferrer" class="btn-pdf-view" data-view-pdf="assets/catalogs/greenlam-architectural-surfaces.pdf" data-title="Greenlam Architectural Surfaces" data-filename="Greenlam-Architectural-Surfaces.pdf">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>View PDF</span>
+                </a>
+                <a href="assets/catalogs/greenlam-architectural-surfaces.pdf" download="Greenlam-Architectural-Surfaces.pdf" class="btn-pdf-download" title="Download Greenlam Surfaces PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Catalog 9: Pidilite Fevicol Adhesives -->
+          <article class="pdf-catalog-card" data-catalog-id="cat-pidilite-adhesives">
+            <div class="pdf-card-cover-wrap">
+              <img src="assets/images/catalogs/catalog_pidilite_adhesives.jpg" alt="Pidilite Fevicol Professional Wood Adhesives" class="pdf-card-cover-img" loading="lazy" />
+              <span class="pdf-brand-badge">Pidilite</span>
+              <span class="pdf-type-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#FFF" stroke-width="2"></polyline></svg>
+                PDF
+              </span>
+            </div>
+            <div class="pdf-card-body">
+              <span class="pdf-card-cat">Adhesives &amp; Glues</span>
+              <h3 class="pdf-card-title">Pidilite Fevicol Professional Adhesives</h3>
+              <p class="pdf-card-desc">Fevicol Marine, HeatX, Speedx, and Hi-Per professional woodworking &amp; laminate bonding.</p>
+              <div class="pdf-card-meta">
+                <span class="pdf-meta-pill">3 Pages</span>
+                <span class="pdf-meta-pill">5.3 KB</span>
+              </div>
+              <div class="pdf-card-actions">
+                <a href="assets/catalogs/pidilite-fevicol-wood-adhesives.pdf" target="_blank" rel="noopener noreferrer" class="btn-pdf-view" data-view-pdf="assets/catalogs/pidilite-fevicol-wood-adhesives.pdf" data-title="Pidilite Fevicol Professional Adhesives" data-filename="Pidilite-Fevicol-Wood-Adhesives.pdf">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>View PDF</span>
+                </a>
+                <a href="assets/catalogs/pidilite-fevicol-wood-adhesives.pdf" download="Pidilite-Fevicol-Wood-Adhesives.pdf" class="btn-pdf-download" title="Download Pidilite Fevicol PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       6. Trust and Service Benefits (Slim 4-Col Row)
        ========================================================================= -->
   <section class="benefits-section" aria-label="Service Benefits">
     <div class="container">
@@ -382,83 +749,17 @@
   </section>
 
   <!-- =========================================================================
-       5. Shop by Category (4 Core Categories: Hardware, Electrical, Plumbing, Paints)
+       7. Regular Products & Complete Catalog Bar
        ========================================================================= -->
-  <section class="categories-section" id="categories-section" aria-label="Main Product Categories">
+  <section class="bestsellers-section" id="bestsellers-section" aria-label="Regular Products and Full Catalog">
     <div class="container">
       <div class="section-header-row">
         <div>
-          <span class="eyebrow-tag">SHOP BY CATEGORY</span>
-          <h2 class="section-title">Everything for Your Next Project</h2>
+          <h2 class="section-title">Verified Hardware &amp; Full Catalog</h2>
         </div>
-        <a href="#bestsellers-section" class="view-all-link">
-          View all &rarr;
-        </a>
-      </div>
-
-      <!-- 4 Circular Thumbnails Grid (Rendered dynamically by home.js) -->
-      <div class="category-circles-grid" id="categories-grid">
-        <!-- Rendered by home.js renderCategories() -->
-      </div>
-    </div>
-  </section>
-
-  <!-- =========================================================================
-       6. Featured Collections (Editorial 2-Card Banner)
-       ========================================================================= -->
-  <section class="collections-section" aria-label="Featured Collections">
-    <div class="container">
-      <div class="collections-grid">
-        <!-- Collection 1: Electrical -->
-        <article class="collection-card">
-          <div class="collection-content">
-            <span class="eyebrow-tag">FEATURED COLLECTION</span>
-            <h3 class="collection-title">Power Every Space</h3>
-            <p class="collection-desc">
-              Concealed copper wiring, modular designer switches, and distribution accessories engineered for safety.
-            </p>
-            <a href="#bestsellers-section" class="btn btn-collection" data-category-filter="cat-electrical">
-              Explore &rarr;
-            </a>
-          </div>
-          <div class="collection-img-wrap">
-            <img src="assets/images/collection_elec.jpg" alt="Designer brass toggle switches and architectural lighting" loading="lazy" />
-          </div>
-        </article>
-
-        <!-- Collection 2: Finishing Touches -->
-        <article class="collection-card">
-          <div class="collection-content">
-            <span class="eyebrow-tag">BEDROOM &amp; INTERIOR ESSENTIALS</span>
-            <h3 class="collection-title">Restful. Stylish. Yours.</h3>
-            <p class="collection-desc">
-              Architectural wall paints, luxury lime emulsions, and solid brass hardware for refined living.
-            </p>
-            <a href="#bestsellers-section" class="btn btn-collection" data-category-filter="cat-paints">
-              Shop Collection &rarr;
-            </a>
-          </div>
-          <div class="collection-img-wrap">
-            <img src="assets/images/collection_finish.jpg" alt="Warm lime-washed wall with brushed brass architectural hardware" loading="lazy" />
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- =========================================================================
-       7. Best-Selling Products Section
-       ========================================================================= -->
-  <section class="bestsellers-section" id="bestsellers-section" aria-label="Best Selling Products">
-    <div class="container">
-      <div class="section-header-row">
-        <div>
-          <span class="eyebrow-tag">BESTSELLERS</span>
-          <h2 class="section-title">Products Our Customers Choose</h2>
-        </div>
-        <a href="#categories-section" class="view-all-link">
-          View all &rarr;
-        </a>
+        <span class="view-all-link" style="color:var(--color-text-secondary);font-size:0.85rem;">
+          Verified ISI Supplies &bull; Fast Pan-India Dispatch
+        </span>
       </div>
 
       <!-- Interactive Catalog Controls & Filters -->
@@ -509,13 +810,12 @@
 
         <!-- Box 2: Center Story Card -->
         <div class="story-text-box">
-          <span class="eyebrow-tag">A MORE BEAUTIFUL WAY TO BUILD</span>
           <h2 class="story-title">Timeless Quality for Modern Living</h2>
           <p class="story-desc">
             We curate practical, verified home improvement materials using authentic standards and thoughtful craftsmanship. Honest pricing, ISI certified components, and durability for generations.
           </p>
           <a href="#trust-section" class="btn-story">
-            Our Story &rarr;
+            Read Our Story
           </a>
         </div>
 
@@ -524,19 +824,27 @@
           <h3 class="story-dark-title">Better Homes, A Better Tomorrow</h3>
           <div class="story-dark-list">
             <div class="story-dark-item">
-              <div class="story-dark-icon">&check;</div>
+              <div class="story-dark-icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
               <span>100% Genuine Factory Direct</span>
             </div>
             <div class="story-dark-item">
-              <div class="story-dark-icon">&check;</div>
+              <div class="story-dark-icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
               <span>Lower Waste &amp; Long Durability</span>
             </div>
             <div class="story-dark-item">
-              <div class="story-dark-icon">&check;</div>
+              <div class="story-dark-icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
               <span>Built to Last for Decades</span>
             </div>
             <div class="story-dark-item">
-              <div class="story-dark-icon">&check;</div>
+              <div class="story-dark-icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
               <span>Transparent GST Contractor Billing</span>
             </div>
           </div>
@@ -606,14 +914,13 @@
     <div class="container">
       <div class="section-header-row" style="align-items:flex-end; flex-wrap:wrap; gap:1rem;">
         <div>
-          <span class="eyebrow-tag">GENUINE CUSTOMER VOICES</span>
           <h2 class="section-title">Verified Customer Feedback</h2>
           <p style="color:var(--color-text-secondary); font-size:0.9rem; margin-top:0.35rem; margin-bottom:0;">
             100% authentic experiences from verified contractors, electricians, and homeowners.
           </p>
         </div>
         <button type="button" class="btn btn-primary btn-sm" id="btn-give-feedback" style="display:inline-flex; align-items:center; gap:0.45rem; padding:0.65rem 1.25rem;">
-          <span style="font-size:1.1rem; line-height:1;">⭐</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="color:var(--color-star, #DFA135);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
           <span>Give Your Feedback</span>
         </button>
       </div>
@@ -631,11 +938,11 @@
     <div class="container">
       <div class="section-header-row">
         <div>
-          <span class="eyebrow-tag">FOLLOW US @DEVSHREE</span>
           <h2 class="section-title">Real Homes. Real Inspiration.</h2>
         </div>
         <a href="#bestsellers-section" class="view-all-link">
-          View on Instagram &rarr;
+          <span>View on Instagram</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </a>
       </div>
 
@@ -693,7 +1000,7 @@
         </div>
 
         <div class="newsletter-art-visual">
-          <span>Better<br />Spaces<br />Happier<br />People ♡</span>
+          <span>Better<br />Spaces<br />Happier<br />Living</span>
         </div>
       </div>
     </div>

@@ -50,7 +50,17 @@ import {
   isCatalogSeeded 
 } from './products.js';
 import { setupOrderNotificationsListener } from './order-notifications.js';
-import { initMaintenanceGuard } from './maintenance.js';
+import { 
+  DEVSHREE_CATALOGS, 
+  DEVSHREE_CATEGORIES, 
+  getActiveCatalogs, 
+  openPdfViewerModal, 
+  closePdfViewerModal 
+} from './catalogs-data.js';
+import { 
+  DEFAULT_OFFERS, 
+  getActiveOffers 
+} from './offers-data.js';
 
 /**
  * Helper to get all available products combining localStorage cache (from admin / firestore) and mock data
@@ -59,8 +69,9 @@ function getAllAvailableProducts() {
   const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
   try {
     const cached = getStorage('devshree_cached_products', null);
-    if (Array.isArray(cached)) {
-      return cached.filter(p => !deletedIds.has(String(p.id)));
+    if (Array.isArray(cached) && cached.length > 0) {
+      const filtered = cached.filter(p => !deletedIds.has(String(p.id)));
+      if (filtered.length > 0) return filtered;
     }
   } catch (_) {}
   return MOCK_PRODUCTS.filter(p => !deletedIds.has(String(p.id)));
@@ -101,16 +112,15 @@ let currentCatalogOptions = {
 };
 
 async function initDevshreeHome() {
-  const isMaintenanceBlocked = await initMaintenanceGuard();
-  if (isMaintenanceBlocked) {
-    return;
-  }
-
   checkCatalogSyncUrl();
   initHeaderAndNavigation();
   initSearchUI();
   initAuthUI();
-  initCatalogToolbar();
+  initTopCategoriesBar();
+  initShopByCategoryRail();
+  initOffersCarousel();
+  await renderDealsRail();
+  initHomeCatalogsCarousel();
   initSyncButton();
   renderCategories();
   renderProductSections();
@@ -565,7 +575,11 @@ function initSearchUI() {
   });
 
   const focusSearch = () => {
-    searchSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (searchSection) {
+      searchSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     input.focus();
     openDropdown();
     form.classList.add('search-spotlight-pulse');
@@ -949,6 +963,358 @@ function initCatalogToolbar() {
 }
 
 /**
+ * Initialize Top Categories Horizontal Scrollbar (Flipkart/Amazon Reference Style)
+ */
+function initTopCategoriesBar() {
+  const container = document.getElementById('top-categories-scroll');
+  if (!container) return;
+
+  const items = container.querySelectorAll('.top-cat-item');
+  items.forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      items.forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+
+      const catId = item.dataset.topCat || '';
+      const keyword = item.dataset.keyword || '';
+
+      if (keyword) {
+        const input = document.getElementById('master-search-input');
+        if (input) input.value = keyword;
+        filterProductsByQuery(keyword, catId);
+      } else {
+        setCatalogCategoryFilter(catId);
+      }
+
+      document.getElementById('bestsellers-section')?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+}
+
+/**
+ * Initialize Visual "Shop by Category" Showcase Rail (Positioned Under Second Bar)
+ */
+function initShopByCategoryRail() {
+  const container = document.getElementById('category-cards-rail-track');
+  const seeAllBtn = document.getElementById('shop-by-cat-see-all');
+
+  if (seeAllBtn) {
+    seeAllBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Clear filters and reset to all products
+      setCatalogCategoryFilter('');
+      const input = document.getElementById('master-search-input');
+      if (input) input.value = '';
+      const clearBtn = document.getElementById('search-clear-btn');
+      if (clearBtn) clearBtn.style.display = 'none';
+
+      const cards = container ? container.querySelectorAll('.cat-rail-card') : [];
+      cards.forEach(c => c.classList.remove('active'));
+
+      renderProductSections();
+      document.getElementById('bestsellers-section')?.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+
+  if (!container) return;
+
+  const cards = container.querySelectorAll('.cat-rail-card');
+  cards.forEach(card => {
+    card.addEventListener('click', (e) => {
+      e.preventDefault();
+      cards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+
+      const keyword = (card.dataset.keyword || '').trim();
+      const catFilter = card.dataset.catFilter || 'cat-hardware';
+      const cardTitle = card.querySelector('.cat-rail-card-title')?.textContent?.trim() || 'Category';
+
+      // Check if keyword matches products in current inventory
+      const allProds = getAllAvailableProducts();
+      const keywordLower = keyword.toLowerCase();
+      const matchingProds = allProds.filter(p => {
+        const nameMatch = p.name && p.name.toLowerCase().includes(keywordLower);
+        const descMatch = p.description && p.description.toLowerCase().includes(keywordLower);
+        const catMatch = p.categoryName && p.categoryName.toLowerCase().includes(keywordLower);
+        return nameMatch || descMatch || catMatch;
+      });
+
+      if (matchingProds.length > 0) {
+        filterProductsByQuery(keyword, catFilter);
+      } else {
+        // Fallback gracefully to category filter with informative message
+        setCatalogCategoryFilter(catFilter);
+        showToast(`Showing hardware & building supplies for ${cardTitle}.`, 'info');
+      }
+
+      document.getElementById('bestsellers-section')?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+}
+
+/**
+ * Auto-Scrolling Offers Banner Carousel (Matches Reference Photo with dots & touch support)
+ * Dynamically rendered from active offers configured by store admin or default campaigns.
+ */
+let _offersAutoTimer = null;
+
+function initOffersCarousel() {
+  const container = document.getElementById('offers-carousel-container');
+  const track = document.getElementById('offers-carousel-track');
+  const dotsContainer = document.getElementById('offers-carousel-dots');
+  const prevBtn = document.getElementById('offers-carousel-prev');
+  const nextBtn = document.getElementById('offers-carousel-next');
+
+  if (!container || !track) return;
+
+  // Retrieve dynamic offers from offers-data.js or localStorage
+  const offersList = (typeof getActiveOffers === 'function')
+    ? getActiveOffers().filter(o => o && o.active !== false)
+    : [];
+
+  if (offersList.length > 0) {
+    track.innerHTML = offersList.map((offer, idx) => `
+      <article class="offer-slide offer-slide-${idx + 1}" data-slide-index="${idx}">
+        <div class="offer-slide-backdrop">
+          <img src="${escapeHTML(offer.image || 'assets/images/cat_hardware.jpg')}" alt="${escapeHTML(offer.title)}" class="offer-slide-bg-img" />
+          <div class="offer-slide-overlay"></div>
+        </div>
+        <div class="offer-slide-content">
+          <div class="offer-badge-row">
+            ${offer.tagBadge ? `<span class="offer-tag-badge">${escapeHTML(offer.tagBadge)}</span>` : ''}
+            ${offer.tagSpec ? `<span class="offer-tag-spec">${escapeHTML(offer.tagSpec)}</span>` : ''}
+          </div>
+          <h2 class="offer-slide-title">${escapeHTML(offer.title)}</h2>
+          ${offer.description ? `<p class="offer-slide-desc">${escapeHTML(offer.description)}</p>` : ''}
+          <div class="offer-slide-perks">
+            ${(offer.perks || []).filter(Boolean).map(perk => `<span class="offer-perk">${escapeHTML(perk)}</span>`).join('')}
+          </div>
+          <div class="offer-slide-actions">
+            <a href="${escapeHTML(offer.ctaLink || '#bestsellers-section')}" class="btn btn-offer-cta" ${offer.categoryFilter ? `data-category-filter="${escapeHTML(offer.categoryFilter)}"` : ''}>
+              ${escapeHTML(offer.ctaText || 'Shop Deals')}
+            </a>
+            ${offer.subtext ? `<span class="offer-subtext">${escapeHTML(offer.subtext)}</span>` : ''}
+          </div>
+        </div>
+      </article>
+    `).join('');
+
+    if (dotsContainer) {
+      dotsContainer.innerHTML = offersList.map((_, idx) => `
+        <button type="button" class="offers-dot ${idx === 0 ? 'active' : ''}" data-slide-to="${idx}" aria-label="Slide ${idx + 1}"></button>
+      `).join('');
+    }
+  }
+
+  const slides = track.querySelectorAll('.offer-slide');
+  const totalSlides = slides.length;
+  if (totalSlides === 0) return;
+
+  let currentSlide = 0;
+  const INTERVAL = 3500; // 3.5s per slide
+
+  function updateDots() {
+    if (!dotsContainer) return;
+    const dots = dotsContainer.querySelectorAll('.offers-dot');
+    dots.forEach((dot, idx) => {
+      dot.classList.toggle('active', idx === currentSlide);
+    });
+  }
+
+  function goToSlide(index) {
+    currentSlide = (index + totalSlides) % totalSlides;
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    updateDots();
+  }
+
+  function nextSlide() {
+    goToSlide(currentSlide + 1);
+  }
+
+  function prevSlide() {
+    goToSlide(currentSlide - 1);
+  }
+
+  function startAutoPlay() {
+    stopAutoPlay();
+    _offersAutoTimer = setInterval(nextSlide, INTERVAL);
+  }
+
+  function stopAutoPlay() {
+    if (_offersAutoTimer) {
+      clearInterval(_offersAutoTimer);
+      _offersAutoTimer = null;
+    }
+  }
+
+  // Dots click events
+  if (dotsContainer) {
+    dotsContainer.querySelectorAll('.offers-dot').forEach((dot, idx) => {
+      dot.addEventListener('click', (e) => {
+        e.preventDefault();
+        goToSlide(idx);
+        startAutoPlay();
+      });
+    });
+  }
+
+  // Prev / Next button clicks
+  prevBtn?.replaceWith(prevBtn.cloneNode(true));
+  nextBtn?.replaceWith(nextBtn.cloneNode(true));
+  const newPrevBtn = document.getElementById('offers-carousel-prev');
+  const newNextBtn = document.getElementById('offers-carousel-next');
+
+  newPrevBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    prevSlide();
+    startAutoPlay();
+  });
+
+  newNextBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    nextSlide();
+    startAutoPlay();
+  });
+
+  // Pause on hover
+  container.addEventListener('mouseenter', stopAutoPlay);
+  container.addEventListener('mouseleave', startAutoPlay);
+
+  // Touch Swipe Gesture Detection for Mobile
+  let startX = 0;
+  let startY = 0;
+  let isSwiping = false;
+
+  container.addEventListener('touchstart', (e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    isSwiping = true;
+    stopAutoPlay();
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!isSwiping || !e.touches || e.touches.length === 0) return;
+    const diffX = e.touches[0].clientX - startX;
+    const diffY = e.touches[0].clientY - startY;
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+      // Horizontal swipe detected
+    }
+  }, { passive: true });
+
+  container.addEventListener('touchend', (e) => {
+    if (!isSwiping || !e.changedTouches || e.changedTouches.length === 0) return;
+    const diffX = e.changedTouches[0].clientX - startX;
+    const diffY = e.changedTouches[0].clientY - startY;
+    isSwiping = false;
+
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+      if (diffX < 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    }
+    startAutoPlay();
+  }, { passive: true });
+
+  // Slide CTA clicks
+  slides.forEach(slide => {
+    slide.querySelectorAll('[data-category-filter]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const catId = btn.dataset.categoryFilter;
+        if (catId) {
+          setCatalogCategoryFilter(catId);
+        }
+      });
+    });
+  });
+
+  // Start autoplay
+  startAutoPlay();
+}
+
+// Live sync listener for offers updates from admin console
+if (typeof window !== 'undefined' && !window._devshreeOffersListenerBound) {
+  window._devshreeOffersListenerBound = true;
+  window.addEventListener('devshree:offers-updated', () => initOffersCarousel());
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'devshree_custom_offers') initOffersCarousel();
+  });
+}
+
+/**
+ * Render the Under-Autoscrolling Product Rail Shelf (Reference Photo Purple Container)
+ * Prioritizes Regular Hardware Deals explicitly marked by store admin.
+ */
+async function renderDealsRail() {
+  const track = document.getElementById('deals-rail-track');
+  if (!track) return;
+
+  const allProducts = getAllAvailableProducts();
+  if (!allProducts || allProducts.length === 0) return;
+
+  // Regular Hardware Deals explicitly flagged in Admin take top priority
+  const regularDeals = allProducts.filter(p => !!p.isRegularDeal);
+  const otherDeals = allProducts.filter(p => {
+    if (p.isRegularDeal) return false;
+    const disc = calculateDiscount(p.price, p.compareAtPrice, p.discountPercentage);
+    return disc >= 10 || p.isBestseller || p.isFeatured;
+  });
+
+  let dealItems = [...regularDeals, ...otherDeals];
+  if (dealItems.length === 0) {
+    dealItems = allProducts.slice(0, 8);
+  } else if (dealItems.length > 12) {
+    dealItems = dealItems.slice(0, 12);
+  }
+
+  track.innerHTML = dealItems.map(p => {
+    const disc = calculateDiscount(p.price, p.compareAtPrice, p.discountPercentage);
+    const comparePrice = p.compareAtPrice || (disc > 0 ? Math.round(p.price / (1 - disc / 100)) : null);
+    
+    let discBadge = disc > 0 ? `${disc}% off` : (p.isBestseller ? 'Bestseller' : 'Deal');
+    if (p.isRegularDeal) {
+      discBadge = disc > 0 ? `${disc}% off • Regular Deal` : 'Regular Deal';
+    }
+
+    const catObj = (typeof MOCK_CATEGORIES !== 'undefined' && Array.isArray(MOCK_CATEGORIES))
+      ? MOCK_CATEGORIES.find(c => c.id === p.categoryId)
+      : null;
+    const catLabel = catObj ? catObj.name.split(' ')[0] : 'Hardware';
+
+    return `
+      <article class="deals-rail-card" data-product-id="${p.id}">
+        <a href="product.html?id=${encodeURIComponent(p.id)}" class="deals-rail-card-img-wrap" style="text-decoration:none;" aria-label="${escapeHTML(p.name)}">
+          <span class="deals-rail-discount-chip ${p.isRegularDeal ? 'regular-deal-chip' : ''}">${escapeHTML(discBadge)}</span>
+          <img src="${p.image}" alt="${escapeHTML(p.name)}" class="deals-rail-card-img" loading="lazy" />
+        </a>
+        <div class="deals-rail-card-body">
+          <span class="deals-rail-card-cat">${escapeHTML(catLabel)}</span>
+          <h3 class="deals-rail-card-title" title="${escapeHTML(p.name)}">
+            <a href="product.html?id=${encodeURIComponent(p.id)}" style="color:inherit;text-decoration:none;">
+              ${escapeHTML(p.name)}
+            </a>
+          </h3>
+          <div class="deals-rail-card-price-row">
+            <span class="deals-rail-current-price">${formatINR(p.price)}</span>
+            ${comparePrice ? `<span class="deals-rail-compare-price">${formatINR(comparePrice)}</span>` : ''}
+          </div>
+          <button type="button" class="btn-deals-rail-add" data-add-cart-btn data-product-id="${p.id}" aria-label="Add ${escapeHTML(p.name)} to cart">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Add</span>
+          </button>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  bindProductCardEvents(track);
+}
+
+/**
  * Filter the catalog grid by a category ID
  */
 function setCatalogCategoryFilter(catId) {
@@ -957,6 +1323,20 @@ function setCatalogCategoryFilter(catId) {
   tabs.forEach(tab => {
     tab.classList.toggle('active', tab.dataset.catalogCat === (catId || ''));
   });
+
+  // Sync Top Category Horizontal Scrollbar active state
+  const topItems = document.querySelectorAll('#top-categories-scroll .top-cat-item');
+  topItems.forEach(item => {
+    const itemCat = item.dataset.topCat || '';
+    item.classList.toggle('active', itemCat === (catId || ''));
+  });
+
+  // Sync Shop by Category Rail active state
+  const railCards = document.querySelectorAll('.cat-rail-card');
+  railCards.forEach(card => {
+    if (!catId) card.classList.remove('active');
+  });
+
   renderCatalogGrid();
   document.getElementById('bestsellers-section')?.scrollIntoView({ behavior: 'smooth' });
 }
@@ -1808,3 +2188,104 @@ async function updateAccountModalProfile(user) {
   }
 }
 
+
+
+/**
+ * Initialize Home Page Catalogs Carousel Track & View Pill Handlers
+ * Matches reference photo with direct PDF downloads and in-browser modal viewing
+ */
+/**
+ * Initialize Home Page Official Brand PDF Catalogs Rail & View / Download Handlers
+ * Matches Devshree's Scandinavian architectural library aesthetic with modal previews and direct downloads.
+ */
+function initHomeCatalogsCarousel() {
+  const track = document.getElementById('home-pdf-catalogs-track') || document.getElementById('home-catalogs-track');
+  const prevBtn = document.getElementById('pdf-catalogs-prev');
+  const nextBtn = document.getElementById('pdf-catalogs-next') || document.getElementById('home-catalogs-next');
+  if (!track) return;
+
+  // Retrieve dynamic catalogs from catalogs-data.js or localStorage
+  const sourceCatalogs = (typeof getActiveCatalogs === 'function')
+    ? getActiveCatalogs()
+    : (typeof DEVSHREE_CATALOGS !== 'undefined' ? DEVSHREE_CATALOGS : []);
+
+  if (sourceCatalogs && sourceCatalogs.length > 0) {
+    track.innerHTML = sourceCatalogs.map(c => `
+      <article class="pdf-catalog-card" data-catalog-id="${escapeHTML(c.id)}">
+        <div class="pdf-card-cover-wrap">
+          <img src="${escapeHTML(c.coverImage || 'assets/images/catalogs/catalog_acrysoft_genoa.jpg')}" alt="${escapeHTML(c.title)}" class="pdf-card-cover-img" loading="lazy" />
+          <span class="pdf-brand-badge">${escapeHTML(c.brand)}</span>
+          <span class="pdf-type-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#FFF" stroke-width="2"></polyline></svg>
+            PDF
+          </span>
+        </div>
+        <div class="pdf-card-body">
+          <span class="pdf-card-cat">${escapeHTML(c.category)}</span>
+          <h3 class="pdf-card-title">${escapeHTML(c.title)}</h3>
+          <p class="pdf-card-desc">${escapeHTML(c.description || '')}</p>
+          <div class="pdf-card-meta">
+            <span class="pdf-meta-pill">${c.pages || 1} Pages</span>
+            <span class="pdf-meta-pill">${escapeHTML(c.size || 'PDF')}</span>
+          </div>
+          <div class="pdf-card-actions">
+            <button type="button" class="btn-pdf-view" data-view-pdf="${escapeHTML(c.pdfUrl)}" data-title="${escapeHTML(c.title)}" data-filename="${escapeHTML(c.filename || 'catalog.pdf')}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <span>View PDF</span>
+            </button>
+            <a href="${escapeHTML(c.pdfUrl)}" download="${escapeHTML(c.filename || 'catalog.pdf')}" class="btn-pdf-download" title="Download ${escapeHTML(c.title)} PDF">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Download</span>
+            </a>
+          </div>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  // Next / Prev Smooth Horizontal Scrolling
+  prevBtn?.replaceWith(prevBtn.cloneNode(true));
+  nextBtn?.replaceWith(nextBtn.cloneNode(true));
+  const newPrevBtn = document.getElementById('pdf-catalogs-prev');
+  const newNextBtn = document.getElementById('pdf-catalogs-next') || document.getElementById('home-catalogs-next');
+
+  newPrevBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    track.scrollBy({ left: -340, behavior: 'smooth' });
+  });
+
+  newNextBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    track.scrollBy({ left: 340, behavior: 'smooth' });
+  });
+
+  // Modal PDF Viewer Binding for in-browser inspection
+  track.querySelectorAll('.btn-pdf-view, .btn-catalog-view-pill').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const pdf = btn.dataset.viewPdf || btn.getAttribute('href');
+      const title = btn.dataset.title || 'Brand Catalog Lookbook';
+      const filename = btn.dataset.filename || 'catalog.pdf';
+      if (typeof openPdfViewerModal === 'function') {
+        e.preventDefault();
+        openPdfViewerModal(pdf, title, filename);
+      }
+    });
+  });
+}
+
+// Live sync listener for catalogs & products updates from admin console
+if (typeof window !== 'undefined' && !window._devshreeHomeCatalogsBound) {
+  window._devshreeHomeCatalogsBound = true;
+  window.addEventListener('devshree:catalogs-updated', () => initHomeCatalogsCarousel());
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'devshree_custom_catalogs') initHomeCatalogsCarousel();
+    if (e.key === 'devshree_cached_products') {
+      renderProductSections();
+      renderDealsRail();
+    }
+  });
+  window.addEventListener('devshree:products-updated', () => {
+    renderProductSections();
+    renderDealsRail();
+  });
+}

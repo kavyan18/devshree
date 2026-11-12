@@ -84,12 +84,8 @@ export async function fetchProducts(options = {}) {
         });
 
         // Firestore is the sole source of truth: do NOT re-insert deleted demo products
-        if (!options.categoryId) {
+        if (!options.categoryId && products.length > 0) {
           setStorage(CACHE_PRODUCTS_KEY, products);
-        }
-      } else {
-        if (!options.categoryId) {
-          setStorage(CACHE_PRODUCTS_KEY, []);
         }
       }
     } catch (err) {
@@ -97,12 +93,13 @@ export async function fetchProducts(options = {}) {
     }
   }
 
-  // If Firestore returned no products or errored, use cached or mock products (offline only)
+  // If Firestore returned no products or errored, use cached or mock products as fallback
   if (!Array.isArray(products) || products.length === 0) {
     const cached = getStorage(CACHE_PRODUCTS_KEY, null);
     if (Array.isArray(cached) && cached.length > 0) {
       products = cached.filter(p => !deletedIds.has(String(p.id)));
-    } else if (!isConfigured) {
+    }
+    if (!Array.isArray(products) || products.length === 0) {
       products = MOCK_PRODUCTS.filter(p => !deletedIds.has(String(p.id)));
     }
   }
@@ -196,8 +193,6 @@ export async function getProductById(productId) {
       if (snap.exists()) {
         return { id: snap.id, ...snap.data() };
       }
-      // If Firestore is active and document doesn't exist, it was deleted!
-      return null;
     } catch (err) {
       console.warn('[Devshree] Error reading product by ID from Firestore:', err);
     }
@@ -210,10 +205,8 @@ export async function getProductById(productId) {
     if (found && !deletedIds.has(String(found.id))) return found;
   }
 
-  if (!isConfigured) {
-    return MOCK_PRODUCTS.find(p => String(p.id) === String(productId) && !deletedIds.has(String(p.id))) || null;
-  }
-  return null;
+  // Fallback to MOCK_PRODUCTS so product detail pages always resolve
+  return MOCK_PRODUCTS.find(p => String(p.id) === String(productId) && !deletedIds.has(String(p.id))) || null;
 }
 
 /**

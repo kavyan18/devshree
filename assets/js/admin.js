@@ -38,12 +38,22 @@ import {
   triggerOrderNotification, 
   sendTestOrderNotification 
 } from './order-notifications.js';
-import { 
-  getMaintenanceConfig, 
-  setMaintenanceMode, 
-  fetchRemoteMaintenanceConfig 
-} from './maintenance.js';
 import { openWhatsAppDispatchModal, openWhatsAppChat, buildOrderCancellationWhatsAppMessage, getStoreOwnerPhone, setStoreOwnerPhone } from './whatsapp-service.js';
+import { 
+  DEVSHREE_CATALOGS, 
+  DEVSHREE_CATEGORIES, 
+  getActiveCatalogs, 
+  saveActiveCatalogs, 
+  resetCatalogsToDefault, 
+  openPdfViewerModal, 
+  closePdfViewerModal 
+} from './catalogs-data.js';
+import { 
+  DEFAULT_OFFERS, 
+  getActiveOffers, 
+  saveActiveOffers, 
+  resetOffersToDefault 
+} from './offers-data.js';
 
 const CACHE_PRODUCTS_KEY = 'devshree_cached_products';
 
@@ -54,6 +64,9 @@ let activeTab = 'products';
 function syncProductsCache() {
   try {
     setStorage(CACHE_PRODUCTS_KEY, allProducts);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('devshree:products-updated', { detail: { products: allProducts } }));
+    }
   } catch (e) {
     console.warn('[Admin] Failed to sync products to storage:', e);
   }
@@ -133,8 +146,9 @@ function initDevshreeAdmin() {
   initUserDropdown();
   initAdminNotificationCenter();
   initAdminSettings();
-  initMaintenanceAdminUI();
   initAdminCancelModal();
+  initCatalogsTab();
+  initOffersTab();
 
   // Check if verified active admin session exists
   if (isAdminSessionActive()) {
@@ -221,6 +235,8 @@ function initAdminNavigation() {
         overview: 'Overview',
         categories: 'Categories',
         customers: 'Customers',
+        catalogs: 'PDF Catalogs',
+        offers: 'Offers & Carousel',
         settings: 'Store Settings'
       };
 
@@ -230,6 +246,8 @@ function initAdminNavigation() {
         overview: 'Operations Overview',
         categories: 'Product Categories',
         customers: 'Customer Directory',
+        catalogs: 'Brand PDF Catalogs & Spec Sheets',
+        offers: 'Promotional Offers & Top Carousel Bar',
         settings: 'Store Settings'
       };
 
@@ -239,6 +257,8 @@ function initAdminNavigation() {
         overview: 'Real-time synchronization with Cloud Firestore for product inventory and revenue.',
         categories: '4 standardized trade departments for Devshree Hardware supplies.',
         customers: 'Registered contractor and trade customer accounts.',
+        catalogs: 'Manage manufacturer lookbooks, brand brochures and technical spec sheets downloadable by customers.',
+        offers: 'Manage top autoscrolling carousel slides, festive promotional banners and category shortcuts.',
         settings: 'Store legal details, tax configuration, and support helpline.'
       };
 
@@ -391,70 +411,83 @@ function initProductForm() {
   const chooseBtn = document.getElementById('admin-choose-image-btn');
   const previewImg = document.getElementById('admin-image-preview');
   const hiddenImgInput = document.getElementById('prod-image');
+  const urlInput = document.getElementById('prod-image-url');
   const removeImgBtn = document.getElementById('admin-remove-image-btn');
 
-  // Trigger Image File Picker
-  chooseBtn?.addEventListener('click', () => fileInput?.click());
+  // Trigger Image File Picker (clears input value so selecting the same file triggers change every time)
+  chooseBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (fileInput) {
+      fileInput.value = '';
+      fileInput.click();
+    }
+  });
 
-  // Helper: Secure Multi-Stage Image File Handler (Validation, Deep Canvas Sanitization, Isolated Storage)
+  chooseBtn?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (fileInput) {
+        fileInput.value = '';
+        fileInput.click();
+      }
+    }
+  });
+
+  // Direct Image URL input live sync
+  urlInput?.addEventListener('input', () => {
+    const val = urlInput.value.trim();
+    if (val) {
+      if (previewImg) previewImg.src = val;
+      if (hiddenImgInput) hiddenImgInput.value = val;
+    } else {
+      if (previewImg) previewImg.src = DEFAULT_BULB_IMG;
+      if (hiddenImgInput) hiddenImgInput.value = '';
+    }
+  });
+
+  // Helper: Secure Image File Handler with INSTANT 0ms visual preview
   async function handleImageFileSelection(file) {
     if (!file) return;
 
+    // 1. INSTANTANEOUS preview in 0ms so the user sees the image changed IMMEDIATELY!
     try {
-      showToast('Inspecting, verifying & sanitizing image...', 'info');
+      const objUrl = URL.createObjectURL(file);
+      if (previewImg) previewImg.src = objUrl;
+    } catch (_) {}
 
-      // 1. Multi-layer validation (size, extension, MIME, magic bytes) & Canvas re-encoding
-      const { sanitizedBlob, dataUrl, safeFileName, mimeType } = await sanitizeAndOptimizeImage(file);
-
-      // 2. IMMEDIATELY update UI preview & hidden form input with sanitized dataUrl
-      // This guarantees the image is inserted and displayed instantly without hanging on cloud network
+    // 2. Read as persistent Base64 Data URL
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target.result;
       if (previewImg) previewImg.src = dataUrl;
       if (hiddenImgInput) hiddenImgInput.value = dataUrl;
+      if (urlInput) urlInput.value = dataUrl;
+      showToast('Product photo updated successfully!', 'success');
+    };
+    reader.onerror = () => {
+      showToast('Unable to read selected image file.', 'error');
+    };
+    reader.readAsDataURL(file);
 
-      showToast('Product photo uploaded & optimized successfully!', 'success');
-
-      // 3. Background Cloud Storage upload (non-blocking with timeout) if storage is configured
-      if (isConfigured && storage) {
-        try {
-          const storagePath = `products/${safeFileName}`;
-          const isolation = verifyStorageIsolation(storagePath);
-          if (!isolation.isIsolated) {
-            console.warn('[Admin] Storage isolation policy:', isolation.reason);
-            return;
-          }
-
-          const fileRef = ref(storage, storagePath);
-          
-          // Use Promise.race with a 4-second timeout so it never hangs or blocks the UI
-          const uploadPromise = (async () => {
-            const snapshot = await uploadBytesResumable(fileRef, sanitizedBlob, {
-              contentType: mimeType,
-              cacheControl: 'public, max-age=31536000'
-            });
-            return await getDownloadURL(snapshot.ref);
-          })();
-
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Cloud storage upload timeout (4s)')), 4000)
-          );
-
-          const cloudUrl = await Promise.race([uploadPromise, timeoutPromise]);
-          if (cloudUrl) {
-            // Upgrade hidden input and preview to permanent cloud URL
-            if (hiddenImgInput && hiddenImgInput.value === dataUrl) {
-              hiddenImgInput.value = cloudUrl;
-            }
-            if (previewImg && previewImg.src === dataUrl) {
-              previewImg.src = cloudUrl;
-            }
-            console.log('[Admin] Sanitized image upgraded to isolated Cloud Storage URL:', cloudUrl);
-          }
-        } catch (storageErr) {
-          console.warn('[Admin] Cloud Storage background upload bypassed (using sanitized local image):', storageErr?.message || storageErr);
+    // 3. Background optimization & Cloud Storage upload (non-blocking)
+    if (isConfigured && storage) {
+      try {
+        const safeName = `product_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const fileRef = ref(storage, `products/${safeName}`);
+        const snapshot = await uploadBytesResumable(fileRef, file, {
+          contentType: file.type || 'image/jpeg',
+          cacheControl: 'public, max-age=31536000'
+        });
+        const cloudUrl = await getDownloadURL(snapshot.ref);
+        if (cloudUrl) {
+          if (hiddenImgInput) hiddenImgInput.value = cloudUrl;
+          if (urlInput) urlInput.value = cloudUrl;
+          if (previewImg) previewImg.src = cloudUrl;
         }
+      } catch (e) {
+        console.warn('[Admin] Cloud upload skipped (persisting local data URL):', e);
       }
-    } catch (err) {
-      showSafeErrorToast(err, 'Unable to process image. Please verify file format (JPG, PNG, WebP under 5MB) and try again.');
     }
   }
 
@@ -494,6 +527,7 @@ function initProductForm() {
     if (previewImg) previewImg.src = DEFAULT_BULB_IMG;
     if (hiddenImgInput) hiddenImgInput.value = '';
     if (fileInput) fileInput.value = '';
+    if (urlInput) urlInput.value = '';
     showToast('Image reset to default.', 'info');
   });
 
@@ -519,6 +553,7 @@ function initProductForm() {
     const isBestseller = !!document.getElementById('prod-is-bestseller')?.checked;
     const isNew = !!document.getElementById('prod-is-new')?.checked;
     const isFeatured = !!document.getElementById('prod-is-featured')?.checked;
+    const isRegularDeal = !!document.getElementById('prod-is-regular-deal')?.checked;
 
     if (!name || basePrice <= 0) {
       showToast('Please enter product name and selling price.', 'error');
@@ -557,6 +592,7 @@ function initProductForm() {
           isBestseller,
           isNew,
           isFeatured,
+          isRegularDeal,
           updatedAt: new Date().toISOString()
         };
 
@@ -594,6 +630,7 @@ function initProductForm() {
           isBestseller,
           isNew,
           isFeatured,
+          isRegularDeal,
           rating: 0,
           reviewCount: 0,
           createdAt: new Date().toISOString()
@@ -641,18 +678,22 @@ function resetProductForm() {
 
   if (previewImg) previewImg.src = DEFAULT_BULB_IMG;
   if (hiddenImgInput) hiddenImgInput.value = '';
+  const urlInput = document.getElementById('prod-image-url');
+  if (urlInput) urlInput.value = '';
 
   const comparePriceInput = document.getElementById('prod-compare-price');
   const discountPercentInput = document.getElementById('prod-discount-percent');
   const bestsellerCheckbox = document.getElementById('prod-is-bestseller');
   const newCheckbox = document.getElementById('prod-is-new');
   const featuredCheckbox = document.getElementById('prod-is-featured');
+  const regularDealCheckbox = document.getElementById('prod-is-regular-deal');
 
   if (comparePriceInput) comparePriceInput.value = '';
   if (discountPercentInput) discountPercentInput.value = '';
   if (bestsellerCheckbox) bestsellerCheckbox.checked = false;
   if (newCheckbox) newCheckbox.checked = false;
   if (featuredCheckbox) featuredCheckbox.checked = false;
+  if (regularDealCheckbox) regularDealCheckbox.checked = false;
 
   // Trigger price recalculation to defaults
   document.getElementById('prod-price')?.dispatchEvent(new Event('input'));
@@ -703,6 +744,7 @@ function editProduct(prod) {
   const bestsellerCheckbox = document.getElementById('prod-is-bestseller');
   const newCheckbox = document.getElementById('prod-is-new');
   const featuredCheckbox = document.getElementById('prod-is-featured');
+  const regularDealCheckbox = document.getElementById('prod-is-regular-deal');
 
   if (comparePriceInput) comparePriceInput.value = prod.compareAtPrice || '';
 
@@ -715,10 +757,13 @@ function editProduct(prod) {
   if (bestsellerCheckbox) bestsellerCheckbox.checked = !!prod.isBestseller;
   if (newCheckbox) newCheckbox.checked = !!prod.isNew;
   if (featuredCheckbox) featuredCheckbox.checked = !!prod.isFeatured;
+  if (regularDealCheckbox) regularDealCheckbox.checked = !!prod.isRegularDeal;
 
   const img = prod.image || DEFAULT_BULB_IMG;
   if (previewImg) previewImg.src = img;
   if (hiddenImgInput) hiddenImgInput.value = img;
+  const editUrlInput = document.getElementById('prod-image-url');
+  if (editUrlInput) editUrlInput.value = prod.image || '';
 
   if (formTitle) formTitle.textContent = `Edit Product: ${prod.name}`;
   if (saveBtnText) saveBtnText.textContent = 'Update Product';
@@ -955,6 +1000,16 @@ function renderProductsTable(products = null) {
           <span>+ Mark Bestseller</span>
         </button>`;
 
+    // Regular Hardware Deal toggle button
+    const isDeal = !!prod.isRegularDeal;
+    const dealToggleHtml = isDeal 
+      ? `<button type="button" class="btn-toggle-deal active" data-deal-toggle-id="${prod.id}" title="Click to remove from Regular Hardware Deals" style="margin-top:4px;display:inline-flex;align-items:center;gap:3px;font-size:0.7rem;font-weight:700;background:#FFF3EB;color:#C2410C;border:1px solid #FFD8BE;border-radius:4px;padding:3px 6px;cursor:pointer;">
+          <span>🏷️ REGULAR DEAL</span>
+        </button>`
+      : `<button type="button" class="btn-toggle-deal" data-deal-toggle-id="${prod.id}" title="Click to mark as Regular Hardware Deal (Promoted on Deals Shelf)" style="margin-top:4px;display:inline-flex;align-items:center;gap:3px;font-size:0.7rem;font-weight:600;background:#F8FAFC;color:#64748B;border:1px dashed #CBD5E1;border-radius:4px;padding:3px 6px;cursor:pointer;">
+          <span>+ Regular Deal</span>
+        </button>`;
+
     return `
       <tr data-prod-id="${prod.id}">
         <td>
@@ -975,7 +1030,10 @@ function renderProductsTable(products = null) {
           ${discountHtml}
         </td>
         <td>
-          ${bestsellerHtml}
+          <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+            ${bestsellerHtml}
+            ${dealToggleHtml}
+          </div>
         </td>
         <td>
           <span class="admin-row-stock-qty">${stock}</span>
@@ -1049,6 +1107,34 @@ function renderProductsTable(products = null) {
       showToast(`"${target.name}" ${newStatus ? 'marked as BESTSELLER! 🔥' : 'removed from bestsellers.'}`, newStatus ? 'success' : 'info');
     });
   });
+
+  tbody.querySelectorAll('[data-deal-toggle-id]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.dealToggleId;
+      const target = allProducts.find(p => p.id === id);
+      if (!target) return;
+
+      const newStatus = !target.isRegularDeal;
+      target.isRegularDeal = newStatus;
+      target.updatedAt = new Date().toISOString();
+
+      if (db) {
+        try {
+          await updateDoc(doc(db, 'products', id), { 
+            isRegularDeal: newStatus, 
+            updatedAt: target.updatedAt 
+          });
+        } catch (err) {
+          console.warn('[Admin] Firestore regular deal toggle fallback:', err);
+        }
+      }
+
+      syncProductsCache();
+      renderProductsTable();
+      showToast(`"${target.name}" ${newStatus ? 'promoted as Regular Hardware Deal! 🏷️' : 'removed from regular deals.'}`, newStatus ? 'success' : 'info');
+    });
+  });
 }
 
 /**
@@ -1118,6 +1204,14 @@ function updateKpis() {
   if (catHardEl) catHardEl.textContent = `${hardCount} Active Items`;
   if (catPlumbEl) catPlumbEl.textContent = `${plumbCount} Active Items`;
   if (catPaintEl) catPaintEl.textContent = `${paintCount} Active Items`;
+
+  // Update Catalogs & Offers Sidebar Badges
+  const catalogsCount = (typeof getActiveCatalogs === 'function') ? getActiveCatalogs().length : 12;
+  const offersCount = (typeof getActiveOffers === 'function') ? getActiveOffers().filter(o => o && o.active !== false).length : 4;
+  const navCatalogsBadge = document.getElementById('nav-catalogs-count');
+  const navOffersBadge = document.getElementById('nav-offers-count');
+  if (navCatalogsBadge) navCatalogsBadge.textContent = catalogsCount;
+  if (navOffersBadge) navOffersBadge.textContent = offersCount;
 
   // Dynamically update customer directory
   renderCustomersDirectory();
@@ -1983,166 +2077,6 @@ function initAdminSettings() {
 }
 
 /**
- * 11B. Maintenance Mode Admin Controller
- * Synchronizes the topbar pill, toggle switch, and settings form with Firestore & localStorage
- */
-function initMaintenanceAdminUI() {
-  const topbarBtn = document.getElementById('btn-admin-topbar-maintenance');
-  const topbarText = document.getElementById('admin-topbar-mode-text');
-  const toggleCheckbox = document.getElementById('maintenance-mode-toggle');
-  const statusBadge = document.getElementById('maintenance-status-badge');
-  const headlineInput = document.getElementById('maintenance-headline-input');
-  const messageInput = document.getElementById('maintenance-message-input');
-  const etaInput = document.getElementById('maintenance-eta-input');
-  const phoneInput = document.getElementById('maintenance-phone-input');
-  const saveBtn = document.getElementById('btn-save-maintenance-settings');
-  const previewBtn = document.getElementById('btn-preview-maintenance');
-  const saveStatus = document.getElementById('maintenance-save-status');
-
-  function updateUI(cfg) {
-    const isMaintenance = Boolean(cfg && cfg.enabled);
-
-    // 1. Topbar status pill
-    if (topbarBtn) {
-      if (isMaintenance) {
-        topbarBtn.className = 'admin-mode-pill maintenance';
-        if (topbarText) topbarText.textContent = '⚠️ Maintenance ON';
-        topbarBtn.setAttribute('title', 'Maintenance Mode is ACTIVE — Click to turn OFF');
-      } else {
-        topbarBtn.className = 'admin-mode-pill live';
-        if (topbarText) topbarText.textContent = 'Store Online';
-        topbarBtn.setAttribute('title', 'Store is ONLINE — Click to turn ON Maintenance');
-      }
-    }
-
-    // 2. Settings toggle checkbox
-    if (toggleCheckbox) {
-      toggleCheckbox.checked = isMaintenance;
-    }
-
-    // 3. Settings status badge
-    if (statusBadge) {
-      if (isMaintenance) {
-        statusBadge.textContent = 'Maintenance Mode Active';
-        statusBadge.style.background = '#FFEDD5';
-        statusBadge.style.color = '#9A3412';
-      } else {
-        statusBadge.textContent = 'Store Live';
-        statusBadge.style.background = '#DCFCE7';
-        statusBadge.style.color = '#166534';
-      }
-    }
-
-    // 4. Form inputs
-    if (cfg) {
-      if (headlineInput && cfg.headline) headlineInput.value = cfg.headline;
-      if (messageInput && cfg.message) messageInput.value = cfg.message;
-      if (etaInput && typeof cfg.estimatedTime === 'string') etaInput.value = cfg.estimatedTime;
-      if (phoneInput && cfg.contactPhone) phoneInput.value = cfg.contactPhone;
-    }
-  }
-
-  // Load from local cache immediately
-  let currentCfg = getMaintenanceConfig();
-  updateUI(currentCfg);
-
-  // Background fetch remote config from Firestore for multi-device sync
-  fetchRemoteMaintenanceConfig().then(fresh => {
-    if (fresh) {
-      currentCfg = fresh;
-      updateUI(currentCfg);
-    }
-  }).catch(() => {});
-
-  // 1-Click Topbar Pill Toggle Handler
-  topbarBtn?.addEventListener('click', async () => {
-    const isCurrentlyOn = Boolean(currentCfg && currentCfg.enabled);
-    const targetState = !isCurrentlyOn;
-
-    const confirmMsg = targetState
-      ? 'Turn ON Maintenance Mode?\n\nRegular visitors will see the maintenance screen with disconnected cable artwork while you update the store.\nYou can still view the store and admin panel.'
-      : 'Turn OFF Maintenance Mode and make the store live for all customers?';
-
-    if (!confirm(confirmMsg)) return;
-
-    try {
-      const updated = await setMaintenanceMode(targetState);
-      currentCfg = updated;
-      updateUI(updated);
-      showToast(
-        targetState ? 'Maintenance mode turned ON. Store is now in maintenance.' : 'Maintenance mode turned OFF. Store is now LIVE!',
-        targetState ? 'warning' : 'success'
-      );
-    } catch (err) {
-      showToast('Error updating maintenance mode: ' + (err.message || 'Unknown error'), 'error');
-    }
-  });
-
-  // Settings Switch Toggle Change Handler
-  toggleCheckbox?.addEventListener('change', async () => {
-    const targetState = toggleCheckbox.checked;
-    try {
-      const updated = await setMaintenanceMode(targetState, {
-        headline: headlineInput?.value.trim() || undefined,
-        message: messageInput?.value.trim() || undefined,
-        estimatedTime: etaInput?.value.trim() || '',
-        contactPhone: phoneInput?.value.trim() || undefined
-      });
-      currentCfg = updated;
-      updateUI(updated);
-      showToast(
-        targetState ? 'Maintenance mode enabled!' : 'Maintenance mode disabled. Store is live!',
-        targetState ? 'warning' : 'success'
-      );
-    } catch (err) {
-      toggleCheckbox.checked = !targetState;
-      showToast('Failed to toggle maintenance mode', 'error');
-    }
-  });
-
-  // Save Settings Form Button Handler
-  saveBtn?.addEventListener('click', async () => {
-    const headline = headlineInput?.value.trim() || 'The site is currently down for maintenance';
-    const message = messageInput?.value.trim() || "We apologize for any inconveniences caused. We've almost done.";
-    const estimatedTime = etaInput?.value.trim() || '';
-    const contactPhone = phoneInput?.value.trim() || '+91 8866130409';
-    const enabled = Boolean(toggleCheckbox ? toggleCheckbox.checked : (currentCfg && currentCfg.enabled));
-
-    try {
-      const updated = await setMaintenanceMode(enabled, {
-        headline,
-        message,
-        estimatedTime,
-        contactPhone
-      });
-      currentCfg = updated;
-      updateUI(updated);
-
-      if (saveStatus) {
-        saveStatus.style.display = 'inline';
-        setTimeout(() => { if (saveStatus) saveStatus.style.display = 'none'; }, 3000);
-      }
-      showToast('Maintenance settings saved successfully!', 'success');
-    } catch (err) {
-      showToast('Failed to save maintenance settings: ' + (err.message || 'Unknown error'), 'error');
-    }
-  });
-
-  // Preview Button Handler
-  previewBtn?.addEventListener('click', () => {
-    window.open('maintenance.html?preview=1', '_blank');
-  });
-
-  // Listen to cross-component maintenance changes
-  window.addEventListener('devshree:maintenance-changed', (e) => {
-    if (e.detail) {
-      currentCfg = e.detail;
-      updateUI(currentCfg);
-    }
-  });
-}
-
-/**
  * 12. Dynamic Contractor & Customer Directory
  */
 function renderCustomersDirectory() {
@@ -2269,5 +2203,721 @@ function exportOrdersToCSV(orders) {
   link.click();
   document.body.removeChild(link);
   showToast('Orders exported successfully to CSV!', 'success');
+}
+
+/**
+ * 14. PDF Catalogs & Manufacturer Spec Sheets Controller
+ */
+function initCatalogsTab() {
+  const form = document.getElementById('admin-catalog-form');
+  const tbody = document.getElementById('admin-catalogs-tbody');
+  const searchInput = document.getElementById('admin-catalog-search');
+  const catFilter = document.getElementById('admin-catalog-cat-filter');
+  const formTitle = document.getElementById('catalog-form-title');
+  const saveBtnText = document.getElementById('btn-save-catalog-text');
+  const cancelBtn = document.getElementById('btn-cancel-catalog');
+  const resetDefaultsBtn = document.getElementById('btn-reset-catalogs-default');
+
+  const editIdInput = document.getElementById('catalog-edit-id');
+  const titleInput = document.getElementById('catalog-title');
+  const brandInput = document.getElementById('catalog-brand');
+  const categorySelect = document.getElementById('catalog-category');
+  const pagesInput = document.getElementById('catalog-pages');
+  const sizeInput = document.getElementById('catalog-size');
+  const coverUrlInput = document.getElementById('catalog-cover-url');
+  const coverFileInput = document.getElementById('catalog-cover-file');
+  const coverPreview = document.getElementById('catalog-cover-preview');
+  const browseCoverBtn = document.getElementById('btn-browse-catalog-cover');
+  const pdfUrlInput = document.getElementById('catalog-pdf-url');
+  const pdfFileInput = document.getElementById('catalog-pdf-file');
+  const filenameInput = document.getElementById('catalog-filename');
+  const browsePdfBtn = document.getElementById('btn-browse-catalog-pdf');
+  const descInput = document.getElementById('catalog-desc');
+
+  let allCatalogs = (typeof getActiveCatalogs === 'function') 
+    ? getActiveCatalogs() 
+    : (typeof DEVSHREE_CATALOGS !== 'undefined' ? DEVSHREE_CATALOGS.slice() : []);
+
+  function updateCatalogKPIs() {
+    const totalEl = document.getElementById('kpi-catalogs-total');
+    const brandsEl = document.getElementById('kpi-catalogs-brands');
+    const navBadge = document.getElementById('nav-catalogs-count');
+
+    if (totalEl) totalEl.textContent = allCatalogs.length;
+    if (navBadge) navBadge.textContent = allCatalogs.length;
+    if (brandsEl) {
+      const uniqueBrands = new Set(allCatalogs.map(c => (c.brand || '').trim()).filter(Boolean));
+      brandsEl.textContent = uniqueBrands.size;
+    }
+  }
+
+  function resetCatalogForm() {
+    form?.reset();
+    if (editIdInput) editIdInput.value = '';
+    if (coverPreview) coverPreview.src = 'assets/images/catalogs/catalog_acrysoft_genoa.jpg';
+    if (formTitle) formTitle.textContent = 'Add New PDF Catalog / Lookbook';
+    if (saveBtnText) saveBtnText.textContent = 'Save PDF Catalog';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+
+  function renderCatalogsTable(filtered = null) {
+    if (!tbody) return;
+    const list = filtered || allCatalogs;
+
+    if (list.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center;padding:2.5rem;color:var(--admin-text-secondary);">
+            <div style="font-size:1.75rem;margin-bottom:0.5rem;">📄</div>
+            <div style="font-weight:700;color:var(--admin-text-main);margin-bottom:0.25rem;">No PDF catalogs found</div>
+            <span style="font-size:0.8rem;">Add a new brand catalog above or reset filters.</span>
+          </td>
+        </tr>
+      `;
+      updateCatalogKPIs();
+      return;
+    }
+
+    tbody.innerHTML = list.map(c => `
+      <tr data-catalog-id="${escapeHTML(c.id)}">
+        <td>
+          <img src="${escapeHTML(c.coverImage || 'assets/images/catalogs/catalog_acrysoft_genoa.jpg')}" alt="${escapeHTML(c.title)}" class="admin-row-thumb" style="width:46px;height:46px;object-fit:cover;border-radius:4px;" loading="lazy" />
+        </td>
+        <td>
+          <div class="admin-row-prod-name" style="font-weight:700;">${escapeHTML(c.title)}</div>
+          <div class="admin-row-prod-code" style="font-size:0.75rem;color:var(--admin-text-secondary);display:flex;align-items:center;gap:4px;margin-top:2px;">
+            <span>📁 ${escapeHTML(c.filename || 'catalog.pdf')}</span>
+          </div>
+        </td>
+        <td>
+          <span class="badge" style="background:#FAF8F5;border:1px solid #D6CFC4;color:#252720;font-weight:700;font-size:0.75rem;padding:3px 7px;border-radius:4px;">
+            ${escapeHTML(c.brand || 'Devshree')}
+          </span>
+        </td>
+        <td>
+          <span class="admin-row-cat-badge">${escapeHTML(c.category || 'General')}</span>
+        </td>
+        <td>
+          <span style="font-size:0.8rem;font-weight:600;color:var(--admin-text-main);">${c.pages || 1} Pages</span>
+          <div style="font-size:0.72rem;color:var(--admin-text-secondary);">${escapeHTML(c.size || '')}</div>
+        </td>
+        <td style="text-align:right;">
+          <div class="admin-row-actions" style="justify-content:flex-end;">
+            <button type="button" class="btn-table-edit" data-view-pdf-url="${escapeHTML(c.pdfUrl)}" data-title="${escapeHTML(c.title)}" data-filename="${escapeHTML(c.filename || 'catalog.pdf')}" title="Preview PDF document">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <span>View</span>
+            </button>
+            <button type="button" class="btn-table-edit" data-edit-catalog-id="${escapeHTML(c.id)}" title="Edit catalog">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <span>Edit</span>
+            </button>
+            <button type="button" class="btn-table-remove" data-remove-catalog-id="${escapeHTML(c.id)}" title="Delete catalog">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Delete</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    // Attach row button listeners
+    tbody.querySelectorAll('[data-view-pdf-url]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const url = btn.dataset.viewPdfUrl;
+        const title = btn.dataset.title;
+        const filename = btn.dataset.filename;
+        if (typeof openPdfViewerModal === 'function') {
+          openPdfViewerModal(url, title, filename);
+        } else {
+          window.open(url, '_blank');
+        }
+      });
+    });
+
+    tbody.querySelectorAll('[data-edit-catalog-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.editCatalogId;
+        const target = allCatalogs.find(c => c.id === id);
+        if (!target) return;
+
+        if (editIdInput) editIdInput.value = target.id;
+        if (titleInput) titleInput.value = target.title || '';
+        if (brandInput) brandInput.value = target.brand || '';
+        if (categorySelect) categorySelect.value = target.category || 'Laminates & Liners';
+        if (pagesInput) pagesInput.value = target.pages || 1;
+        if (sizeInput) sizeInput.value = target.size || '';
+        if (coverUrlInput) coverUrlInput.value = target.coverImage || '';
+        if (coverPreview) coverPreview.src = target.coverImage || 'assets/images/catalogs/catalog_acrysoft_genoa.jpg';
+        if (pdfUrlInput) pdfUrlInput.value = target.pdfUrl || '';
+        if (filenameInput) filenameInput.value = target.filename || '';
+        if (descInput) descInput.value = target.description || '';
+
+        if (formTitle) formTitle.textContent = `Edit Catalog: ${target.title}`;
+        if (saveBtnText) saveBtnText.textContent = 'Update PDF Catalog';
+        if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+
+        document.getElementById('admin-catalog-form-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    tbody.querySelectorAll('[data-remove-catalog-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.removeCatalogId;
+        const target = allCatalogs.find(c => c.id === id);
+        if (!target) return;
+
+        if (!confirm(`Are you sure you want to remove "${target.title}"?`)) return;
+
+        allCatalogs = allCatalogs.filter(c => c.id !== id);
+        if (typeof saveActiveCatalogs === 'function') {
+          saveActiveCatalogs(allCatalogs);
+        }
+
+        if (db) {
+          try {
+            await deleteDoc(doc(db, 'catalogs', id));
+          } catch (err) {
+            console.warn('[Admin] Firestore catalog delete fallback:', err);
+          }
+        }
+
+        renderCatalogsTable();
+        showToast(`Catalog "${target.title}" removed.`, 'info');
+      });
+    });
+
+    updateCatalogKPIs();
+  }
+
+  // Cover image file picker
+  browseCoverBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (coverFileInput) {
+      coverFileInput.value = '';
+      coverFileInput.click();
+    }
+  });
+  browseCoverBtn?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (coverFileInput) {
+        coverFileInput.value = '';
+        coverFileInput.click();
+      }
+    }
+  });
+
+  coverFileInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const objUrl = URL.createObjectURL(file);
+      if (coverPreview) coverPreview.src = objUrl;
+    } catch (_) {}
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (coverPreview) coverPreview.src = event.target.result;
+      if (coverUrlInput) coverUrlInput.value = event.target.result;
+      showToast(`Cover image selected: ${file.name}`, 'info');
+    };
+    reader.readAsDataURL(file);
+  });
+  coverUrlInput?.addEventListener('input', () => {
+    if (coverPreview) coverPreview.src = coverUrlInput.value.trim() || 'assets/images/catalogs/catalog_acrysoft_genoa.jpg';
+  });
+
+  // PDF file picker
+  browsePdfBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (pdfFileInput) {
+      pdfFileInput.value = '';
+      pdfFileInput.click();
+    }
+  });
+  browsePdfBtn?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (pdfFileInput) {
+        pdfFileInput.value = '';
+        pdfFileInput.click();
+      }
+    }
+  });
+
+  pdfFileInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (filenameInput && (!filenameInput.value || filenameInput.value.trim() === '')) {
+      filenameInput.value = file.name;
+    }
+    if (sizeInput) {
+      const sizeStr = file.size > 1024 * 1024 
+        ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
+        : (file.size / 1024).toFixed(1) + ' KB';
+      sizeInput.value = sizeStr;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (pdfUrlInput) pdfUrlInput.value = event.target.result;
+      showToast(`Selected PDF: ${file.name}`, 'success');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Cancel edit button
+  cancelBtn?.addEventListener('click', () => resetCatalogForm());
+
+  // Direct click listener on save button to ensure form validity reporting
+  const saveCatalogBtn = document.getElementById('btn-save-catalog');
+  saveCatalogBtn?.addEventListener('click', () => {
+    if (form && !form.checkValidity()) {
+      form.reportValidity();
+    }
+  });
+
+  // Form submission
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const editId = editIdInput?.value?.trim();
+    const title = titleInput?.value?.trim();
+    const brand = brandInput?.value?.trim();
+    const category = categorySelect?.value?.trim() || 'Laminates & Liners';
+    const pages = parseInt(pagesInput?.value, 10) || 1;
+    const size = sizeInput?.value?.trim() || '5.4 KB';
+    const coverImage = coverUrlInput?.value?.trim() || coverPreview?.src || 'assets/images/catalogs/catalog_acrysoft_genoa.jpg';
+    const pdfUrl = pdfUrlInput?.value?.trim() || 'assets/catalogs/acrysoft-genoa-matt-acrylic-laminates.pdf';
+    const filename = filenameInput?.value?.trim() || (title ? `${title.replace(/\s+/g, '-')}.pdf` : 'Catalog.pdf');
+    const description = descInput?.value?.trim() || '';
+
+    if (!title || !brand) {
+      showToast('Please provide both Catalog Title and Brand Name.', 'error');
+      return;
+    }
+
+    const categorySlugMap = {
+      'Laminates & Liners': 'laminates',
+      'MDF, HDHMR & PVC Boards': 'boards',
+      'Kitchen Hardware': 'hardware',
+      'Cabinet Hardware': 'hardware',
+      'Panels & Mouldings': 'panels',
+      'Adhesive': 'adhesive',
+      'Nails, Screws & Accessories': 'hardware',
+      'Electrical & Lighting': 'electrical',
+      'Paints & Finishes': 'paints'
+    };
+    const categorySlug = categorySlugMap[category] || 'hardware';
+
+    const catalogData = {
+      id: editId || ('cat-' + Date.now()),
+      title,
+      brand,
+      category,
+      categorySlug,
+      coverImage,
+      pdfUrl,
+      filename,
+      pages,
+      size,
+      description,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (editId) {
+      const idx = allCatalogs.findIndex(c => c.id === editId);
+      if (idx !== -1) {
+        allCatalogs[idx] = { ...allCatalogs[idx], ...catalogData };
+      } else {
+        allCatalogs.unshift(catalogData);
+      }
+      showToast(`Catalog "${title}" updated successfully!`, 'success');
+    } else {
+      allCatalogs.unshift(catalogData);
+      showToast(`New Catalog "${title}" added!`, 'success');
+    }
+
+    if (typeof saveActiveCatalogs === 'function') {
+      saveActiveCatalogs(allCatalogs);
+    }
+
+    if (db) {
+      try {
+        await setDoc(doc(db, 'catalogs', catalogData.id), catalogData);
+      } catch (err) {
+        console.warn('[Admin] Firestore catalog save fallback:', err);
+      }
+    }
+
+    resetCatalogForm();
+    renderCatalogsTable();
+  });
+
+  // Search & Filter
+  const filterCatalogs = () => {
+    const q = (searchInput?.value || '').toLowerCase().trim();
+    const cat = catFilter?.value || 'all';
+
+    const filtered = allCatalogs.filter(c => {
+      const matchesCat = cat === 'all' || c.category === cat || (c.categorySlug && c.categorySlug.includes(cat.toLowerCase()));
+      const haystack = `${c.title} ${c.brand} ${c.category} ${c.description || ''} ${c.filename || ''}`.toLowerCase();
+      const matchesQ = !q || haystack.includes(q);
+      return matchesCat && matchesQ;
+    });
+
+    renderCatalogsTable(filtered);
+  };
+
+  searchInput?.addEventListener('input', filterCatalogs);
+  catFilter?.addEventListener('change', filterCatalogs);
+
+  // Restore Factory Defaults
+  resetDefaultsBtn?.addEventListener('click', () => {
+    if (!confirm('Reset all catalogs to store default manufacturer lookbooks?')) return;
+    if (typeof resetCatalogsToDefault === 'function') {
+      allCatalogs = resetCatalogsToDefault();
+    } else if (typeof DEVSHREE_CATALOGS !== 'undefined') {
+      allCatalogs = DEVSHREE_CATALOGS.slice();
+      if (typeof saveActiveCatalogs === 'function') saveActiveCatalogs(allCatalogs);
+    }
+    resetCatalogForm();
+    renderCatalogsTable();
+    showToast('Reset to factory default brand catalogs.', 'info');
+  });
+
+  // Initial table render
+  renderCatalogsTable();
+}
+
+/**
+ * 15. Promotional Offers & Top Carousel Bar Controller
+ */
+function initOffersTab() {
+  const form = document.getElementById('admin-offer-form');
+  const tbody = document.getElementById('admin-offers-tbody');
+  const formTitle = document.getElementById('offer-form-title');
+  const saveBtnText = document.getElementById('btn-save-offer-text');
+  const cancelBtn = document.getElementById('btn-cancel-offer');
+  const restoreDefaultsBtn = document.getElementById('btn-restore-default-offers');
+
+  const editIdInput = document.getElementById('offer-edit-id');
+  const titleInput = document.getElementById('offer-title');
+  const subtextInput = document.getElementById('offer-subtext');
+  const badgeInput = document.getElementById('offer-badge');
+  const specInput = document.getElementById('offer-spec');
+  const categorySelect = document.getElementById('offer-category');
+  const imageUrlInput = document.getElementById('offer-image-url');
+  const imageFileInput = document.getElementById('offer-image-file');
+  const imagePreview = document.getElementById('offer-image-preview');
+  const browseImageBtn = document.getElementById('btn-browse-offer-image');
+  const perk1Input = document.getElementById('offer-perk-1');
+  const perk2Input = document.getElementById('offer-perk-2');
+  const perk3Input = document.getElementById('offer-perk-3');
+  const ctaTextInput = document.getElementById('offer-cta-text');
+  const ctaLinkInput = document.getElementById('offer-cta-link');
+  const descInput = document.getElementById('offer-desc');
+
+  let allOffers = (typeof getActiveOffers === 'function')
+    ? getActiveOffers()
+    : (typeof DEFAULT_OFFERS !== 'undefined' ? DEFAULT_OFFERS.slice() : []);
+
+  function updateOfferKPIs() {
+    const totalEl = document.getElementById('kpi-offers-total');
+    const navBadge = document.getElementById('nav-offers-count');
+    const count = allOffers.filter(o => o && o.active !== false).length;
+    if (totalEl) totalEl.textContent = count;
+    if (navBadge) navBadge.textContent = count;
+  }
+
+  function resetOfferForm() {
+    form?.reset();
+    if (editIdInput) editIdInput.value = '';
+    if (imagePreview) imagePreview.src = 'assets/images/cat_hardware.jpg';
+    if (formTitle) formTitle.textContent = 'Add Promotional Carousel Offer';
+    if (saveBtnText) saveBtnText.textContent = 'Save Offer Slide';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+
+  function renderOffersTable() {
+    if (!tbody) return;
+
+    if (allOffers.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center;padding:2.5rem;color:var(--admin-text-secondary);">
+            <div style="font-size:1.75rem;margin-bottom:0.5rem;">🏷️</div>
+            <div style="font-weight:700;color:var(--admin-text-main);margin-bottom:0.25rem;">No active promotional slides</div>
+            <span style="font-size:0.8rem;">Create a new banner slide above or restore factory default slides.</span>
+          </td>
+        </tr>
+      `;
+      updateOfferKPIs();
+      return;
+    }
+
+    tbody.innerHTML = allOffers.map((offer, idx) => `
+      <tr data-offer-id="${escapeHTML(offer.id)}">
+        <td style="font-weight:800;color:var(--admin-text-secondary);font-size:0.85rem;">
+          #${idx + 1}
+        </td>
+        <td>
+          <img src="${escapeHTML(offer.image || 'assets/images/cat_hardware.jpg')}" alt="${escapeHTML(offer.title)}" class="admin-row-thumb" style="width:72px;height:42px;object-fit:cover;border-radius:4px;" loading="lazy" />
+        </td>
+        <td>
+          <div class="admin-row-prod-name" style="font-weight:700;">${escapeHTML(offer.title)}</div>
+          <div style="font-size:0.75rem;color:var(--admin-text-secondary);margin-top:2px;">
+            ${escapeHTML(offer.subtext || '')} ${offer.categoryFilter ? `&bull; Target: ${escapeHTML(offer.categoryFilter)}` : ''}
+          </div>
+        </td>
+        <td>
+          <span class="badge" style="background:#FFF3EB;color:#C2410C;border:1px solid #FFD8BE;margin-right:4px;font-size:0.72rem;padding:3px 6px;border-radius:4px;">
+            ${escapeHTML(offer.tagBadge || 'Special')}
+          </span>
+          <span class="badge" style="background:#1E293B;color:#FFF;font-size:0.72rem;padding:3px 6px;border-radius:4px;">
+            ${escapeHTML(offer.tagSpec || 'Discount')}
+          </span>
+        </td>
+        <td>
+          <span style="font-size:0.75rem;font-weight:700;color:var(--admin-terracotta);">
+            ${escapeHTML(offer.ctaText || 'Shop')} &rarr;
+          </span>
+          <div style="font-size:0.7rem;color:var(--admin-text-secondary);">${escapeHTML(offer.ctaLink || '#')}</div>
+        </td>
+        <td style="text-align:right;">
+          <div class="admin-row-actions" style="justify-content:flex-end;">
+            <button type="button" class="btn-table-edit" data-move-up-offer-id="${escapeHTML(offer.id)}" title="Move Slide Up" ${idx === 0 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>
+              ▲
+            </button>
+            <button type="button" class="btn-table-edit" data-move-down-offer-id="${escapeHTML(offer.id)}" title="Move Slide Down" ${idx === allOffers.length - 1 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>
+              ▼
+            </button>
+            <button type="button" class="btn-table-edit" data-edit-offer-id="${escapeHTML(offer.id)}" title="Edit slide">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <span>Edit</span>
+            </button>
+            <button type="button" class="btn-table-remove" data-remove-offer-id="${escapeHTML(offer.id)}" title="Delete slide">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Delete</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    // Attach row button listeners
+    tbody.querySelectorAll('[data-move-up-offer-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.moveUpOfferId;
+        const idx = allOffers.findIndex(o => o.id === id);
+        if (idx > 0) {
+          const temp = allOffers[idx];
+          allOffers[idx] = allOffers[idx - 1];
+          allOffers[idx - 1] = temp;
+          persistOffersChange();
+        }
+      });
+    });
+
+    tbody.querySelectorAll('[data-move-down-offer-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.moveDownOfferId;
+        const idx = allOffers.findIndex(o => o.id === id);
+        if (idx !== -1 && idx < allOffers.length - 1) {
+          const temp = allOffers[idx];
+          allOffers[idx] = allOffers[idx + 1];
+          allOffers[idx + 1] = temp;
+          persistOffersChange();
+        }
+      });
+    });
+
+    tbody.querySelectorAll('[data-edit-offer-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.editOfferId;
+        const target = allOffers.find(o => o.id === id);
+        if (!target) return;
+
+        if (editIdInput) editIdInput.value = target.id;
+        if (titleInput) titleInput.value = target.title || '';
+        if (subtextInput) subtextInput.value = target.subtext || '';
+        if (badgeInput) badgeInput.value = target.tagBadge || '';
+        if (specInput) specInput.value = target.tagSpec || '';
+        if (categorySelect) categorySelect.value = target.categoryFilter || '';
+        if (imageUrlInput) imageUrlInput.value = target.image || '';
+        if (imagePreview) imagePreview.src = target.image || 'assets/images/cat_hardware.jpg';
+        if (perk1Input) perk1Input.value = target.perks?.[0] || '';
+        if (perk2Input) perk2Input.value = target.perks?.[1] || '';
+        if (perk3Input) perk3Input.value = target.perks?.[2] || '';
+        if (ctaTextInput) ctaTextInput.value = target.ctaText || 'Shop Deals';
+        if (ctaLinkInput) ctaLinkInput.value = target.ctaLink || '#bestsellers-section';
+        if (descInput) descInput.value = target.description || '';
+
+        if (formTitle) formTitle.textContent = `Edit Carousel Offer: ${target.title}`;
+        if (saveBtnText) saveBtnText.textContent = 'Update Slide';
+        if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+
+        document.getElementById('admin-offer-form-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    tbody.querySelectorAll('[data-remove-offer-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.removeOfferId;
+        const target = allOffers.find(o => o.id === id);
+        if (!target) return;
+
+        if (!confirm(`Are you sure you want to remove slide "${target.title}"?`)) return;
+
+        allOffers = allOffers.filter(o => o.id !== id);
+        persistOffersChange();
+
+        if (db) {
+          try {
+            await deleteDoc(doc(db, 'offers', id));
+          } catch (err) {
+            console.warn('[Admin] Firestore offer delete fallback:', err);
+          }
+        }
+
+        showToast(`Offer slide "${target.title}" removed.`, 'info');
+      });
+    });
+
+    updateOfferKPIs();
+  }
+
+  function persistOffersChange() {
+    if (typeof saveActiveOffers === 'function') {
+      saveActiveOffers(allOffers);
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('devshree:offers-updated', { detail: { offers: allOffers } }));
+    }
+    renderOffersTable();
+  }
+
+  // Slide image file picker
+  browseImageBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (imageFileInput) {
+      imageFileInput.value = '';
+      imageFileInput.click();
+    }
+  });
+  browseImageBtn?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (imageFileInput) {
+        imageFileInput.value = '';
+        imageFileInput.click();
+      }
+    }
+  });
+
+  imageFileInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const objUrl = URL.createObjectURL(file);
+      if (imagePreview) imagePreview.src = objUrl;
+    } catch (_) {}
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (imagePreview) imagePreview.src = event.target.result;
+      if (imageUrlInput) imageUrlInput.value = event.target.result;
+      showToast(`Slide image selected: ${file.name}`, 'info');
+    };
+    reader.readAsDataURL(file);
+  });
+  imageUrlInput?.addEventListener('input', () => {
+    if (imagePreview) imagePreview.src = imageUrlInput.value.trim() || 'assets/images/cat_hardware.jpg';
+  });
+
+  // Cancel edit button
+  cancelBtn?.addEventListener('click', () => resetOfferForm());
+
+  // Form submission
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const editId = editIdInput?.value?.trim();
+    const title = titleInput?.value?.trim();
+    const subtext = subtextInput?.value?.trim() || '';
+    const tagBadge = badgeInput?.value?.trim() || 'Special Offer';
+    const tagSpec = specInput?.value?.trim() || 'Discount';
+    const categoryFilter = categorySelect?.value?.trim() || '';
+    const image = imageUrlInput?.value?.trim() || imagePreview?.src || 'assets/images/cat_hardware.jpg';
+    const perks = [
+      perk1Input?.value?.trim(),
+      perk2Input?.value?.trim(),
+      perk3Input?.value?.trim()
+    ].filter(Boolean);
+    const ctaText = ctaTextInput?.value?.trim() || 'Shop Deals';
+    const ctaLink = ctaLinkInput?.value?.trim() || '#bestsellers-section';
+    const description = descInput?.value?.trim() || '';
+
+    if (!title) {
+      showToast('Please enter headline title for this promotional slide.', 'error');
+      return;
+    }
+
+    const offerData = {
+      id: editId || ('offer-' + Date.now()),
+      title,
+      subtext,
+      tagBadge,
+      tagSpec,
+      categoryFilter,
+      image,
+      perks: perks.length > 0 ? perks : ['Official warranty', 'Instant dispatch', 'UPI & COD'],
+      ctaText,
+      ctaLink,
+      description,
+      active: true,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (editId) {
+      const idx = allOffers.findIndex(o => o.id === editId);
+      if (idx !== -1) {
+        allOffers[idx] = { ...allOffers[idx], ...offerData };
+      } else {
+        allOffers.push(offerData);
+      }
+      showToast(`Offer slide "${title}" updated successfully!`, 'success');
+    } else {
+      allOffers.push(offerData);
+      showToast(`New offer slide "${title}" added to autoscrolling bar!`, 'success');
+    }
+
+    persistOffersChange();
+
+    if (db) {
+      try {
+        await setDoc(doc(db, 'offers', offerData.id), offerData);
+      } catch (err) {
+        console.warn('[Admin] Firestore offer save fallback:', err);
+      }
+    }
+
+    resetOfferForm();
+  });
+
+  // Restore Factory Defaults
+  restoreDefaultsBtn?.addEventListener('click', () => {
+    if (!confirm('Restore all carousel slides to store factory promotional defaults?')) return;
+    if (typeof resetOffersToDefault === 'function') {
+      allOffers = resetOffersToDefault();
+    } else if (typeof DEFAULT_OFFERS !== 'undefined') {
+      allOffers = DEFAULT_OFFERS.slice();
+    }
+    persistOffersChange();
+    resetOfferForm();
+    showToast('Carousel slides restored to default promotions.', 'info');
+  });
+
+  // Initial table render
+  renderOffersTable();
 }
 

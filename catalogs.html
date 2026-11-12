@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Download official architectural catalogs, shade cards, and technical datasheets for laminates, acrylic boards, plywood, hardware, and adhesives from Devshree." />
+  <meta name="keywords" content="Devshree catalogs, laminate catalogue, Action Tesa PDF, Greenlam PDF, CenturyLaminates lookbook, acrylic board specs, architectural hardware catalogue" />
+  <meta property="og:title" content="Product Catalogs & Spec Sheets | Devshree" />
+  <meta property="og:description" content="Download official PDF catalogs and view online lookbooks for laminates, boards, fittings, and adhesives." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#F7F5F0" />
+
+  <title>Product Catalogs &amp; PDF Lookbooks | DEVSHREE</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png" />
+
+  <!-- Google Fonts: Manrope, Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=Noto+Sans+Gujarati:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Core & Responsive Styles -->
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/responsive.css" />
+
+  <!-- Razorpay Official Checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+</head>
+<body class="catalogs-page-body">
+
+  <!-- =========================================================================
+       1. Top Announcement Bar
+       ========================================================================= -->
+  <aside class="announcement-bar" aria-label="Store Announcement">
+    <div class="container">
+      <div class="announcement-left">
+        <span>Free express dispatch across India on orders above ₹1,999</span>
+        <span style="opacity:0.4;">|</span>
+        <span>100% Genuine Factory Direct Supplies</span>
+      </div>
+
+      <div class="announcement-right">
+        <span>GST Invoices Available for Contractors</span>
+        <span style="opacity:0.4;">|</span>
+        <a href="tel:+918866130409" class="announcement-link">Helpline: +91 88661 30409</a>
+        <a href="index.html#header-track-order-link" class="announcement-link">Track Order</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       2. Site Header & Minimalist Navigation
+       ========================================================================= -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-main">
+        <!-- Mobile Menu Hamburger Trigger -->
+        <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open Navigation Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <!-- Brand Identity Logo -->
+        <a href="index.html" class="brand-logo" aria-label="Devshree - The Hardware Gallery">
+          <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" class="brand-logo-img" />
+        </a>
+
+        <!-- Desktop Navigation Bar -->
+        <nav class="header-nav" aria-label="Primary Navigation">
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="index.html#shop-by-category-section" class="nav-link">Shop by Category</a>
+          <a href="catalogs.html" class="nav-link active" style="color:var(--color-terracotta);">Catalogs</a>
+          <a href="index.html#story-section" class="nav-link">About</a>
+          <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+
+        <!-- Action Items (Account, Wishlist, Cart) -->
+        <div class="header-actions">
+          <a href="index.html" class="btn btn-primary btn-sm">Shop Store &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Drawer -->
+  <div class="mobile-drawer-overlay" id="mobile-drawer-overlay"></div>
+  <aside class="mobile-drawer" id="mobile-drawer" aria-label="Mobile Navigation Drawer">
+    <div class="mobile-drawer-header">
+      <a href="index.html" class="brand-logo" aria-label="Devshree - The Hardware Gallery">
+        <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" class="brand-logo-img" style="height:44px;" />
+      </a>
+      <button type="button" class="mobile-drawer-close" id="mobile-drawer-close" aria-label="Close Navigation Menu">&times;</button>
+    </div>
+
+    <nav class="mobile-drawer-nav">
+      <a href="index.html" class="mobile-drawer-link">Home</a>
+      <a href="index.html#shop-by-category-section" class="mobile-drawer-link">Shop by Category</a>
+      <a href="catalogs.html" class="mobile-drawer-link active" style="color:var(--color-terracotta);">Product Catalogs &amp; PDFs</a>
+      <a href="index.html#story-section" class="mobile-drawer-link">About Devshree</a>
+      <a href="contact.html" class="mobile-drawer-link">Contact &amp; Support</a>
+    </nav>
+  </aside>
+
+  <!-- =========================================================================
+       3. Catalogs Hero Banner
+       ========================================================================= -->
+  <section class="catalogs-page-hero">
+    <div class="container">
+      <nav class="catalogs-breadcrumbs" aria-label="Breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <span class="current">Product Catalogs &amp; Spec Sheets</span>
+      </nav>
+      
+      <div class="catalogs-hero-content">
+        <span class="catalogs-eyebrow">OFFICIAL ARCHITECTURAL LOOKBOOKS</span>
+        <h1 class="catalogs-main-heading">Product Catalogs &amp; Specification Sheets</h1>
+        <p class="catalogs-hero-desc">
+          Browse, view in-browser, and download official PDF shade cards, brochures, and technical specification datasheets from leading architectural laminate and hardware manufacturers.
+        </p>
+      </div>
+
+      <!-- Live Search & Category Filter Toolbar -->
+      <div class="catalogs-page-toolbar">
+        <div class="catalogs-search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="search" 
+            id="catalogs-search-input" 
+            class="catalogs-search-input" 
+            placeholder="Search catalogs by brand, title or keyword (e.g. Action Tesa, Acrysoft, Laminates)..." 
+            aria-label="Search catalogs"
+          />
+        </div>
+
+        <div class="catalogs-filter-pills" id="catalogs-filter-pills">
+          <button type="button" class="catalog-pill-btn active" data-catalog-filter="all">All Catalogs (<span id="count-all">9</span>)</button>
+          <button type="button" class="catalog-pill-btn" data-catalog-filter="laminates">Laminates &amp; Liners (<span id="count-laminates">4</span>)</button>
+          <button type="button" class="catalog-pill-btn" data-catalog-filter="boards">MDF, HDHMR &amp; Boards (<span id="count-boards">3</span>)</button>
+          <button type="button" class="catalog-pill-btn" data-catalog-filter="hardware">Cabinet Hardware (<span id="count-hardware">1</span>)</button>
+          <button type="button" class="catalog-pill-btn" data-catalog-filter="adhesive">Adhesive (<span id="count-adhesive">1</span>)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       4. Catalogs Grid Section
+       ========================================================================= -->
+  <main class="catalogs-grid-section" id="catalogs-grid-section">
+    <div class="container">
+      <div class="catalogs-grid" id="catalogs-grid-container">
+        <!-- Rendered dynamically by catalogs-data.js and inline script -->
+      </div>
+      
+      <div class="catalogs-empty-state" id="catalogs-empty-state" style="display:none;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <h3>No Catalogs Found</h3>
+        <p>No matching PDF catalogs found for your search. Try searching for "Laminates", "Tesa", or "Hardware".</p>
+        <button type="button" class="btn btn-outline" id="btn-reset-catalog-filter">Reset Filters</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       5. Brand Logos Strip
+       ========================================================================= -->
+  <section class="catalogs-brands-section">
+    <div class="container">
+      <h3 class="catalogs-brands-title">Authorized Catalog Distributor For Leading Brands</h3>
+      <div class="catalogs-brands-banner-wrap">
+        <img src="assets/images/banners/brand_logos_strip.jpg" alt="Authorized Brands: Khidki, Finetouch, Merino, Greenlam, CenturyLaminates, Virgo, Royale Touche, Saket" class="catalogs-brands-strip-img" />
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       6. Site Footer
+       ========================================================================= -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Col 1: Brand Info -->
+        <div class="footer-col-brand">
+          <a href="index.html" class="brand-logo" aria-label="Devshree - The Hardware Gallery">
+            <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" class="brand-logo-img" />
+          </a>
+          <p class="footer-tagline">
+            Devshree - The Hardware Gallery. Premium architectural hardware, laminates, decorative boards, and building materials with prompt pan-India dispatch.
+          </p>
+          <p class="footer-contact-item">
+            <strong>Helpline:</strong> <a href="tel:+918866130409" style="color:inherit;text-decoration:none;">+91 88661 30409</a>
+          </p>
+          <p class="footer-contact-item">
+            <strong>Email:</strong> <a href="mailto:contact@devshree.in" style="color:inherit;text-decoration:none;">contact@devshree.in</a>
+          </p>
+        </div>
+
+        <!-- Col 2: Quick Links -->
+        <div>
+          <h4 class="footer-col-title">Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="index.html" class="footer-link">Home</a></li>
+            <li><a href="index.html#shop-by-category-section" class="footer-link">Shop by Category</a></li>
+            <li><a href="catalogs.html" class="footer-link">Product Catalogs (PDF)</a></li>
+            <li><a href="contact.html" class="footer-link">Contact Support</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Official Policies -->
+        <div>
+          <h4 class="footer-col-title">Customer Care</h4>
+          <ul class="footer-links">
+            <li><a href="shipping-policy.html" class="footer-link">Shipping &amp; Logistics Policy</a></li>
+            <li><a href="refund-policy.html" class="footer-link">Refund &amp; Cancellation Policy</a></li>
+            <li><a href="terms-and-conditions.html" class="footer-link">Terms &amp; Conditions</a></li>
+            <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Trade Inquiries -->
+        <div>
+          <h4 class="footer-col-title">Contractor &amp; Trade Desks</h4>
+          <p style="font-size:0.83rem;line-height:1.6;color:var(--color-text-secondary);margin-bottom:1rem;">
+            Architects, interior designers, and commercial contractors can request physical shade cards and bulk project quotations.
+          </p>
+          <a href="https://wa.me/918866130409?text=Hello%20Devshree,%20I%20am%20interested%20in%20product%20catalogs%20and%20contractor%20rates." target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;">
+            <span>WhatsApp Trade Desk</span>
+            &rarr;
+          </a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Devshree &mdash; The Hardware Gallery. All rights reserved.</p>
+        <p>100% Genuine Certified Building Materials &bull; GST Input Tax Invoices</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- WhatsApp Floating Action Button -->
+  <a 
+    href="https://wa.me/918866130409?text=Hello%20Devshree,%20I%20need%20help%20with%20product%20catalogs%20and%20pricing." 
+    class="devshree-floating-wa" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    aria-label="Chat on WhatsApp" 
+    title="Need Catalog Help? Chat with Devshree on WhatsApp"
+  >
+    <svg width="34" height="34" viewBox="0 0 24 24">
+      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.592 2.654-.696c1.029.575 1.84.883 2.806.883 3.182 0 5.768-2.587 5.768-5.766.001-3.18-2.585-5.766-5.768-5.766zm9.969 5.768c0 5.515-4.485 10-10 10-1.745 0-3.381-.453-4.81-1.246l-5.19 1.36 1.385-5.06c-.867-1.478-1.385-3.21-1.385-5.054 0-5.515 4.485-10 10-10 5.515 0 10 4.485 10 10z"/>
+    </svg>
+    <span class="floating-wa-tooltip">Chat with Devshree</span>
+  </a>
+
+  <!-- Catalog Data & Viewer Script (ES Module) -->
+  <script type="module">
+    import { 
+      DEVSHREE_CATALOGS, 
+      getActiveCatalogs, 
+      openPdfViewerModal, 
+      closePdfViewerModal 
+    } from './assets/js/catalogs-data.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Mobile Drawer Toggle
+      const menuBtn = document.getElementById('mobile-menu-btn');
+      const drawer = document.getElementById('mobile-drawer');
+      const overlay = document.getElementById('mobile-drawer-overlay');
+      const closeBtn = document.getElementById('mobile-drawer-close');
+
+      function openDrawer() {
+        drawer?.classList.add('active');
+        overlay?.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeDrawer() {
+        drawer?.classList.remove('active');
+        overlay?.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      menuBtn?.addEventListener('click', openDrawer);
+      closeBtn?.addEventListener('click', closeDrawer);
+      overlay?.addEventListener('click', closeDrawer);
+
+      // Render Catalogs Grid
+      const gridContainer = document.getElementById('catalogs-grid-container');
+      const emptyState = document.getElementById('catalogs-empty-state');
+      const searchInput = document.getElementById('catalogs-search-input');
+      const filterPills = document.querySelectorAll('.catalog-pill-btn');
+      const resetBtn = document.getElementById('btn-reset-catalog-filter');
+
+      let currentFilter = 'all';
+      let currentQuery = '';
+
+      // Check URL query param e.g. ?cat=laminates or ?q=tesa
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('cat')) {
+        currentFilter = urlParams.get('cat');
+        filterPills.forEach(p => p.classList.toggle('active', p.dataset.catalogFilter === currentFilter));
+      }
+      if (urlParams.get('q')) {
+        currentQuery = urlParams.get('q').toLowerCase();
+        if (searchInput) searchInput.value = urlParams.get('q');
+      }
+
+      function renderCatalogs() {
+        const sourceCatalogs = (typeof getActiveCatalogs === 'function') 
+          ? getActiveCatalogs() 
+          : (typeof DEVSHREE_CATALOGS !== 'undefined' ? DEVSHREE_CATALOGS : []);
+        if (!gridContainer || !sourceCatalogs || sourceCatalogs.length === 0) return;
+
+        const filtered = sourceCatalogs.filter(cat => {
+          const matchesCategory = currentFilter === 'all' || cat.categorySlug === currentFilter;
+          const searchHaystack = (cat.title + ' ' + cat.brand + ' ' + cat.category + ' ' + cat.description).toLowerCase();
+          const matchesQuery = !currentQuery || searchHaystack.includes(currentQuery);
+          return matchesCategory && matchesQuery;
+        });
+
+        if (filtered.length === 0) {
+          gridContainer.innerHTML = '';
+          if (emptyState) emptyState.style.display = 'block';
+          return;
+        }
+
+        if (emptyState) emptyState.style.display = 'none';
+
+        gridContainer.innerHTML = filtered.map(c => `
+          <article class="catalog-page-card" data-catalog-id="${c.id}">
+            <div class="catalog-card-cover-box">
+              <img src="${c.coverImage}" alt="${c.title}" class="catalog-card-cover-img" loading="lazy" />
+              <span class="catalog-card-badge">${c.brand}</span>
+              <a href="${c.pdfUrl}" download="${c.filename}" class="catalog-download-circle-btn" title="Download ${c.title} PDF" aria-label="Download PDF">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              </a>
+            </div>
+            
+            <div class="catalog-card-body">
+              <span class="catalog-card-cat-label">${c.category}</span>
+              <h3 class="catalog-card-title">${c.title}</h3>
+              <p class="catalog-card-desc">${c.description}</p>
+              
+              <div class="catalog-card-meta">
+                <span class="catalog-meta-tag">📄 ${c.pages} Pages</span>
+                <span class="catalog-meta-tag">📁 ${c.size}</span>
+                <span class="catalog-meta-tag">🔒 ISI Spec</span>
+              </div>
+              
+              <div class="catalog-card-actions">
+                <button type="button" class="btn btn-catalog-view-trigger" data-view-pdf="${c.pdfUrl}" data-title="${c.title}" data-filename="${c.filename}">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>View PDF</span>
+                </button>
+                <a href="${c.pdfUrl}" download="${c.filename}" class="btn btn-catalog-download-trigger" title="Download PDF to device">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+          </article>
+        `).join('');
+
+        // Bind View buttons
+        gridContainer.querySelectorAll('.btn-catalog-view-trigger').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const pdf = btn.dataset.viewPdf;
+            const title = btn.dataset.title;
+            const filename = btn.dataset.filename;
+            if (typeof openPdfViewerModal === 'function') {
+              openPdfViewerModal(pdf, title, filename);
+            } else {
+              window.open(pdf, '_blank');
+            }
+          });
+        });
+      }
+
+      // Filter pills
+      filterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          filterPills.forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          currentFilter = pill.dataset.catalogFilter;
+          renderCatalogs();
+        });
+      });
+
+      // Search input
+      searchInput?.addEventListener('input', (e) => {
+        currentQuery = e.target.value.trim().toLowerCase();
+        renderCatalogs();
+      });
+
+      // Reset
+      resetBtn?.addEventListener('click', () => {
+        currentFilter = 'all';
+        currentQuery = '';
+        if (searchInput) searchInput.value = '';
+        filterPills.forEach(p => p.classList.toggle('active', p.dataset.catalogFilter === 'all'));
+        renderCatalogs();
+      });
+
+      // Live cross-tab sync
+      window.addEventListener('devshree:catalogs-updated', () => renderCatalogs());
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'devshree_custom_catalogs') renderCatalogs();
+      });
+
+      // Initial Render
+      renderCatalogs();
+    });
+  </script>
+</body>
+</html>

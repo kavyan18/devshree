@@ -639,7 +639,48 @@
     padding: 0 3px !important;
   }
 
+  /* Mobile Header with Embedded Search Bar */
+  .site-header {
+    padding-bottom: 0.5rem !important;
+  }
+  .header-main {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    min-height: var(--header-height) !important;
+    padding: 0.4rem 0 0.2rem !important;
+    gap: 0.4rem 0.5rem !important;
+  }
+  .header-nav-compact {
+    display: none !important;
+  }
+  .header-search-wrapper {
+    order: 10 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0.25rem 0 0 !important;
+  }
+  .header-search-bar-form {
+    padding: 0.2rem 0.35rem 0.2rem 0.75rem !important;
+  }
+  .header-search-bar-form .search-shortcut-badge {
+    display: none !important;
+  }
+  .header-search-bar-form .search-master-submit-btn span {
+    display: none !important;
+  }
+  .header-search-bar-form .search-master-submit-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    justify-content: center !important;
+  }
+
   /* Search Bar Clean Mobile Mode */
+  .site-search-section {
+    padding: 0.5rem 0 0.5rem !important;
+  }
   .search-master-form {
     padding: 0.25rem 0.35rem 0.25rem 0.75rem !important;
     border-radius: 9999px !important;
@@ -667,32 +708,163 @@
     display: none !important;
   }
 
-  /* Hero Section Proportions */
-  .hero-section {
-    padding: 1.5rem 0 2.25rem !important;
+  /* Top Category Bar Mobile (Flipkart/Amazon Reference Style) */
+  .top-categories-bar-section {
+    padding: 0.35rem 0 0 !important;
   }
-  .hero-title {
-    font-size: 1.95rem !important;
-    line-height: 1.2 !important;
-    letter-spacing: -0.02em !important;
-    margin-bottom: 0.85rem !important;
+  .top-categories-scroll-wrapper {
+    justify-content: safe center !important;
+    gap: 0.4rem !important;
+    padding: 0.2rem 0.5rem 0 !important;
   }
-  .eyebrow-tag {
-    font-size: 0.68rem !important;
-    letter-spacing: 0.12em !important;
-    margin-bottom: 0.5rem !important;
+  .top-cat-item {
+    min-width: 62px !important;
+    padding: 0.25rem 0.4rem 0.45rem !important;
   }
-  .hero-desc {
-    font-size: 0.92rem !important;
-    line-height: 1.55 !important;
-    margin-bottom: 1.5rem !important;
+  .top-cat-icon-box {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 11px !important;
+    margin-bottom: 0.25rem !important;
   }
-  .btn-hero {
-    padding: 0.85rem 1.25rem !important;
-    font-size: 0.92rem !important;
+  .top-cat-icon-box svg {
+    width: 19px !important;
+    height: 19px !important;
   }
-  .hero-secondary-link {
-    font-size: 0.85rem !important;
+  .top-cat-label {
+    font-size: 0.69rem !important;
+  }
+
+  /* Offers Carousel on Mobile (Full Bar Image) */
+  .offers-carousel-section {
+    padding: 0.65rem 0 0.85rem !important;
+  }
+  .offers-carousel-container {
+    border-radius: 14px !important;
+  }
+  .offer-slide {
+    padding: 1.25rem 1.15rem 2.25rem !important;
+    min-height: 190px !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+  }
+  .offer-slide-backdrop {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .offer-slide-bg-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+  }
+  .offer-slide-overlay {
+    background: linear-gradient(
+      90deg,
+      rgba(25, 27, 22, 0.94) 0%,
+      rgba(25, 27, 22, 0.82) 58%,
+      rgba(25, 27, 22, 0.40) 100%
+    ) !important;
+  }
+  .offer-slide-content {
+    max-width: 85% !important;
+  }
+  .offer-slide-title {
+    font-size: 1.12rem !important;
+    margin-bottom: 0.35rem !important;
+    line-height: 1.25 !important;
+  }
+  .offer-slide-desc {
+    display: none !important;
+  }
+  .offer-slide-perks {
+    display: none !important;
+  }
+  .btn-offer-cta {
+    font-size: 0.76rem !important;
+    padding: 0.42rem 0.95rem !important;
+  }
+  .offer-subtext {
+    display: none !important;
+  }
+  .offers-carousel-nav {
+    display: none !important;
+  }
+  .offers-carousel-dots {
+    bottom: 8px !important;
+    padding: 4px 8px !important;
+  }
+
+  /* Deals shelf card on mobile (Devshree Architectural Theme) */
+  .deals-shelf-section {
+    padding: 0.25rem 0 1rem !important;
+  }
+  .deals-shelf-card {
+    border-radius: 14px !important;
+    padding: 1rem 0.85rem 1.15rem !important;
+  }
+  .deals-shelf-title {
+    font-size: 1.05rem !important;
+  }
+  .deals-shelf-subtitle {
+    font-size: 0.74rem !important;
+  }
+  .deals-rail-card {
+    flex: 0 0 142px !important;
+    width: 142px !important;
+    border-radius: 8px !important;
+  }
+  .deals-rail-card-img-wrap {
+    height: 105px !important;
+  }
+  .deals-rail-card-title {
+    font-size: 0.75rem !important;
+    height: 1.95rem !important;
+  }
+  .deals-rail-current-price {
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  /* Shop by Category Section Mobile */
+  .shop-by-category-section {
+    padding: 1.15rem 0 1.5rem !important;
+  }
+  .shop-by-category-title {
+    font-size: 1.15rem !important;
+  }
+  .shop-by-category-see-all {
+    font-size: 0.82rem !important;
+  }
+  .category-cards-rail-track {
+    display: flex !important;
+    gap: 0.65rem !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 0.35rem !important;
+  }
+  .category-cards-rail-track::-webkit-scrollbar {
+    display: none !important;
+  }
+  .cat-rail-card {
+    flex: 0 0 102px !important;
+    width: 102px !important;
+  }
+  .cat-rail-card-img-wrap {
+    border-radius: 12px !important;
+    padding: 0.5rem !important;
+  }
+  .cat-rail-card-title {
+    font-size: 0.72rem !important;
+    min-height: 1.8rem !important;
+    margin-top: 0.45rem !important;
   }
 
   /* Section Header Rows */
@@ -1407,5 +1579,54 @@
 
   .btn-order-track:hover {
     transform: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Home Brand PDF Catalogs Section Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .home-pdf-catalogs-section {
+    padding: 1.5rem 0 1.75rem;
+  }
+  .pdf-catalogs-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .pdf-catalogs-title {
+    font-size: 1.25rem;
+  }
+  .pdf-catalogs-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .pdf-viewer-modal-dialog {
+    width: 96%;
+    height: 94vh;
+    border-radius: 12px;
+  }
+  .pdf-viewer-modal-header {
+    padding: 0.75rem 1rem;
+  }
+  .btn-pdf-header-action span {
+    display: none;
+  }
+  .btn-pdf-header-action {
+    padding: 0.45rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pdf-catalog-card {
+    flex: 0 0 230px;
+    width: 230px;
+  }
+  .pdf-card-cover-wrap {
+    height: 140px;
+  }
+  .pdf-card-body {
+    padding: 0.85rem 0.95rem 1rem;
   }
 }
