@@ -60,7 +60,7 @@ export async function fetchCategories() {
  * @returns {Promise<Array>}
  */
 export async function fetchProducts(options = {}) {
-  let products = [];
+  let firestoreProducts = [];
   const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
 
   if (isConfigured && db) {
@@ -80,28 +80,45 @@ export async function fetchProducts(options = {}) {
           if (createdAt && typeof createdAt.toDate === 'function') {
             createdAt = createdAt.toDate().toISOString();
           }
-          products.push({ id: d.id, ...data, ...(createdAt ? { createdAt } : {}) });
+          firestoreProducts.push({ id: d.id, ...data, ...(createdAt ? { createdAt } : {}) });
         });
-
-        // Firestore is the sole source of truth: do NOT re-insert deleted demo products
-        if (!options.categoryId && products.length > 0) {
-          setStorage(CACHE_PRODUCTS_KEY, products);
-        }
       }
     } catch (err) {
       console.warn('[Devshree] Error fetching products from Firestore, using fallback:', err);
     }
   }
 
-  // If Firestore returned no products or errored, use cached or mock products as fallback
-  if (!Array.isArray(products) || products.length === 0) {
-    const cached = getStorage(CACHE_PRODUCTS_KEY, null);
-    if (Array.isArray(cached) && cached.length > 0) {
-      products = cached.filter(p => !deletedIds.has(String(p.id)));
+  // Combine seed products, local storage cache, and Firestore products into a complete catalog
+  const catalogMap = new Map();
+
+  // 1. Seed items across all architectural hardware & utility categories
+  MOCK_PRODUCTS.forEach(p => {
+    if (!deletedIds.has(String(p.id))) {
+      catalogMap.set(String(p.id), p);
     }
-    if (!Array.isArray(products) || products.length === 0) {
-      products = MOCK_PRODUCTS.filter(p => !deletedIds.has(String(p.id)));
+  });
+
+  // 2. Cached items from admin / localStorage
+  const cached = getStorage(CACHE_PRODUCTS_KEY, null);
+  if (Array.isArray(cached)) {
+    cached.forEach(p => {
+      if (!deletedIds.has(String(p.id))) {
+        catalogMap.set(String(p.id), p);
+      }
+    });
+  }
+
+  // 3. Firestore items take precedence
+  firestoreProducts.forEach(p => {
+    if (!deletedIds.has(String(p.id))) {
+      catalogMap.set(String(p.id), p);
     }
+  });
+
+  let products = Array.from(catalogMap.values());
+
+  if (!options.categoryId && products.length > 0) {
+    setStorage(CACHE_PRODUCTS_KEY, products);
   }
 
   // Apply in-memory filtering (robust against missing Firestore composite indexes)

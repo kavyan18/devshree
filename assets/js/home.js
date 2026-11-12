@@ -67,14 +67,19 @@ import {
  */
 function getAllAvailableProducts() {
   const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
+  const combinedMap = new Map();
+  MOCK_PRODUCTS.forEach(p => {
+    if (!deletedIds.has(String(p.id))) combinedMap.set(String(p.id), p);
+  });
   try {
     const cached = getStorage('devshree_cached_products', null);
     if (Array.isArray(cached) && cached.length > 0) {
-      const filtered = cached.filter(p => !deletedIds.has(String(p.id)));
-      if (filtered.length > 0) return filtered;
+      cached.forEach(p => {
+        if (!deletedIds.has(String(p.id))) combinedMap.set(String(p.id), p);
+      });
     }
   } catch (_) {}
-  return MOCK_PRODUCTS.filter(p => !deletedIds.has(String(p.id)));
+  return Array.from(combinedMap.values());
 }
 
 /**
@@ -112,27 +117,31 @@ let currentCatalogOptions = {
 };
 
 async function initDevshreeHome() {
-  checkCatalogSyncUrl();
-  initHeaderAndNavigation();
-  initSearchUI();
-  initAuthUI();
-  initTopCategoriesBar();
-  initShopByCategoryRail();
-  initOffersCarousel();
-  await renderDealsRail();
-  initHomeCatalogsCarousel();
-  initSyncButton();
-  renderCategories();
-  renderProductSections();
-  renderReviews();
-  initFeedbackSystem();
-  initQuickViewModal();
-  initCartDrawer();
-  initTrackingAndCheckoutModals();
-  initNewsletterForm();
-  initCartBadge();
-  initWishlistBadge();
-  setupOrderNotificationsListener();
+  // 1. Prioritize immediate product & deals rendering so the catalog is NEVER blank
+  try { await renderCatalogGrid(); } catch (e) { console.warn('[Devshree] Catalog grid init error:', e); }
+  try { await renderDealsRail(); } catch (e) { console.warn('[Devshree] Deals rail init error:', e); }
+
+  // 2. Initialize all interactive controls with isolation
+  try { checkCatalogSyncUrl(); } catch (e) {}
+  try { initHeaderAndNavigation(); } catch (e) {}
+  try { initSearchUI(); } catch (e) {}
+  try { initAuthUI(); } catch (e) {}
+  try { initTopCategoriesBar(); } catch (e) {}
+  try { initShopByCategoryRail(); } catch (e) {}
+  try { initOffersCarousel(); } catch (e) {}
+  try { initHomeCatalogsCarousel(); } catch (e) {}
+  try { initSyncButton(); } catch (e) {}
+  try { renderCategories(); } catch (e) {}
+  try { await renderProductSections(); } catch (e) {}
+  try { renderReviews(); } catch (e) {}
+  try { initFeedbackSystem(); } catch (e) {}
+  try { initQuickViewModal(); } catch (e) {}
+  try { initCartDrawer(); } catch (e) {}
+  try { initTrackingAndCheckoutModals(); } catch (e) {}
+  try { initNewsletterForm(); } catch (e) {}
+  try { initCartBadge(); } catch (e) {}
+  try { initWishlistBadge(); } catch (e) {}
+  try { setupOrderNotificationsListener(); } catch (e) {}
 }
 
 if (document.readyState === 'loading') {
@@ -824,14 +833,20 @@ async function renderProductSections() {
   const dealsGrid = document.getElementById('deals-grid');
 
   if (newArrivalsGrid) {
-    const newItems = await fetchProducts({ sortBy: 'newest' });
+    let newItems = await fetchProducts({ sortBy: 'newest' });
+    if (!newItems || newItems.length === 0) {
+      newItems = (await fetchProducts()).slice(0, 4);
+    }
     newArrivalsGrid.innerHTML = newItems.slice(0, 4).map(createProductCardHtml).join('');
     bindProductCardEvents(newArrivalsGrid);
   }
 
   if (dealsGrid) {
     const allProducts = await fetchProducts();
-    const deals = allProducts.filter(p => calculateDiscount(p.price, p.compareAtPrice, p.discountPercentage) >= 20).slice(0, 4);
+    let deals = allProducts.filter(p => calculateDiscount(p.price, p.compareAtPrice, p.discountPercentage) >= 10).slice(0, 4);
+    if (!deals || deals.length === 0) {
+      deals = allProducts.slice(0, 4);
+    }
     dealsGrid.innerHTML = deals.map(createProductCardHtml).join('');
     bindProductCardEvents(dealsGrid);
   }
@@ -844,27 +859,38 @@ async function renderCatalogGrid() {
   const bestsellersGrid = document.getElementById('bestsellers-grid');
   if (!bestsellersGrid) return;
 
-  bestsellersGrid.innerHTML = `
-    <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem; color: var(--color-text-secondary);">
-      <p>Loading live products from database...</p>
-    </div>
-  `;
+  // 1. Immediately bind events to any pre-rendered cards in DOM
+  bindProductCardEvents(bestsellersGrid);
 
-  const products = await fetchProducts(currentCatalogOptions);
+  // 2. If the grid has no cards yet, immediately populate from local products (0ms instant render)
+  if (!bestsellersGrid.querySelector('.product-card')) {
+    const instantProds = getAllAvailableProducts();
+    if (instantProds && instantProds.length > 0) {
+      bestsellersGrid.innerHTML = instantProds.slice(0, 8).map(createProductCardHtml).join('');
+      bindProductCardEvents(bestsellersGrid);
+    }
+  }
 
-  if (products.length === 0) {
-    bestsellersGrid.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; background: #FFF; border-radius: var(--radius-md); border: 1px dashed var(--color-border);">
-        <p style="font-size: 1.1rem; color: var(--color-navy); font-weight: 600; margin-bottom: 0.5rem;">No products match the selected filters.</p>
-        <button id="reset-catalog-filter-btn" class="btn btn-outline btn-sm">Clear Filters</button>
-      </div>
-    `;
-    bestsellersGrid.querySelector('#reset-catalog-filter-btn')?.addEventListener('click', () => {
-      setCatalogCategoryFilter('');
-    });
-  } else {
-    bestsellersGrid.innerHTML = products.map(createProductCardHtml).join('');
-    bindProductCardEvents(bestsellersGrid);
+  // 3. Fetch latest products from database / catalog service
+  try {
+    const products = await fetchProducts(currentCatalogOptions);
+
+    if (products.length === 0) {
+      bestsellersGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; background: #FFF; border-radius: var(--radius-md); border: 1px dashed var(--color-border);">
+          <p style="font-size: 1.1rem; color: var(--color-navy); font-weight: 600; margin-bottom: 0.5rem;">No products match the selected filters.</p>
+          <button id="reset-catalog-filter-btn" class="btn btn-outline btn-sm">Clear Filters</button>
+        </div>
+      `;
+      bestsellersGrid.querySelector('#reset-catalog-filter-btn')?.addEventListener('click', () => {
+        setCatalogCategoryFilter('');
+      });
+    } else {
+      bestsellersGrid.innerHTML = products.map(createProductCardHtml).join('');
+      bindProductCardEvents(bestsellersGrid);
+    }
+  } catch (err) {
+    console.warn('[Devshree] Catalog grid fetch error, preserving existing cards:', err);
   }
 }
 

@@ -543,11 +543,6 @@
       const params = new URLSearchParams(window.location.search);
       const prodId = params.get('id');
 
-      if (!prodId) {
-        showNotFound();
-        return;
-      }
-
       // Try fetching from Firestore catalog
       let allProducts = [];
       try {
@@ -556,8 +551,19 @@
         allProducts = [];
       }
 
-      currentProduct = allProducts.find(p => String(p.id) === String(prodId)) ||
-                       MOCK_PRODUCTS.find(p => String(p.id) === String(prodId));
+      if (!prodId) {
+        if (allProducts.length > 0) {
+          currentProduct = allProducts[0];
+        } else if (MOCK_PRODUCTS.length > 0) {
+          currentProduct = MOCK_PRODUCTS[0];
+        } else {
+          showNotFound();
+          return;
+        }
+      } else {
+        currentProduct = allProducts.find(p => String(p.id) === String(prodId)) ||
+                         MOCK_PRODUCTS.find(p => String(p.id) === String(prodId));
+      }
 
       if (!currentProduct) {
         showNotFound();
