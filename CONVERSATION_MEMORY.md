@@ -11,7 +11,7 @@
 - **Visual Design Identity:** Warm terracotta (`#C2623B`), deep architectural bronze, brushed gold accents, soft ivory backgrounds, crisp typography.
 - **Repository:** `https://github.com/kavyan18/devshree`
 - **Active Branch:** `main`
-- **Latest Remote Commit:** `170d031fdcdbfa387582b663910c763d8a98d9be`
+- **Latest Remote Commit:** `dafe5c357c2d8e26ed5931a09689510cf8458be7`
 
 ---
 
@@ -169,14 +169,32 @@
   7. **Verified Tests:** All 274 unit and integration test assertions pass (100%).
   8. Synced all changes to `github_ready_folder` and `devshree_live_store`, and rebuilt `devshree-website-github.zip`.
 
+### Session Turn 19: Elimination of Demo Products & Catalogs on Reload and Mobile Hydration
+- User requested: *"fix this problme when i reload the website it will show the old itmes and old demo product demo product will show in moblie and when reload the website it will show the old items in catloag fix it properly and push in the github"*
+- Diagnosed root causes:
+  1. **Unconditional Mock Product Injection (`assets/js/products.js`):** In `fetchProducts()`, `MOCK_PRODUCTS` (Havells Coral, Polycab wire, Asian Paints, etc.) were unconditionally inserted into `catalogMap` on every fetch, polluting `devshree_cached_products` and re-injecting demo products on reload.
+  2. **Unconditional Homepage Product Augmentation (`assets/js/home.js`):** In `getAllAvailableProducts()`, `MOCK_PRODUCTS` were always appended to the product list even when cached user items existed.
+  3. **Static HTML Pre-Render of Demo Cards (`index.html`):** The `#bestsellers-grid` statically contained 8 hardcoded demo cards in raw HTML, causing old demo products to flash on initial paint before JavaScript execution on reloads and mobile devices.
+  4. **Catalog Demo Fallback & Missing Firestore Sync (`assets/js/catalogs-data.js`):** `getActiveCatalogs()` had `if (Array.isArray(parsed) && parsed.length > 0) return parsed; return DEVSHREE_CATALOGS.slice();`. If an admin deleted catalogs or had zero custom lookbooks, it immediately fell back to all 9 demo lookbooks. Also, catalogs were never fetched from Firestore.
+- Implemented comprehensive fixes:
+  1. **Authoritative Firestore Products (`assets/js/products.js`):** Updated `fetchProducts()` so that `firestoreProducts` is the sole authoritative catalog. `MOCK_PRODUCTS` are only consulted if both Firestore and local storage are completely empty.
+  2. **Clean Product Retrieval (`assets/js/home.js`):** Updated `getAllAvailableProducts()` to return cached items directly without injecting `MOCK_PRODUCTS`.
+  3. **Live Pre-Rendered Products in HTML (`index.html`):** Replaced the 8 static demo cards in `#bestsellers-grid` with the 6 genuine user products from Firestore (`TANDAM (6 Pcs)`, `LED LEMP 9w`, `NAIL 14x1III`, `NAIL 17x1I LH`, `Biding 1x0I—-3’`, and `NAIL 14x1I LH`), backed by optimized local images in `assets/images/products/`.
+  4. **Asynchronous Firestore Catalog Sync (`assets/js/catalogs-data.js`):** Built `fetchActiveCatalogs()`, added `devshree_deleted_catalog_ids` tracking so deleted demo catalogs never resurrect, and updated `getActiveCatalogs()` to respect empty custom lists.
+  5. **Integrated Catalog Sync Across Admin & Storefront (`assets/js/admin.js`, `catalogs.html`, & `assets/js/home.js`):** Connected `fetchActiveCatalogs()` to admin tables, the dedicated catalog page (`catalogs.html`), and the homepage carousel.
+  6. **Automated Verification:** All 274 unit and integration test assertions pass (100%).
+  7. Synced all changes to `github_ready_folder` and `devshree_live_store`, and rebuilt `devshree-website-github.zip`.
+
 ---
 
 ## 3. Current System State & Key Details
 
 | Component | Status | Details |
 |---|---|---|
+| **Product Hydration** | 100% Live & Pure | Firestore products authoritative; demo products completely purged from reloads and mobile |
+| **Catalog Hydration** | Live & Persistent | Asynchronous Firestore catalog sync (`fetchActiveCatalogs`); deleted demo lookbooks never resurrect |
 | **Cloud Firestore Rules** | Deployed & Live | `firestore.rules` deployed live with `/catalogs` and `/offers`; public read & admin write enforced |
-| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `170d031` |
+| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: pending push |
 | **Catalog Page UI** | Luxury Architectural Redesign | 3-column responsive grid, elevated search toolbar, terracotta pills, frosted glass badges |
 | **PDF Catalog Engine** | Fully Operational | Dual-storage engine (IndexedDB + LocalStorage metadata + Blob Object URL viewer + Bulletproof Native Overlay file picker) |
 | **Admin File Pickers** | Fully Operational | Transparent native `<input type="file">` overlay for Cover Image, PDF Document, and Slide Image; Dropzone for Products |
@@ -193,8 +211,8 @@
 ---
 
 ## 4. Where the Last Conversation Stopped
-- **Last Completed Task:** Complete UI & architectural redesign of the Dedicated Lookbook Catalog Page (`catalogs.html`) with luxury 3-column grid, elevated search & pill filters, frosted glass badges, and responsive tablet/mobile breakpoints. All 274 tests pass (100%).
-- **Pending Action:** Ready to push changes to GitHub repository `kavyan18/devshree` upon user confirmation.
+- **Last Completed Task:** Fixed product and catalog reloading/hydration so that old demo products and deleted factory catalogs never display on reload or mobile devices. Replaced static demo cards in `index.html` with real Firestore user products, made Firestore products authoritative in `assets/js/products.js` and `assets/js/home.js`, and implemented asynchronous Firestore catalog sync with deletion tracking in `assets/js/catalogs-data.js` and `catalogs.html`. All 274 tests pass (100%).
+- **Pending Action:** Ready for user review or any next features/requests.
 
 ---
 

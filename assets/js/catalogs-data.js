@@ -2,7 +2,12 @@
  * Devshree Architectural Hardware & Interior Catalogs
  * Official brand PDF catalogs, lookbooks, and technical spec sheets
  * High-performance dual storage: IndexedDB for large PDF payloads + LocalStorage metadata
+ * Firestore Cloud synchronization for seamless cross-device persistence
  */
+
+import { db, collection, getDocs, isConfigured } from './firebase-config.js';
+
+const DELETED_CATALOGS_KEY = 'devshree_deleted_catalog_ids';
 
 const DEVSHREE_CATALOGS = [
   {
@@ -547,20 +552,83 @@ function closePdfViewerModal() {
    ========================================================================= */
 
 /**
- * Retrieve active catalogs merged with admin customizations from localStorage
+ * Retrieve active catalogs merged with admin customizations from localStorage,
+ * permanently excluding any user-deleted items.
  * @returns {Array} List of official and admin-added PDF catalogs
  */
 function getActiveCatalogs() {
+  const deletedIds = new Set();
   try {
-    const raw = localStorage.getItem(CUSTOM_CATALOGS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+    const delRaw = localStorage.getItem(DELETED_CATALOGS_KEY);
+    if (delRaw) {
+      const parsedDel = JSON.parse(delRaw);
+      if (Array.isArray(parsedDel)) {
+        parsedDel.forEach(id => deletedIds.add(String(id)));
       }
     }
   } catch (_) {}
-  return DEVSHREE_CATALOGS.slice();
+
+  try {
+    const raw = localStorage.getItem(CUSTOM_CATALOGS_KEY);
+    if (raw !== null) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(c => !deletedIds.has(String(c.id)));
+      }
+    }
+  } catch (_) {}
+
+  return DEVSHREE_CATALOGS.filter(c => !deletedIds.has(String(c.id)));
+}
+
+/**
+ * Asynchronously fetch active catalogs from Cloud Firestore.
+ * Prioritizes live database changes across mobile/desktop, synchronizes local cache,
+ * and ensures deleted demo catalogs never resurrect.
+ * @returns {Promise<Array>}
+ */
+async function fetchActiveCatalogs() {
+  const deletedIds = new Set();
+  try {
+    const delRaw = localStorage.getItem(DELETED_CATALOGS_KEY);
+    if (delRaw) {
+      const parsedDel = JSON.parse(delRaw);
+      if (Array.isArray(parsedDel)) {
+        parsedDel.forEach(id => deletedIds.add(String(id)));
+      }
+    }
+  } catch (_) {}
+
+  let firestoreCatalogs = [];
+  if (isConfigured && db) {
+    try {
+      const snap = await getDocs(collection(db, 'catalogs'));
+      if (!snap.empty) {
+        snap.forEach(d => {
+          if (!deletedIds.has(String(d.id))) {
+            const data = d.data();
+            firestoreCatalogs.push({ id: d.id, ...data });
+          }
+        });
+      }
+    } catch (err) {
+      console.warn('[Devshree Catalogs] Firestore fetch fallback:', err);
+    }
+  }
+
+  // If Firestore has catalogs, use Firestore as the authoritative source
+  if (firestoreCatalogs.length > 0) {
+    try {
+      localStorage.setItem(CUSTOM_CATALOGS_KEY, JSON.stringify(firestoreCatalogs));
+    } catch (_) {}
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('devshree:catalogs-updated', { detail: { catalogs: firestoreCatalogs } }));
+    }
+    return firestoreCatalogs;
+  }
+
+  // Fallback to local active catalogs (respecting deletedIds and user saves)
+  return getActiveCatalogs();
 }
 
 /**
@@ -691,6 +759,7 @@ function resetCatalogsToDefault() {
   try {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(CUSTOM_CATALOGS_KEY);
+      localStorage.removeItem(DELETED_CATALOGS_KEY);
     }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('devshree:catalogs-updated', { detail: { catalogs: DEVSHREE_CATALOGS } }));
@@ -706,6 +775,7 @@ if (typeof window !== 'undefined') {
   window.DEVSHREE_CATALOGS = DEVSHREE_CATALOGS;
   window.DEVSHREE_CATEGORIES = DEVSHREE_CATEGORIES;
   window.getActiveCatalogs = getActiveCatalogs;
+  window.fetchActiveCatalogs = fetchActiveCatalogs;
   window.saveActiveCatalogs = saveActiveCatalogs;
   window.resetCatalogsToDefault = resetCatalogsToDefault;
   window.openPdfViewerModal = openPdfViewerModal;
@@ -721,6 +791,7 @@ export {
   DEVSHREE_CATALOGS,
   DEVSHREE_CATEGORIES,
   getActiveCatalogs,
+  fetchActiveCatalogs,
   saveActiveCatalogs,
   resetCatalogsToDefault,
   openPdfViewerModal,

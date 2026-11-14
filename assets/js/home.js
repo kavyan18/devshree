@@ -54,6 +54,7 @@ import {
   DEVSHREE_CATALOGS, 
   DEVSHREE_CATEGORIES, 
   getActiveCatalogs, 
+  fetchActiveCatalogs,
   openPdfViewerModal, 
   closePdfViewerModal 
 } from './catalogs-data.js';
@@ -68,17 +69,20 @@ import {
 function getAllAvailableProducts() {
   const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
   const combinedMap = new Map();
-  MOCK_PRODUCTS.forEach(p => {
-    if (!deletedIds.has(String(p.id))) combinedMap.set(String(p.id), p);
-  });
   try {
     const cached = getStorage('devshree_cached_products', null);
     if (Array.isArray(cached) && cached.length > 0) {
       cached.forEach(p => {
         if (!deletedIds.has(String(p.id))) combinedMap.set(String(p.id), p);
       });
+      return Array.from(combinedMap.values());
     }
   } catch (_) {}
+
+  // Only fall back to MOCK_PRODUCTS if cache is completely empty
+  MOCK_PRODUCTS.forEach(p => {
+    if (!deletedIds.has(String(p.id))) combinedMap.set(String(p.id), p);
+  });
   return Array.from(combinedMap.values());
 }
 
@@ -2230,12 +2234,17 @@ function initHomeCatalogsCarousel() {
   const nextBtn = document.getElementById('pdf-catalogs-next') || document.getElementById('home-catalogs-next');
   if (!track) return;
 
-  // Retrieve dynamic catalogs from catalogs-data.js or localStorage
-  const sourceCatalogs = (typeof getActiveCatalogs === 'function')
-    ? getActiveCatalogs()
-    : (typeof DEVSHREE_CATALOGS !== 'undefined' ? DEVSHREE_CATALOGS : []);
+  const renderTrackItems = (sourceCatalogs) => {
+    if (!sourceCatalogs || sourceCatalogs.length === 0) {
+      track.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:#78716C;">
+          <p style="font-size:1.05rem;font-weight:600;margin-bottom:6px;">No brand lookbooks published yet.</p>
+          <p style="font-size:0.875rem;">New factory catalogs and datasheets added by admin will appear here automatically.</p>
+        </div>
+      `;
+      return;
+    }
 
-  if (sourceCatalogs && sourceCatalogs.length > 0) {
     track.innerHTML = sourceCatalogs.map(c => `
       <article class="pdf-catalog-card" data-catalog-id="${escapeHTML(c.id)}">
         <div class="pdf-card-cover-wrap">
@@ -2256,7 +2265,7 @@ function initHomeCatalogsCarousel() {
           </div>
           <div class="pdf-card-actions">
             <button type="button" class="btn-pdf-view" data-view-pdf="${escapeHTML(c.pdfUrl)}" data-title="${escapeHTML(c.title)}" data-filename="${escapeHTML(c.filename || 'catalog.pdf')}">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
               <span>View PDF</span>
             </button>
             <a href="${escapeHTML(c.pdfUrl)}" download="${escapeHTML(c.filename || 'catalog.pdf')}" class="btn-pdf-download" title="Download ${escapeHTML(c.title)} PDF">
@@ -2271,6 +2280,36 @@ function initHomeCatalogsCarousel() {
         </div>
       </article>
     `).join('');
+
+    // Modal PDF Viewer Binding for in-browser inspection
+    track.querySelectorAll('.btn-pdf-view, .btn-catalog-view-pill').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const pdf = btn.dataset.viewPdf || btn.getAttribute('href');
+        const title = btn.dataset.title || 'Brand Catalog Lookbook';
+        const filename = btn.dataset.filename || 'catalog.pdf';
+        const catalogId = btn.closest('[data-catalog-id]')?.dataset.catalogId || '';
+        if (typeof openPdfViewerModal === 'function') {
+          e.preventDefault();
+          openPdfViewerModal(pdf, title, filename, catalogId);
+        }
+      });
+    });
+  };
+
+  // Retrieve dynamic catalogs from catalogs-data.js or localStorage
+  const initialCatalogs = (typeof getActiveCatalogs === 'function')
+    ? getActiveCatalogs()
+    : (typeof DEVSHREE_CATALOGS !== 'undefined' ? DEVSHREE_CATALOGS : []);
+
+  renderTrackItems(initialCatalogs);
+
+  // Asynchronous sync with Firestore so reloads and mobile visits display current catalogs
+  if (typeof fetchActiveCatalogs === 'function') {
+    fetchActiveCatalogs().then(fresh => {
+      if (Array.isArray(fresh) && JSON.stringify(fresh.map(c => c.id)) !== JSON.stringify(initialCatalogs.map(c => c.id))) {
+        renderTrackItems(fresh);
+      }
+    }).catch(() => {});
   }
 
   // Next / Prev Smooth Horizontal Scrolling
@@ -2287,20 +2326,6 @@ function initHomeCatalogsCarousel() {
   newNextBtn?.addEventListener('click', (e) => {
     e.preventDefault();
     track.scrollBy({ left: 340, behavior: 'smooth' });
-  });
-
-  // Modal PDF Viewer Binding for in-browser inspection
-  track.querySelectorAll('.btn-pdf-view, .btn-catalog-view-pill').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const pdf = btn.dataset.viewPdf || btn.getAttribute('href');
-      const title = btn.dataset.title || 'Brand Catalog Lookbook';
-      const filename = btn.dataset.filename || 'catalog.pdf';
-      const catalogId = btn.closest('[data-catalog-id]')?.dataset.catalogId || '';
-      if (typeof openPdfViewerModal === 'function') {
-        e.preventDefault();
-        openPdfViewerModal(pdf, title, filename, catalogId);
-      }
-    });
   });
 }
 

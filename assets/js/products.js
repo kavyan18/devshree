@@ -91,29 +91,31 @@ export async function fetchProducts(options = {}) {
   // Combine seed products, local storage cache, and Firestore products into a complete catalog
   const catalogMap = new Map();
 
-  // 1. Seed items across all architectural hardware & utility categories
-  MOCK_PRODUCTS.forEach(p => {
-    if (!deletedIds.has(String(p.id))) {
-      catalogMap.set(String(p.id), p);
-    }
-  });
-
-  // 2. Cached items from admin / localStorage
-  const cached = getStorage(CACHE_PRODUCTS_KEY, null);
-  if (Array.isArray(cached)) {
-    cached.forEach(p => {
+  if (firestoreProducts.length > 0) {
+    // 1. Live Firestore products are authoritative — never pollute with demo products
+    firestoreProducts.forEach(p => {
       if (!deletedIds.has(String(p.id))) {
         catalogMap.set(String(p.id), p);
       }
     });
-  }
-
-  // 3. Firestore items take precedence
-  firestoreProducts.forEach(p => {
-    if (!deletedIds.has(String(p.id))) {
-      catalogMap.set(String(p.id), p);
+  } else {
+    // 2. Cached items from admin / localStorage when Firestore is offline or loading
+    const cached = getStorage(CACHE_PRODUCTS_KEY, null);
+    if (Array.isArray(cached) && cached.length > 0) {
+      cached.forEach(p => {
+        if (!deletedIds.has(String(p.id))) {
+          catalogMap.set(String(p.id), p);
+        }
+      });
+    } else {
+      // 3. Fallback to mock products ONLY if both Firestore and local storage are completely empty
+      MOCK_PRODUCTS.forEach(p => {
+        if (!deletedIds.has(String(p.id))) {
+          catalogMap.set(String(p.id), p);
+        }
+      });
     }
-  });
+  }
 
   let products = Array.from(catalogMap.values());
 

@@ -43,6 +43,7 @@ import {
   DEVSHREE_CATALOGS, 
   DEVSHREE_CATEGORIES, 
   getActiveCatalogs, 
+  fetchActiveCatalogs,
   saveActiveCatalogs, 
   resetCatalogsToDefault, 
   openPdfViewerModal, 
@@ -2292,6 +2293,16 @@ function initCatalogsTab() {
     ? getActiveCatalogs() 
     : (typeof DEVSHREE_CATALOGS !== 'undefined' ? DEVSHREE_CATALOGS.slice() : []);
 
+  if (typeof fetchActiveCatalogs === 'function') {
+    fetchActiveCatalogs().then(cats => {
+      if (Array.isArray(cats)) {
+        allCatalogs = cats;
+        updateCatalogKPIs();
+        renderCatalogsTable();
+      }
+    }).catch(e => console.warn('[Admin] Firestore catalogs sync:', e));
+  }
+
   function updateCatalogKPIs() {
     const totalEl = document.getElementById('kpi-catalogs-total');
     const brandsEl = document.getElementById('kpi-catalogs-brands');
@@ -2448,6 +2459,13 @@ function initCatalogsTab() {
         if (!confirm(`Are you sure you want to remove "${target.title}"?`)) return;
 
         allCatalogs = allCatalogs.filter(c => c.id !== id);
+
+        // Permanently record deletion so old demo/deleted items never resurrect on reload
+        const deletedCatIds = getStorage('devshree_deleted_catalog_ids', []) || [];
+        if (!deletedCatIds.includes(String(id))) {
+          deletedCatIds.push(String(id));
+          setStorage('devshree_deleted_catalog_ids', deletedCatIds);
+        }
         if (typeof deleteCatalogPdfBlob === 'function') {
           try {
             await deleteCatalogPdfBlob(id);

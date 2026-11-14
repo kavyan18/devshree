@@ -265,6 +265,7 @@
     import { 
       DEVSHREE_CATALOGS, 
       getActiveCatalogs, 
+      fetchActiveCatalogs,
       openPdfViewerModal, 
       closePdfViewerModal,
       resolveCatalogPdfUrl
@@ -313,11 +314,17 @@
         if (searchInput) searchInput.value = urlParams.get('q');
       }
 
-      function renderCatalogs() {
-        const sourceCatalogs = (typeof getActiveCatalogs === 'function') 
-          ? getActiveCatalogs() 
-          : (typeof DEVSHREE_CATALOGS !== 'undefined' ? DEVSHREE_CATALOGS : []);
-        if (!gridContainer || !sourceCatalogs || sourceCatalogs.length === 0) return;
+      async function renderCatalogs() {
+        let sourceCatalogs = [];
+        if (typeof fetchActiveCatalogs === 'function') {
+          sourceCatalogs = await fetchActiveCatalogs();
+        } else if (typeof getActiveCatalogs === 'function') {
+          sourceCatalogs = getActiveCatalogs();
+        } else {
+          sourceCatalogs = typeof DEVSHREE_CATALOGS !== 'undefined' ? DEVSHREE_CATALOGS : [];
+        }
+
+        if (!gridContainer) return;
 
         // Dynamically update category pill counters
         const countAll = document.getElementById('count-all');
@@ -325,11 +332,17 @@
         const countBrd = document.getElementById('count-boards');
         const countHdw = document.getElementById('count-hardware');
         const countAdh = document.getElementById('count-adhesive');
-        if (countAll) countAll.textContent = sourceCatalogs.length;
-        if (countLam) countLam.textContent = sourceCatalogs.filter(c => c.categorySlug === 'laminates').length;
-        if (countBrd) countBrd.textContent = sourceCatalogs.filter(c => c.categorySlug === 'boards').length;
-        if (countHdw) countHdw.textContent = sourceCatalogs.filter(c => c.categorySlug === 'hardware').length;
-        if (countAdh) countAdh.textContent = sourceCatalogs.filter(c => c.categorySlug === 'adhesive').length;
+        if (countAll) countAll.textContent = sourceCatalogs ? sourceCatalogs.length : 0;
+        if (countLam) countLam.textContent = sourceCatalogs ? sourceCatalogs.filter(c => c.categorySlug === 'laminates').length : 0;
+        if (countBrd) countBrd.textContent = sourceCatalogs ? sourceCatalogs.filter(c => c.categorySlug === 'boards').length : 0;
+        if (countHdw) countHdw.textContent = sourceCatalogs ? sourceCatalogs.filter(c => c.categorySlug === 'hardware').length : 0;
+        if (countAdh) countAdh.textContent = sourceCatalogs ? sourceCatalogs.filter(c => c.categorySlug === 'adhesive').length : 0;
+
+        if (!sourceCatalogs || sourceCatalogs.length === 0) {
+          gridContainer.innerHTML = '';
+          if (emptyState) emptyState.style.display = 'block';
+          return;
+        }
 
         const filtered = sourceCatalogs.filter(cat => {
           const matchesCategory = currentFilter === 'all' || cat.categorySlug === currentFilter;
