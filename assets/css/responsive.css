@@ -148,6 +148,15 @@
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
+
+  /* Catalogs Page */
+  .catalogs-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  .catalogs-main-heading {
+    font-size: 1.95rem;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -408,6 +417,27 @@
   .delivery-gstin-pill {
     margin-left: 0;
     margin-top: 0.5rem;
+  }
+
+  /* Catalogs Page (768px) */
+  .catalogs-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+  .catalogs-main-heading {
+    font-size: 1.7rem;
+  }
+  .catalogs-hero-content {
+    margin-bottom: 1.5rem;
+  }
+  .catalogs-hero-desc {
+    font-size: 0.92rem;
+  }
+  .catalog-card-cover-box {
+    height: 220px;
+  }
+  .catalogs-page-toolbar {
+    padding: 1.15rem;
   }
 }
 
@@ -1628,5 +1658,37 @@
   }
   .pdf-card-body {
     padding: 0.85rem 0.95rem 1rem;
+  }
+
+  /* Dedicated Catalogs Page Mobile */
+  .catalogs-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .catalogs-main-heading {
+    font-size: 1.45rem;
+  }
+  .catalogs-page-hero {
+    padding: 1.5rem 0 2rem;
+  }
+  .catalogs-filter-pills {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .catalogs-filter-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .catalog-pill-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .catalog-card-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+  .btn-catalog-share {
+    grid-column: span 2;
   }
 }
