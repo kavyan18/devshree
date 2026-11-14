@@ -136,19 +136,19 @@ let knownOrderInvoices = new Set();
 let isInitialOrdersSnapshot = true;
 
 function initDevshreeAdmin() {
-  initAdminNavigation();
-  initPriceCalculation();
-  initProductForm();
-  initTableFilters();
-  initSyncAndBackupUI();
-  initOrdersControls();
-  initAdminGate();
-  initUserDropdown();
-  initAdminNotificationCenter();
-  initAdminSettings();
-  initAdminCancelModal();
-  initCatalogsTab();
-  initOffersTab();
+  try { initAdminNavigation(); } catch (e) { console.warn('[Admin] Navigation init:', e); }
+  try { initPriceCalculation(); } catch (e) { console.warn('[Admin] PriceCalc init:', e); }
+  try { initProductForm(); } catch (e) { console.warn('[Admin] ProductForm init:', e); }
+  try { initTableFilters(); } catch (e) { console.warn('[Admin] TableFilters init:', e); }
+  try { initSyncAndBackupUI(); } catch (e) { console.warn('[Admin] SyncBackup init:', e); }
+  try { initOrdersControls(); } catch (e) { console.warn('[Admin] OrdersControls init:', e); }
+  try { initAdminGate(); } catch (e) { console.warn('[Admin] AdminGate init:', e); }
+  try { initUserDropdown(); } catch (e) { console.warn('[Admin] UserDropdown init:', e); }
+  try { initAdminNotificationCenter(); } catch (e) { console.warn('[Admin] NotificationCenter init:', e); }
+  try { initAdminSettings(); } catch (e) { console.warn('[Admin] Settings init:', e); }
+  try { initAdminCancelModal(); } catch (e) { console.warn('[Admin] CancelModal init:', e); }
+  try { initCatalogsTab(); } catch (e) { console.error('[Admin] CatalogsTab init:', e); }
+  try { initOffersTab(); } catch (e) { console.error('[Admin] OffersTab init:', e); }
 
   // Check if verified active admin session exists
   if (isAdminSessionActive()) {
@@ -2234,6 +2234,12 @@ function initCatalogsTab() {
   const browsePdfBtn = document.getElementById('btn-browse-catalog-pdf');
   const descInput = document.getElementById('catalog-desc');
 
+  const pdfSelectedBadge = document.getElementById('catalog-pdf-selected-badge');
+  const pdfBadgeName = document.getElementById('catalog-pdf-badge-name');
+  const pdfBadgeSize = document.getElementById('catalog-pdf-badge-size');
+  const clearPdfBtn = document.getElementById('btn-clear-catalog-pdf');
+  let pendingPdfDataUrl = null;
+
   let allCatalogs = (typeof getActiveCatalogs === 'function') 
     ? getActiveCatalogs() 
     : (typeof DEVSHREE_CATALOGS !== 'undefined' ? DEVSHREE_CATALOGS.slice() : []);
@@ -2253,8 +2259,12 @@ function initCatalogsTab() {
 
   function resetCatalogForm() {
     form?.reset();
+    pendingPdfDataUrl = null;
     if (editIdInput) editIdInput.value = '';
     if (coverPreview) coverPreview.src = 'assets/images/catalogs/catalog_acrysoft_genoa.jpg';
+    if (pdfSelectedBadge) pdfSelectedBadge.style.display = 'none';
+    if (pdfFileInput) pdfFileInput.value = '';
+    if (coverFileInput) coverFileInput.value = '';
     if (formTitle) formTitle.textContent = 'Add New PDF Catalog / Lookbook';
     if (saveBtnText) saveBtnText.textContent = 'Save PDF Catalog';
     if (cancelBtn) cancelBtn.style.display = 'none';
@@ -2327,8 +2337,9 @@ function initCatalogsTab() {
         const url = btn.dataset.viewPdfUrl;
         const title = btn.dataset.title;
         const filename = btn.dataset.filename;
+        const catalogId = btn.closest('tr')?.dataset.catalogId || '';
         if (typeof openPdfViewerModal === 'function') {
-          openPdfViewerModal(url, title, filename);
+          openPdfViewerModal(url, title, filename, catalogId);
         } else {
           window.open(url, '_blank');
         }
@@ -2353,6 +2364,17 @@ function initCatalogsTab() {
         if (filenameInput) filenameInput.value = target.filename || '';
         if (descInput) descInput.value = target.description || '';
 
+        // Show PDF badge if custom or stored PDF is attached
+        if (target.pdfUrl && (target.pdfUrl.startsWith('indexeddb:') || target.hasLocalPdf || target.pdfUrl.startsWith('data:'))) {
+          if (pdfSelectedBadge) {
+            if (pdfBadgeName) pdfBadgeName.textContent = target.filename || 'Custom Lookbook PDF';
+            if (pdfBadgeSize) pdfBadgeSize.textContent = `(${target.size || 'Stored in browser'})`;
+            pdfSelectedBadge.style.display = 'flex';
+          }
+        } else {
+          if (pdfSelectedBadge) pdfSelectedBadge.style.display = 'none';
+        }
+
         if (formTitle) formTitle.textContent = `Edit Catalog: ${target.title}`;
         if (saveBtnText) saveBtnText.textContent = 'Update PDF Catalog';
         if (cancelBtn) cancelBtn.style.display = 'inline-flex';
@@ -2370,8 +2392,13 @@ function initCatalogsTab() {
         if (!confirm(`Are you sure you want to remove "${target.title}"?`)) return;
 
         allCatalogs = allCatalogs.filter(c => c.id !== id);
+        if (typeof deleteCatalogPdfBlob === 'function') {
+          try {
+            await deleteCatalogPdfBlob(id);
+          } catch (_) {}
+        }
         if (typeof saveActiveCatalogs === 'function') {
-          saveActiveCatalogs(allCatalogs);
+          await saveActiveCatalogs(allCatalogs);
         }
 
         if (db) {
@@ -2391,12 +2418,9 @@ function initCatalogsTab() {
   }
 
   // Cover image file picker
-  browseCoverBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  browseCoverBtn?.addEventListener('click', () => {
     if (coverFileInput) {
       coverFileInput.value = '';
-      coverFileInput.click();
     }
   });
   browseCoverBtn?.addEventListener('keydown', (e) => {
@@ -2406,6 +2430,14 @@ function initCatalogsTab() {
         coverFileInput.value = '';
         coverFileInput.click();
       }
+    }
+  });
+
+  // Clicking cover preview thumbnail also triggers file picker
+  coverPreview?.addEventListener('click', () => {
+    if (coverFileInput) {
+      coverFileInput.value = '';
+      coverFileInput.click();
     }
   });
 
@@ -2429,12 +2461,10 @@ function initCatalogsTab() {
   });
 
   // PDF file picker
-  browsePdfBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  let pendingPdfFile = null;
+  browsePdfBtn?.addEventListener('click', () => {
     if (pdfFileInput) {
       pdfFileInput.value = '';
-      pdfFileInput.click();
     }
   });
   browsePdfBtn?.addEventListener('keydown', (e) => {
@@ -2450,25 +2480,48 @@ function initCatalogsTab() {
   pdfFileInput?.addEventListener('change', (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    pendingPdfFile = file;
+
     if (filenameInput && (!filenameInput.value || filenameInput.value.trim() === '')) {
       filenameInput.value = file.name;
     }
-    if (sizeInput) {
-      const sizeStr = file.size > 1024 * 1024 
-        ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
-        : (file.size / 1024).toFixed(1) + ' KB';
-      sizeInput.value = sizeStr;
+    const sizeStr = file.size > 1024 * 1024 
+      ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
+      : (file.size / 1024).toFixed(1) + ' KB';
+    if (sizeInput) sizeInput.value = sizeStr;
+
+    // Show visual status badge immediately
+    if (pdfSelectedBadge) {
+      if (pdfBadgeName) pdfBadgeName.textContent = file.name;
+      if (pdfBadgeSize) pdfBadgeSize.textContent = `(${sizeStr})`;
+      pdfSelectedBadge.style.display = 'flex';
     }
+
     const reader = new FileReader();
     reader.onload = (event) => {
+      pendingPdfDataUrl = event.target.result;
       if (pdfUrlInput) pdfUrlInput.value = event.target.result;
-      showToast(`Selected PDF: ${file.name}`, 'success');
+      showToast(`Selected PDF: ${file.name} (${sizeStr})`, 'success');
     };
     reader.readAsDataURL(file);
   });
 
+  // Clear PDF button
+  clearPdfBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    pendingPdfDataUrl = null;
+    pendingPdfFile = null;
+    if (pdfFileInput) pdfFileInput.value = '';
+    if (pdfUrlInput) pdfUrlInput.value = '';
+    if (pdfSelectedBadge) pdfSelectedBadge.style.display = 'none';
+    showToast('Removed selected PDF file.', 'info');
+  });
+
   // Cancel edit button
-  cancelBtn?.addEventListener('click', () => resetCatalogForm());
+  cancelBtn?.addEventListener('click', () => {
+    pendingPdfFile = null;
+    resetCatalogForm();
+  });
 
   // Direct click listener on save button to ensure form validity reporting
   const saveCatalogBtn = document.getElementById('btn-save-catalog');
@@ -2488,7 +2541,7 @@ function initCatalogsTab() {
     const pages = parseInt(pagesInput?.value, 10) || 1;
     const size = sizeInput?.value?.trim() || '5.4 KB';
     const coverImage = coverUrlInput?.value?.trim() || coverPreview?.src || 'assets/images/catalogs/catalog_acrysoft_genoa.jpg';
-    const pdfUrl = pdfUrlInput?.value?.trim() || 'assets/catalogs/acrysoft-genoa-matt-acrylic-laminates.pdf';
+    const finalPdfUrl = pendingPdfDataUrl || pdfUrlInput?.value?.trim() || 'assets/catalogs/acrysoft-genoa-matt-acrylic-laminates.pdf';
     const filename = filenameInput?.value?.trim() || (title ? `${title.replace(/\s+/g, '-')}.pdf` : 'Catalog.pdf');
     const description = descInput?.value?.trim() || '';
 
@@ -2517,7 +2570,7 @@ function initCatalogsTab() {
       category,
       categorySlug,
       coverImage,
-      pdfUrl,
+      pdfUrl: finalPdfUrl,
       filename,
       pages,
       size,
@@ -2539,17 +2592,24 @@ function initCatalogsTab() {
     }
 
     if (typeof saveActiveCatalogs === 'function') {
-      saveActiveCatalogs(allCatalogs);
+      await saveActiveCatalogs(allCatalogs);
     }
 
     if (db) {
       try {
-        await setDoc(doc(db, 'catalogs', catalogData.id), catalogData);
+        const firestoreCatalog = { ...catalogData };
+        if (firestoreCatalog.pdfUrl && firestoreCatalog.pdfUrl.startsWith('data:')) {
+          firestoreCatalog.pdfUrl = `indexeddb:${catalogData.id}`;
+          firestoreCatalog.hasLocalPdf = true;
+        }
+        await setDoc(doc(db, 'catalogs', catalogData.id), firestoreCatalog);
       } catch (err) {
         console.warn('[Admin] Firestore catalog save fallback:', err);
       }
     }
 
+    pendingPdfDataUrl = null;
+    pendingPdfFile = null;
     resetCatalogForm();
     renderCatalogsTable();
   });
@@ -2581,6 +2641,8 @@ function initCatalogsTab() {
       allCatalogs = DEVSHREE_CATALOGS.slice();
       if (typeof saveActiveCatalogs === 'function') saveActiveCatalogs(allCatalogs);
     }
+    pendingPdfDataUrl = null;
+    pendingPdfFile = null;
     resetCatalogForm();
     renderCatalogsTable();
     showToast('Reset to factory default brand catalogs.', 'info');
@@ -2798,12 +2860,9 @@ function initOffersTab() {
   }
 
   // Slide image file picker
-  browseImageBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  browseImageBtn?.addEventListener('click', () => {
     if (imageFileInput) {
       imageFileInput.value = '';
-      imageFileInput.click();
     }
   });
   browseImageBtn?.addEventListener('keydown', (e) => {
@@ -2813,6 +2872,14 @@ function initOffersTab() {
         imageFileInput.value = '';
         imageFileInput.click();
       }
+    }
+  });
+
+  // Clicking offer image preview thumbnail also triggers file picker
+  imagePreview?.addEventListener('click', () => {
+    if (imageFileInput) {
+      imageFileInput.value = '';
+      imageFileInput.click();
     }
   });
 

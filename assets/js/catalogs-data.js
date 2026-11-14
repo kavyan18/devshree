@@ -1,6 +1,7 @@
 /**
  * Devshree Architectural Hardware & Interior Catalogs
  * Official brand PDF catalogs, lookbooks, and technical spec sheets
+ * High-performance dual storage: IndexedDB for large PDF payloads + LocalStorage metadata
  */
 
 const DEVSHREE_CATALOGS = [
@@ -174,10 +175,187 @@ const DEVSHREE_CATEGORIES = [
   }
 ];
 
+/* =========================================================================
+   IndexedDB Engine for Large PDF Document Payloads (Bypasses 5MB Quota)
+   ========================================================================= */
+
+const DB_NAME = 'devshree_catalog_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'pdf_documents';
+const CUSTOM_CATALOGS_KEY = 'devshree_custom_catalogs';
+
+let _pdfDbPromise = null;
+let _activeObjectUrl = null;
+
+function openPdfDb() {
+  if (_pdfDbPromise) return _pdfDbPromise;
+  _pdfDbPromise = new Promise((resolve) => {
+    if (typeof indexedDB === 'undefined') {
+      resolve(null);
+      return;
+    }
+    try {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = (e) => {
+        console.warn('[Devshree Catalogs] IndexedDB open error:', e);
+        resolve(null);
+      };
+    } catch (err) {
+      console.warn('[Devshree Catalogs] IndexedDB initialization error:', err);
+      resolve(null);
+    }
+  });
+  return _pdfDbPromise;
+}
+
 /**
- * Universal PDF Modal Viewer Handler
+ * Convert base64 data URL to native binary Blob
+ * @param {string} dataUrl 
+ * @returns {Blob}
  */
-function openPdfViewerModal(pdfUrl, title, filename) {
+function dataUrlToBlob(dataUrl) {
+  if (dataUrl instanceof Blob) return dataUrl;
+  try {
+    const parts = dataUrl.split(',');
+    const mimeMatch = parts[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'application/pdf';
+    const bstr = atob(parts[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  } catch (err) {
+    console.warn('[Devshree Catalogs] Failed converting data URL to Blob:', err);
+    return new Blob([], { type: 'application/pdf' });
+  }
+}
+
+/**
+ * Save large PDF payload to IndexedDB
+ */
+async function saveCatalogPdfBlob(id, dataUrlOrBlob, metadata = {}) {
+  const db = await openPdfDb();
+  if (!db) return false;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const entry = {
+        id,
+        payload: dataUrlOrBlob,
+        filename: metadata.filename || `${id}.pdf`,
+        size: metadata.size || '',
+        updatedAt: Date.now()
+      };
+      const req = store.put(entry);
+      req.onsuccess = () => resolve(true);
+      req.onerror = (e) => {
+        console.warn('[Devshree Catalogs] IndexedDB store write failed:', e);
+        resolve(false);
+      };
+    } catch (err) {
+      console.warn('[Devshree Catalogs] IndexedDB write exception:', err);
+      resolve(false);
+    }
+  });
+}
+
+/**
+ * Retrieve PDF payload from IndexedDB
+ */
+async function getCatalogPdfBlob(id) {
+  const db = await openPdfDb();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.get(id);
+      req.onsuccess = () => {
+        if (req.result && req.result.payload) {
+          resolve(req.result.payload);
+        } else {
+          resolve(null);
+        }
+      };
+      req.onerror = () => resolve(null);
+    } catch (_) {
+      resolve(null);
+    }
+  });
+}
+
+/**
+ * Remove PDF payload from IndexedDB
+ */
+async function deleteCatalogPdfBlob(id) {
+  const db = await openPdfDb();
+  if (!db) return false;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.delete(id);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => resolve(false);
+    } catch (_) {
+      resolve(false);
+    }
+  });
+}
+
+/**
+ * Resolve any PDF URL (IndexedDB ID, Base64 DataURL, or Static URL) into a reliable browser URL
+ * @param {string} pdfUrl 
+ * @param {string} catalogId 
+ * @returns {Promise<string>}
+ */
+async function resolveCatalogPdfUrl(pdfUrl, catalogId = '') {
+  if (!pdfUrl) return '';
+
+  // 1. If stored in IndexedDB via reference
+  if (pdfUrl.startsWith('indexeddb:')) {
+    const id = pdfUrl.replace('indexeddb:', '').trim() || catalogId;
+    const stored = await getCatalogPdfBlob(id);
+    if (stored) {
+      const blob = typeof stored === 'string' && stored.startsWith('data:') ? dataUrlToBlob(stored) : stored;
+      return URL.createObjectURL(blob);
+    }
+  }
+
+  // 2. If it's a raw Base64 data URL
+  if (typeof pdfUrl === 'string' && pdfUrl.startsWith('data:')) {
+    const blob = dataUrlToBlob(pdfUrl);
+    return URL.createObjectURL(blob);
+  }
+
+  // 3. Check if an IndexedDB entry exists by catalogId fallback
+  if (catalogId) {
+    const stored = await getCatalogPdfBlob(catalogId);
+    if (stored) {
+      const blob = typeof stored === 'string' && stored.startsWith('data:') ? dataUrlToBlob(stored) : stored;
+      return URL.createObjectURL(blob);
+    }
+  }
+
+  // 4. Standard relative/absolute URL
+  return pdfUrl;
+}
+
+/* =========================================================================
+   Universal PDF Modal Viewer Handler
+   ========================================================================= */
+
+async function openPdfViewerModal(pdfUrl, title, filename, catalogId = '') {
   let modal = document.getElementById('devshree-pdf-modal');
   if (!modal) {
     modal = document.createElement('div');
@@ -203,7 +381,10 @@ function openPdfViewerModal(pdfUrl, title, filename) {
           </div>
         </div>
         <div class="pdf-viewer-modal-body">
-          <iframe id="pdf-viewer-iframe" class="pdf-viewer-iframe" src="about:blank" title="Catalog PDF Viewer"></iframe>
+          <div id="pdf-viewer-loading" style="display:flex;align-items:center;justify-content:center;height:100%;color:#7A766F;font-size:0.9rem;gap:8px;">
+            <span>Loading PDF catalog...</span>
+          </div>
+          <iframe id="pdf-viewer-iframe" class="pdf-viewer-iframe" src="about:blank" title="Catalog PDF Viewer" style="display:none;"></iframe>
         </div>
       </div>
     `;
@@ -222,19 +403,45 @@ function openPdfViewerModal(pdfUrl, title, filename) {
 
   const titleEl = modal.querySelector('#pdf-viewer-title');
   const iframeEl = modal.querySelector('#pdf-viewer-iframe');
+  const loadingEl = modal.querySelector('#pdf-viewer-loading');
   const downloadBtn = modal.querySelector('#pdf-viewer-download-btn');
   const newtabBtn = modal.querySelector('#pdf-viewer-newtab-btn');
 
   if (titleEl) titleEl.textContent = title || 'Product Catalog';
-  if (downloadBtn) {
-    downloadBtn.href = pdfUrl;
-    downloadBtn.setAttribute('download', filename || 'Devshree-Catalog.pdf');
-  }
-  if (newtabBtn) newtabBtn.href = pdfUrl;
-  if (iframeEl) iframeEl.src = pdfUrl;
+  if (loadingEl) loadingEl.style.display = 'flex';
+  if (iframeEl) iframeEl.style.display = 'none';
 
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
+
+  // Revoke previous blob URL if any to free memory
+  if (_activeObjectUrl) {
+    try { URL.revokeObjectURL(_activeObjectUrl); } catch (_) {}
+    _activeObjectUrl = null;
+  }
+
+  const resolved = await resolveCatalogPdfUrl(pdfUrl, catalogId);
+  if (resolved.startsWith('blob:')) {
+    _activeObjectUrl = resolved;
+  }
+
+  if (downloadBtn) {
+    downloadBtn.href = resolved;
+    downloadBtn.setAttribute('download', filename || 'Devshree-Catalog.pdf');
+  }
+  if (newtabBtn) newtabBtn.href = resolved;
+  if (iframeEl) {
+    iframeEl.onload = () => {
+      if (loadingEl) loadingEl.style.display = 'none';
+      iframeEl.style.display = 'block';
+    };
+    iframeEl.src = resolved;
+    // Fallback if onload doesn't fire for pdf viewer plugin
+    setTimeout(() => {
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (iframeEl) iframeEl.style.display = 'block';
+    }, 400);
+  }
 }
 
 function closePdfViewerModal() {
@@ -244,9 +451,15 @@ function closePdfViewerModal() {
   const iframeEl = modal.querySelector('#pdf-viewer-iframe');
   if (iframeEl) iframeEl.src = 'about:blank';
   document.body.style.overflow = '';
+  if (_activeObjectUrl) {
+    try { URL.revokeObjectURL(_activeObjectUrl); } catch (_) {}
+    _activeObjectUrl = null;
+  }
 }
 
-const CUSTOM_CATALOGS_KEY = 'devshree_custom_catalogs';
+/* =========================================================================
+   Active Catalogs Management & Persistence
+   ========================================================================= */
 
 /**
  * Retrieve active catalogs merged with admin customizations from localStorage
@@ -262,21 +475,50 @@ function getActiveCatalogs() {
       }
     }
   } catch (_) {}
-  return DEVSHREE_CATALOGS;
+  return DEVSHREE_CATALOGS.slice();
 }
 
 /**
- * Persist catalogs array to local storage and trigger change event
+ * Persist catalogs array: saves heavy PDF payloads to IndexedDB and stores lightweight metadata in localStorage
  * @param {Array} catalogs 
  */
-function saveActiveCatalogs(catalogs) {
-  try {
-    localStorage.setItem(CUSTOM_CATALOGS_KEY, JSON.stringify(catalogs));
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('devshree:catalogs-updated', { detail: { catalogs } }));
+async function saveActiveCatalogs(catalogs) {
+  if (!Array.isArray(catalogs)) return;
+
+  // 1. Process items: isolate heavy base64 strings into IndexedDB
+  const sanitizedList = [];
+  for (const c of catalogs) {
+    const copy = { ...c };
+    if (copy.pdfUrl && typeof copy.pdfUrl === 'string' && copy.pdfUrl.startsWith('data:')) {
+      // Save large data URL into IndexedDB
+      await saveCatalogPdfBlob(copy.id, copy.pdfUrl, { filename: copy.filename, size: copy.size });
+      copy.pdfUrl = `indexeddb:${copy.id}`;
+      copy.hasLocalPdf = true;
     }
+    sanitizedList.push(copy);
+  }
+
+  // 2. Safely store clean metadata into localStorage (typically < 10 KB)
+  try {
+    localStorage.setItem(CUSTOM_CATALOGS_KEY, JSON.stringify(sanitizedList));
   } catch (err) {
-    console.error('[Devshree] Failed saving custom catalogs:', err);
+    console.warn('[Devshree Catalogs] LocalStorage quota fallback, pruning cover data URLs:', err);
+    try {
+      const slimList = sanitizedList.map(item => ({
+        ...item,
+        coverImage: (item.coverImage && item.coverImage.startsWith('data:')) 
+          ? 'assets/images/catalogs/catalog_acrysoft_genoa.jpg' 
+          : item.coverImage
+      }));
+      localStorage.setItem(CUSTOM_CATALOGS_KEY, JSON.stringify(slimList));
+    } catch (e2) {
+      console.error('[Devshree Catalogs] Critical LocalStorage save error:', e2);
+    }
+  }
+
+  // 3. Dispatch sync events
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('devshree:catalogs-updated', { detail: { catalogs: sanitizedList } }));
   }
 }
 
@@ -297,15 +539,20 @@ function resetCatalogsToDefault() {
   return DEVSHREE_CATALOGS.slice();
 }
 
-// Make accessible to all scripts and window context
+// Make accessible to all scripts and global window context
 if (typeof window !== 'undefined') {
+  window.DEVSHREE_CATALOGS = DEVSHREE_CATALOGS;
+  window.DEVSHREE_CATEGORIES = DEVSHREE_CATEGORIES;
   window.getActiveCatalogs = getActiveCatalogs;
   window.saveActiveCatalogs = saveActiveCatalogs;
   window.resetCatalogsToDefault = resetCatalogsToDefault;
   window.openPdfViewerModal = openPdfViewerModal;
   window.closePdfViewerModal = closePdfViewerModal;
-  window.DEVSHREE_CATALOGS = DEVSHREE_CATALOGS;
-  window.DEVSHREE_CATEGORIES = DEVSHREE_CATEGORIES;
+  window.saveCatalogPdfBlob = saveCatalogPdfBlob;
+  window.getCatalogPdfBlob = getCatalogPdfBlob;
+  window.deleteCatalogPdfBlob = deleteCatalogPdfBlob;
+  window.resolveCatalogPdfUrl = resolveCatalogPdfUrl;
+  window.dataUrlToBlob = dataUrlToBlob;
 }
 
 export {
@@ -315,5 +562,10 @@ export {
   saveActiveCatalogs,
   resetCatalogsToDefault,
   openPdfViewerModal,
-  closePdfViewerModal
+  closePdfViewerModal,
+  saveCatalogPdfBlob,
+  getCatalogPdfBlob,
+  deleteCatalogPdfBlob,
+  resolveCatalogPdfUrl,
+  dataUrlToBlob
 };

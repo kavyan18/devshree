@@ -31,6 +31,18 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // PDF Catalogs & Technical Spec Sheets
+    match /catalogs/{catalogId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Promotional Offers & Top Banner Carousel Slides
+    match /offers/{offerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // User profile documents
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();

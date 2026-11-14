@@ -482,7 +482,7 @@
                     <span>Product Image *</span>
                   </label>
 
-                  <input type="file" id="prod-image-file" accept="image/png, image/jpeg, image/webp" style="position:fixed;top:-10000px;left:-10000px;opacity:0;pointer-events:none;" tabindex="-1" aria-hidden="true" />
+                  <input type="file" id="prod-image-file" accept="image/png, image/jpeg, image/webp, image/*, .png, .jpg, .jpeg, .webp" style="display:none;" />
                   <input type="hidden" id="prod-image" value="" />
 
                   <div class="admin-image-upload-row">
@@ -1239,17 +1239,17 @@
             <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
               <!-- Cover Image -->
               <div class="form-group" style="background:#FAF8F5;padding:0.85rem;border-radius:8px;border:1px solid #ECE7DF;">
-                <label class="admin-numbered-label">
+                <label class="admin-numbered-label" for="catalog-cover-file">
                   <span class="step-num">6</span>
                   <span>Cover Image *</span>
                 </label>
                 <div style="display:flex;gap:0.75rem;align-items:center;">
-                  <img id="catalog-cover-preview" src="assets/images/catalogs/catalog_acrysoft_genoa.jpg" alt="Preview" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #D6CFC4;" />
+                  <img id="catalog-cover-preview" src="assets/images/catalogs/catalog_acrysoft_genoa.jpg" alt="Preview" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #D6CFC4;cursor:pointer;" title="Click to choose cover photo" />
                   <div style="flex:1;">
-                    <input type="file" id="catalog-cover-file" accept="image/jpeg,image/png,image/webp" style="position:fixed;top:-10000px;left:-10000px;opacity:0;pointer-events:none;" tabindex="-1" aria-hidden="true" />
-                    <button type="button" class="btn-admin-outline" id="btn-browse-catalog-cover" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;margin-bottom:4px;">
+                    <input type="file" id="catalog-cover-file" accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp" style="display:none;" />
+                    <label for="catalog-cover-file" class="btn-admin-outline" id="btn-browse-catalog-cover" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;margin-bottom:4px;" tabindex="0" role="button">
                       📁 Choose Image File
-                    </button>
+                    </label>
                     <input type="text" id="catalog-cover-url" class="admin-input" placeholder="Or enter image URL" style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
                   </div>
                 </div>
@@ -1257,15 +1257,30 @@
 
               <!-- PDF File -->
               <div class="form-group" style="background:#FAF8F5;padding:0.85rem;border-radius:8px;border:1px solid #ECE7DF;">
-                <label class="admin-numbered-label">
+                <label class="admin-numbered-label" for="catalog-pdf-file">
                   <span class="step-num">7</span>
                   <span>PDF Document *</span>
                 </label>
                 <div>
-                  <input type="file" id="catalog-pdf-file" accept="application/pdf" style="position:fixed;top:-10000px;left:-10000px;opacity:0;pointer-events:none;" tabindex="-1" aria-hidden="true" />
-                  <button type="button" class="btn-admin-outline" id="btn-browse-catalog-pdf" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;margin-bottom:4px;">
-                    📄 Choose PDF File
-                  </button>
+                  <input type="file" id="catalog-pdf-file" accept="application/pdf,.pdf" style="display:none;" />
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+                    <label for="catalog-pdf-file" class="btn-admin-outline" id="btn-browse-catalog-pdf" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;" tabindex="0" role="button">
+                      📄 Choose PDF File
+                    </label>
+                    <span id="catalog-pdf-help-text" style="font-size:0.72rem;color:var(--admin-text-secondary);">Direct PDF upload (auto-stored safely in browser engine)</span>
+                  </div>
+
+                  <!-- Selected PDF Visual Status Badge -->
+                  <div id="catalog-pdf-selected-badge" style="display:none;margin-bottom:6px;padding:6px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;font-size:0.75rem;color:#166534;align-items:center;justify-content:space-between;gap:8px;">
+                    <div style="display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                      <span>📄</span>
+                      <strong id="catalog-pdf-badge-name" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom;">file.pdf</strong>
+                      <span id="catalog-pdf-badge-size" style="color:#15803D;font-weight:600;">(0 KB)</span>
+                      <span style="background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:4px;font-size:0.7rem;font-weight:700;">✓ PDF Ready</span>
+                    </div>
+                    <button type="button" id="btn-clear-catalog-pdf" style="background:none;border:none;color:#DC2626;cursor:pointer;font-weight:700;font-size:0.9rem;padding:0 4px;" title="Clear selected PDF">&times;</button>
+                  </div>
+
                   <input type="text" id="catalog-pdf-url" class="admin-input" placeholder="Or enter PDF URL (e.g. assets/catalogs/...)" style="font-size:0.75rem;padding:0.4rem 0.6rem;margin-bottom:4px;" />
                   <input type="text" id="catalog-filename" class="admin-input" placeholder="Download filename (e.g. LookBook-2026.pdf)" style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
                 </div>
@@ -1457,12 +1472,12 @@
                 <span>Slide Background Image *</span>
               </label>
               <div style="display:flex;gap:0.75rem;align-items:center;">
-                <img id="offer-image-preview" src="assets/images/cat_hardware.jpg" alt="Preview" style="width:80px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #D6CFC4;" />
+                <img id="offer-image-preview" src="assets/images/cat_hardware.jpg" alt="Preview" style="width:80px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #D6CFC4;cursor:pointer;" title="Click to choose slide image" />
                 <div style="flex:1;">
-                  <input type="file" id="offer-image-file" accept="image/jpeg,image/png,image/webp" style="position:fixed;top:-10000px;left:-10000px;opacity:0;pointer-events:none;" tabindex="-1" aria-hidden="true" />
-                  <button type="button" class="btn-admin-outline" id="btn-browse-offer-image" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;margin-bottom:4px;">
+                  <input type="file" id="offer-image-file" accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp" style="display:none;" />
+                  <label for="offer-image-file" class="btn-admin-outline" id="btn-browse-offer-image" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;margin-bottom:4px;" tabindex="0" role="button">
                     📁 Upload Slide Image
-                  </button>
+                  </label>
                   <input type="text" id="offer-image-url" class="admin-input" placeholder="Or enter image URL (e.g. assets/images/cat_hardware.jpg)" style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
                 </div>
               </div>

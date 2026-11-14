@@ -2295,9 +2295,10 @@ function initHomeCatalogsCarousel() {
       const pdf = btn.dataset.viewPdf || btn.getAttribute('href');
       const title = btn.dataset.title || 'Brand Catalog Lookbook';
       const filename = btn.dataset.filename || 'catalog.pdf';
+      const catalogId = btn.closest('[data-catalog-id]')?.dataset.catalogId || '';
       if (typeof openPdfViewerModal === 'function') {
         e.preventDefault();
-        openPdfViewerModal(pdf, title, filename);
+        openPdfViewerModal(pdf, title, filename, catalogId);
       }
     });
   });

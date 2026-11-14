@@ -14,3 +14,4 @@
 - Devshree Brass uses a warm architectural aesthetic: Terracotta (`#C2623B`), deep bronze, ivory, and brushed gold.
 - Ensure all 274 unit/integration tests continue to pass whenever core files are edited.
 - Maintain the 0ms instant preview engine for file uploads (`FileReader.readAsDataURL`).
+

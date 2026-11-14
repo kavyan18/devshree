@@ -88,14 +88,66 @@
   5. **Direct PDP Fallback:** Handled direct `/product` access without query string to default to the first available product.
   6. All 274 unit and integration tests passing (100%).
 
+### Session Turn 13: Instant 0ms Product Painting & Static Fallback Injected
+- User showed screenshot where `bestsellers-grid` was blank underneath the filter toolbar.
+- Identified that `#bestsellers-grid` was completely empty in static HTML (`<!-- Rendered dynamically by home.js -->`), so before JavaScript finished executing, the user saw a blank white space.
+- Pre-rendered 8 complete product cards directly into `index.html` so products paint on the very first byte with zero delay.
+- Updated `renderCatalogGrid()` in `home.js` to never wipe out existing DOM cards with a blank loading placeholder.
+- Protected all `initDevshreeHome()` subsystems with isolated `try...catch` blocks.
+- Pushed commit `131973e` to GitHub `kavyan18/devshree` on branch `main`.
+
+### Session Turn 14: Expanded Cloud Firestore Security Rules for Catalogs and Offers
+- Added secure rules for `/catalogs/{catalogId}` and `/offers/{offerId}` collections in `firestore.rules`.
+- Configured public read access (`allow read: if true;`) and strict admin write access (`allow write: if isAdmin();`).
+- Preserved all existing helper functions (`isAuthenticated`, `isAdmin`, `isOwner`) and match blocks (`products`, `categories`, `users`, `orders`, `settings`).
+- Verified rules syntax with `firebase_validate_security_rules` MCP validator (passed with 0 errors).
+- All 274 unit and integration tests passing (100%).
+- Synced `firestore.rules` across `devshree_live_store` and `github_ready_folder`.
+
+### Session Turn 15: Resolved PDF Catalog Management & Storage Quota
+- User reported: *"pdf catlog function is not working plz fix this in admin side"*.
+- Diagnosed root causes:
+  1. **LocalStorage 5MB Quota Crash:** Admin PDF uploads were converted into large Base64 data URLs (~4-15 MB) and saved directly to `localStorage`, crashing silently with `QuotaExceededError`.
+  2. **Firestore 1MB Hard Document Size Limit:** Storing raw Base64 PDFs in Firestore documents exceeded the 1,048,576 byte limit, throwing `invalid-argument`.
+  3. **Missing Visual Feedback:** Admin form lacked file selection confirmation or size feedback.
+  4. **Iframe Data URL Sandboxing:** Browsers blocked large Base64 PDFs from rendering inside iframes.
+- Implemented comprehensive fixes:
+  1. **High-Capacity IndexedDB Engine (`assets/js/catalogs-data.js`):** Built `openPdfDb()`, `saveCatalogPdfBlob()`, `getCatalogPdfBlob()`, and `deleteCatalogPdfBlob()` using IndexedDB (`devshree_catalog_db`), allowing multi-megabyte PDFs to be saved reliably without touching the 5MB localStorage limit.
+  2. **Metadata Separation:** In `localStorage` (`devshree_custom_catalogs`), only clean JSON metadata is stored with `pdfUrl: 'indexeddb:cat-xxx'`, keeping storage under 10 KB.
+  3. **Native Binary Blob Object URL Viewer:** Updated `openPdfViewerModal()` to resolve IndexedDB keys and Base64 data into binary `Blob` object URLs (`URL.createObjectURL(blob)`), rendering natively in iframes and new tabs with memory leak prevention (`URL.revokeObjectURL`).
+  4. **Admin UI Status Badge (`admin.html` & `assets/js/admin.js`):** Added `#catalog-pdf-selected-badge` with real-time file name, formatted size pill, "✓ PDF Ready" indicator, and quick-remove button.
+  5. **Safe Firestore Sync:** Stripped bulky base64 strings before Firestore document `setDoc()`, preventing document size limit rejections while preserving real-time metadata syncing.
+  6. **Storefront Download Resolution (`catalogs.html` & `home.js`):** Enhanced "View PDF" and "Download" buttons to resolve IndexedDB URLs for seamless customer preview and downloads.
+  7. **Deployed Live Firestore Security Rules:** Deployed updated `firestore.rules` containing `/catalogs/{catalogId}` and `/offers/{offerId}` to Firebase Cloud Firestore.
+  8. Verified all 274 unit and integration test assertions pass (100%).
+
+### Session Turn 16: Fixed Admin "Choose Image" & "Choose PDF" Buttons
+- User reported: *"in admin side pdf image choose buttonis not working and chosse pdf botton is aslo not working fix it and tell me what is the prroblem"*.
+- Diagnosed root causes:
+  1. **CSS `pointer-events: none` Suppression:** Hidden file inputs (`#catalog-cover-file` and `#catalog-pdf-file`) were styled with `position:fixed;top:-10000px;left:-10000px;pointer-events:none;`. In Chromium/WebKit/Edge, `pointer-events: none` on input elements explicitly suppresses pointer click events, causing programmatic `.click()` calls to be silently discarded.
+  2. **`e.preventDefault()` Event Cancellation:** Click event listeners called `e.preventDefault()`, which prevents the browser's default activation cycle.
+  3. **Non-Semantic `<button>` Triggering:** Trigger buttons were generic `<button type="button">` without native browser HTML `<label for="...">` integration, relying entirely on synthetic JS click propagation.
+  4. **Unisolated `initDevshreeAdmin` Subsystems:** Subsystems were executed without individual `try...catch` isolation, risking cascading failure if an earlier routine halted.
+- Implemented comprehensive fixes:
+  1. **Native HTML `<label for="...">` Conversion:** Converted `#btn-browse-catalog-cover`, `#btn-browse-catalog-pdf`, and `#btn-browse-offer-image` into semantic `<label for="inputId">` elements styled as buttons with `tabindex="0"` and `role="button"`.
+  2. **Removed `pointer-events: none`:** Replaced cumbersome off-screen positioning with clean, accessible `style="display:none;"` across `#catalog-cover-file`, `#catalog-pdf-file`, `#prod-image-file`, and `#offer-image-file`.
+  3. **Removed `e.preventDefault()` on Label Triggers:** Allowed native browser click propagation while resetting `input.value = ''` so re-selecting the identical file triggers the `change` listener reliably.
+  4. **Clickable Preview Thumbnails:** Made `#catalog-cover-preview` and `#offer-image-preview` directly clickable with pointer cursors to open their respective file pickers.
+  5. **Windows MIME Extension Filter Fix:** Added `.pdf` and `.jpg,.jpeg,.png,.webp` extension wildcards to `accept` attributes to guarantee file discovery in Windows file dialogs.
+  6. **Subsystem Error Isolation:** Protected every submodule inside `initDevshreeAdmin()` with individual `try...catch` blocks.
+  7. **Verified Tests:** All 274 unit and integration test assertions pass (100%).
+  8. Synced `admin.html` and `assets/js/admin.js` to `github_ready_folder` and `devshree_live_store`, and rebuilt `devshree-website-github.zip`.
+
 ---
 
 ## 3. Current System State & Key Details
 
 | Component | Status | Details |
 |---|---|---|
-| **Cloud Firestore Rules** | Deployed & Live | Permanent `firestore.rules` deployed; public reads enabled |
-| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `f535038` |
+| **Cloud Firestore Rules** | Deployed & Live | `firestore.rules` deployed live with `/catalogs` and `/offers`; public read & admin write enforced |
+| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `131973e` |
+| **PDF Catalog Engine** | Fully Operational | Dual-storage engine (IndexedDB + LocalStorage metadata + Blob Object URL viewer + Native `<label>` file picker) |
+| **Admin File Pickers** | Fully Operational | Native `<label for="...">` triggers for Cover Image, PDF Document, Product Photo, and Slide Image |
 | **PWA Support** | Configured | `manifest.json` linked in `index.html`, `product.html`, `catalogs.html` |
 | **SEO Structured Data** | Live | `HardwareStore` JSON-LD in `index.html` |
 | **PIN Code Delivery Tool** | Live | Interactive Indian PIN code calculator in `product.html` |
@@ -108,8 +160,8 @@
 ---
 
 ## 4. Where the Last Conversation Stopped
-- **Last Completed Task:** Fixed live storefront product visibility, deployed permanent Cloud Firestore security rules, restored missing `maintenance.js` module, added `"framework": null` in `vercel.json`, and synced `github_ready_folder` and `devshree-website-github.zip`.
-- **Pending Action:** Push updated files to GitHub repository `kavyan18/devshree` upon user approval so Vercel can rebuild and deploy live.
+- **Last Completed Task:** Fixed the Admin PDF Catalog "Choose Image File" and "Choose PDF File" picker buttons by converting them to native HTML `<label for="...">` triggers, removing `pointer-events: none;`, making thumbnails clickable, adding Windows MIME fallback extensions, and adding `try...catch` error isolation to `initDevshreeAdmin()`.
+- **Pending Action:** Ready to push changes to GitHub repository `kavyan18/devshree` upon user confirmation.
 
 ---
 

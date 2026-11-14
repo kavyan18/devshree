@@ -266,7 +266,8 @@
       DEVSHREE_CATALOGS, 
       getActiveCatalogs, 
       openPdfViewerModal, 
-      closePdfViewerModal 
+      closePdfViewerModal,
+      resolveCatalogPdfUrl
     } from './assets/js/catalogs-data.js';
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -374,14 +375,36 @@
 
         // Bind View buttons
         gridContainer.querySelectorAll('.btn-catalog-view-trigger').forEach(btn => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
             const pdf = btn.dataset.viewPdf;
             const title = btn.dataset.title;
             const filename = btn.dataset.filename;
+            const catalogId = btn.closest('article')?.dataset.catalogId || '';
             if (typeof openPdfViewerModal === 'function') {
-              openPdfViewerModal(pdf, title, filename);
+              openPdfViewerModal(pdf, title, filename, catalogId);
             } else {
               window.open(pdf, '_blank');
+            }
+          });
+        });
+
+        // Bind Download buttons (safely resolves IndexedDB blobs if stored locally)
+        gridContainer.querySelectorAll('.btn-catalog-download-trigger, .catalog-download-circle-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const href = btn.getAttribute('href');
+            if (href && (href.startsWith('indexeddb:') || href.startsWith('data:'))) {
+              e.preventDefault();
+              const catalogId = btn.closest('article')?.dataset.catalogId || '';
+              if (typeof resolveCatalogPdfUrl === 'function') {
+                const resolved = await resolveCatalogPdfUrl(href, catalogId);
+                const dl = document.createElement('a');
+                dl.href = resolved;
+                dl.download = btn.getAttribute('download') || 'Devshree-Catalog.pdf';
+                document.body.appendChild(dl);
+                dl.click();
+                setTimeout(() => document.body.removeChild(dl), 100);
+              }
             }
           });
         });
