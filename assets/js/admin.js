@@ -2239,6 +2239,54 @@ function initCatalogsTab() {
   const pdfBadgeSize = document.getElementById('catalog-pdf-badge-size');
   const clearPdfBtn = document.getElementById('btn-clear-catalog-pdf');
   let pendingPdfDataUrl = null;
+  let pendingPdfFile = null;
+  let pendingCoverDataUrl = null;
+  let pendingCoverFile = null;
+
+  // Helper: compress image file using canvas for instant 0ms storage and preview (< 30KB)
+  function compressImageFile(file, maxDimension = 480, quality = 0.82) {
+    return new Promise((resolve) => {
+      if (!file || !(file instanceof Blob)) {
+        resolve('');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            let width = img.width;
+            let height = img.height;
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL('image/jpeg', quality));
+            } else {
+              resolve(e.target.result);
+            }
+          } catch (_) {
+            resolve(e.target.result);
+          }
+        };
+        img.onerror = () => resolve(e.target.result);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  }
 
   let allCatalogs = (typeof getActiveCatalogs === 'function') 
     ? getActiveCatalogs() 
@@ -2260,6 +2308,9 @@ function initCatalogsTab() {
   function resetCatalogForm() {
     form?.reset();
     pendingPdfDataUrl = null;
+    pendingPdfFile = null;
+    pendingCoverDataUrl = null;
+    pendingCoverFile = null;
     if (editIdInput) editIdInput.value = '';
     if (coverPreview) coverPreview.src = 'assets/images/catalogs/catalog_acrysoft_genoa.jpg';
     if (pdfSelectedBadge) pdfSelectedBadge.style.display = 'none';
@@ -2352,6 +2403,11 @@ function initCatalogsTab() {
         const target = allCatalogs.find(c => c.id === id);
         if (!target) return;
 
+        pendingPdfDataUrl = null;
+        pendingPdfFile = null;
+        pendingCoverDataUrl = null;
+        pendingCoverFile = null;
+
         if (editIdInput) editIdInput.value = target.id;
         if (titleInput) titleInput.value = target.title || '';
         if (brandInput) brandInput.value = target.brand || '';
@@ -2397,6 +2453,11 @@ function initCatalogsTab() {
             await deleteCatalogPdfBlob(id);
           } catch (_) {}
         }
+        if (typeof deleteCatalogCoverBlob === 'function') {
+          try {
+            await deleteCatalogCoverBlob(id);
+          } catch (_) {}
+        }
         if (typeof saveActiveCatalogs === 'function') {
           await saveActiveCatalogs(allCatalogs);
         }
@@ -2417,66 +2478,52 @@ function initCatalogsTab() {
     updateCatalogKPIs();
   }
 
-  // Cover image file picker
-  browseCoverBtn?.addEventListener('click', () => {
-    if (coverFileInput) {
-      coverFileInput.value = '';
-    }
-  });
-  browseCoverBtn?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      if (coverFileInput) {
-        coverFileInput.value = '';
-        coverFileInput.click();
-      }
-    }
-  });
-
-  // Clicking cover preview thumbnail also triggers file picker
+  // Cover image file picker: Clicking thumbnail triggers file chooser
   coverPreview?.addEventListener('click', () => {
     if (coverFileInput) {
-      coverFileInput.value = '';
       coverFileInput.click();
     }
   });
 
-  coverFileInput?.addEventListener('change', (e) => {
+  coverFileInput?.addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    pendingCoverFile = file;
+
+    // 1. Instant 0ms local preview via Object URL
     try {
       const objUrl = URL.createObjectURL(file);
       if (coverPreview) coverPreview.src = objUrl;
     } catch (_) {}
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (coverPreview) coverPreview.src = event.target.result;
-      if (coverUrlInput) coverUrlInput.value = event.target.result;
-      showToast(`Cover image selected: ${file.name}`, 'info');
-    };
-    reader.readAsDataURL(file);
+
+    // 2. Compress image using Canvas to high-res, lightweight JPEG thumbnail (max 480px, ~25KB)
+    try {
+      const compressed = await compressImageFile(file, 480, 0.82);
+      if (compressed) {
+        pendingCoverDataUrl = compressed;
+        if (coverPreview) coverPreview.src = compressed;
+        if (coverUrlInput) coverUrlInput.value = compressed;
+      }
+      showToast(`Cover image ready: ${file.name}`, 'info');
+    } catch (err) {
+      console.warn('[Admin] Cover image compression fallback:', err);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        pendingCoverDataUrl = event.target.result;
+        if (coverPreview) coverPreview.src = event.target.result;
+        if (coverUrlInput) coverUrlInput.value = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
   });
+
   coverUrlInput?.addEventListener('input', () => {
+    pendingCoverDataUrl = null;
+    pendingCoverFile = null;
     if (coverPreview) coverPreview.src = coverUrlInput.value.trim() || 'assets/images/catalogs/catalog_acrysoft_genoa.jpg';
   });
 
   // PDF file picker
-  let pendingPdfFile = null;
-  browsePdfBtn?.addEventListener('click', () => {
-    if (pdfFileInput) {
-      pdfFileInput.value = '';
-    }
-  });
-  browsePdfBtn?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      if (pdfFileInput) {
-        pdfFileInput.value = '';
-        pdfFileInput.click();
-      }
-    }
-  });
-
   pdfFileInput?.addEventListener('change', (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -2497,13 +2544,7 @@ function initCatalogsTab() {
       pdfSelectedBadge.style.display = 'flex';
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      pendingPdfDataUrl = event.target.result;
-      if (pdfUrlInput) pdfUrlInput.value = event.target.result;
-      showToast(`Selected PDF: ${file.name} (${sizeStr})`, 'success');
-    };
-    reader.readAsDataURL(file);
+    showToast(`Selected PDF: ${file.name} (${sizeStr})`, 'success');
   });
 
   // Clear PDF button
@@ -2520,6 +2561,9 @@ function initCatalogsTab() {
   // Cancel edit button
   cancelBtn?.addEventListener('click', () => {
     pendingPdfFile = null;
+    pendingPdfDataUrl = null;
+    pendingCoverFile = null;
+    pendingCoverDataUrl = null;
     resetCatalogForm();
   });
 
@@ -2540,15 +2584,66 @@ function initCatalogsTab() {
     const category = categorySelect?.value?.trim() || 'Laminates & Liners';
     const pages = parseInt(pagesInput?.value, 10) || 1;
     const size = sizeInput?.value?.trim() || '5.4 KB';
-    const coverImage = coverUrlInput?.value?.trim() || coverPreview?.src || 'assets/images/catalogs/catalog_acrysoft_genoa.jpg';
-    const finalPdfUrl = pendingPdfDataUrl || pdfUrlInput?.value?.trim() || 'assets/catalogs/acrysoft-genoa-matt-acrylic-laminates.pdf';
-    const filename = filenameInput?.value?.trim() || (title ? `${title.replace(/\s+/g, '-')}.pdf` : 'Catalog.pdf');
-    const description = descInput?.value?.trim() || '';
+    const catalogId = editId || ('cat-' + Date.now());
 
     if (!title || !brand) {
       showToast('Please provide both Catalog Title and Brand Name.', 'error');
       return;
     }
+
+    // 1. Cover Image Resolution (Never discard user's custom photo)
+    let coverImage = 'assets/images/catalogs/catalog_acrysoft_genoa.jpg';
+    if (pendingCoverDataUrl) {
+      coverImage = pendingCoverDataUrl;
+    } else if (coverUrlInput && coverUrlInput.value && coverUrlInput.value.trim()) {
+      coverImage = coverUrlInput.value.trim();
+    } else if (coverPreview && coverPreview.src && !coverPreview.src.startsWith('blob:')) {
+      coverImage = coverPreview.src;
+    }
+
+    // Save cover file in IndexedDB for high-res backup
+    if (pendingCoverFile && typeof saveCatalogCoverBlob === 'function') {
+      try {
+        await saveCatalogCoverBlob(catalogId, pendingCoverFile);
+      } catch (_) {}
+    } else if (pendingCoverDataUrl && typeof saveCatalogCoverBlob === 'function') {
+      try {
+        await saveCatalogCoverBlob(catalogId, pendingCoverDataUrl);
+      } catch (_) {}
+    }
+
+    // 2. PDF Document Resolution
+    let finalPdfUrl = pdfUrlInput?.value?.trim() || 'assets/catalogs/acrysoft-genoa-matt-acrylic-laminates.pdf';
+    let hasLocalPdf = false;
+
+    if (pendingPdfFile && typeof saveCatalogPdfBlob === 'function') {
+      try {
+        await saveCatalogPdfBlob(catalogId, pendingPdfFile, {
+          filename: filenameInput?.value?.trim() || pendingPdfFile.name,
+          size: size
+        });
+        finalPdfUrl = `indexeddb:${catalogId}`;
+        hasLocalPdf = true;
+      } catch (err) {
+        console.warn('[Admin] Failed saving PDF blob to IndexedDB:', err);
+      }
+    } else if (pendingPdfDataUrl && typeof saveCatalogPdfBlob === 'function') {
+      try {
+        await saveCatalogPdfBlob(catalogId, pendingPdfDataUrl, {
+          filename: filenameInput?.value?.trim(),
+          size: size
+        });
+        finalPdfUrl = `indexeddb:${catalogId}`;
+        hasLocalPdf = true;
+      } catch (err) {
+        console.warn('[Admin] Failed saving PDF data URL to IndexedDB:', err);
+      }
+    } else if (finalPdfUrl.startsWith('indexeddb:')) {
+      hasLocalPdf = true;
+    }
+
+    const filename = filenameInput?.value?.trim() || (title ? `${title.replace(/\s+/g, '-')}.pdf` : 'Catalog.pdf');
+    const description = descInput?.value?.trim() || '';
 
     const categorySlugMap = {
       'Laminates & Liners': 'laminates',
@@ -2564,13 +2659,14 @@ function initCatalogsTab() {
     const categorySlug = categorySlugMap[category] || 'hardware';
 
     const catalogData = {
-      id: editId || ('cat-' + Date.now()),
+      id: catalogId,
       title,
       brand,
       category,
       categorySlug,
       coverImage,
       pdfUrl: finalPdfUrl,
+      hasLocalPdf,
       filename,
       pages,
       size,
@@ -2610,6 +2706,8 @@ function initCatalogsTab() {
 
     pendingPdfDataUrl = null;
     pendingPdfFile = null;
+    pendingCoverFile = null;
+    pendingCoverDataUrl = null;
     resetCatalogForm();
     renderCatalogsTable();
   });

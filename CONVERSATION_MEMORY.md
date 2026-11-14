@@ -138,6 +138,22 @@
   7. **Verified Tests:** All 274 unit and integration test assertions pass (100%).
   8. Synced `admin.html` and `assets/js/admin.js` to `github_ready_folder` and `devshree_live_store`, and rebuilt `devshree-website-github.zip`.
 
+### Session Turn 17: Fixed Catalog Cover Image Persistence & Bulletproof Transparent Native File Pickers
+- User reported: *"not insert the cover image in the pdf and pdf choose file fix it"*.
+- Diagnosed root causes:
+  1. **Cover Image Overwriting in LocalStorage Fallback:** When custom high-resolution cover photos (> 2MB) were uploaded as base64 data URLs, saving to `localStorage` threw a `QuotaExceededError`. The catch block in `saveActiveCatalogs` explicitly replaced the user's custom photo with `'assets/images/catalogs/catalog_acrysoft_genoa.jpg'`.
+  2. **File Picker Click Delegation Fragility:** In certain Chromium/WebKit browser environments, programmatic click delegation or click events on `<label for="...">` with hidden `<input type="file" style="display:none;">` were intercepted or ignored.
+  3. **In-Memory State Disconnect:** `saveActiveCatalogs` generated a separate `sanitizedList` without synchronizing the in-memory `allCatalogs` objects, leaving raw multi-megabyte base64 strings in memory and DOM attributes.
+- Implemented comprehensive fixes:
+  1. **Bulletproof Transparent Native File Input Overlay (`admin.html`):** Wrapped "Choose Image File", "Choose PDF File", and "Upload Slide Image" in relative containers with `<input type="file" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;">`. When the user clicks the button area, they physically click the browser's native file input directly, ensuring 100% reliable system file dialogs without any JavaScript dependencies or synthetic click vulnerabilities.
+  2. **HTML5 Canvas Thumbnail Compression (`assets/js/admin.js` & `catalogs-data.js`):** Built `compressImageFile` and `compressDataUrlThumbnail` to automatically downscale uploaded cover images to max 480×480px JPEG (~25KB). This fits comfortably in `localStorage` alongside dozens of catalogs without ever triggering quota errors.
+  3. **High-Res Cover Storage in IndexedDB (`assets/js/catalogs-data.js`):** Added `cover_documents` store (version 2) in `devshree_catalog_db` with `saveCatalogCoverBlob`, `getCatalogCoverBlob`, and `deleteCatalogCoverBlob`.
+  4. **Preserved Custom Cover Photos:** Completely removed the destructive Acrysoft fallback in `saveActiveCatalogs`. User cover photos are never pruned or replaced.
+  5. **Direct Binary Blob Saving:** Directly stored native `File` objects in IndexedDB upon form submission, keeping `allCatalogs` lightweight (`pdfUrl: 'indexeddb:cat-xxx'`).
+  6. **Synchronized In-Memory References:** Synchronized `pdfUrl` and `coverImage` on in-memory `allCatalogs` objects upon save.
+  7. **Verified Tests:** All 274 unit and integration test assertions pass (100%).
+  8. Synced all changes to `github_ready_folder` and `devshree_live_store`, and rebuilt `devshree-website-github.zip`.
+
 ---
 
 ## 3. Current System State & Key Details
@@ -145,9 +161,10 @@
 | Component | Status | Details |
 |---|---|---|
 | **Cloud Firestore Rules** | Deployed & Live | `firestore.rules` deployed live with `/catalogs` and `/offers`; public read & admin write enforced |
-| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `131973e` |
-| **PDF Catalog Engine** | Fully Operational | Dual-storage engine (IndexedDB + LocalStorage metadata + Blob Object URL viewer + Native `<label>` file picker) |
-| **Admin File Pickers** | Fully Operational | Native `<label for="...">` triggers for Cover Image, PDF Document, Product Photo, and Slide Image |
+| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `0c73823` |
+| **PDF Catalog Engine** | Fully Operational | Dual-storage engine (IndexedDB + LocalStorage metadata + Blob Object URL viewer + Bulletproof Native Overlay file picker) |
+| **Admin File Pickers** | Fully Operational | Transparent native `<input type="file">` overlay for Cover Image, PDF Document, and Slide Image; Dropzone for Products |
+| **Cover Image Persistence** | Fully Operational | 480px Canvas compression (~25KB) + IndexedDB high-res backup; never pruned or overwritten |
 | **PWA Support** | Configured | `manifest.json` linked in `index.html`, `product.html`, `catalogs.html` |
 | **SEO Structured Data** | Live | `HardwareStore` JSON-LD in `index.html` |
 | **PIN Code Delivery Tool** | Live | Interactive Indian PIN code calculator in `product.html` |
@@ -160,7 +177,7 @@
 ---
 
 ## 4. Where the Last Conversation Stopped
-- **Last Completed Task:** Fixed the Admin PDF Catalog "Choose Image File" and "Choose PDF File" picker buttons by converting them to native HTML `<label for="...">` triggers, removing `pointer-events: none;`, making thumbnails clickable, adding Windows MIME fallback extensions, and adding `try...catch` error isolation to `initDevshreeAdmin()`.
+- **Last Completed Task:** Fixed Catalog Cover Image saving/persistence (Canvas auto-compression ~25KB, IndexedDB `cover_documents` storage, removed destructive Acrysoft fallback) and implemented the transparent native file input overlay for "Choose Image File", "Choose PDF File", and "Upload Slide Image" in `admin.html`. Verified 100% test pass rate (274 assertions).
 - **Pending Action:** Ready to push changes to GitHub repository `kavyan18/devshree` upon user confirmation.
 
 ---

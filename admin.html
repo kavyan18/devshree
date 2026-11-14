@@ -1246,10 +1246,12 @@
                 <div style="display:flex;gap:0.75rem;align-items:center;">
                   <img id="catalog-cover-preview" src="assets/images/catalogs/catalog_acrysoft_genoa.jpg" alt="Preview" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #D6CFC4;cursor:pointer;" title="Click to choose cover photo" />
                   <div style="flex:1;">
-                    <input type="file" id="catalog-cover-file" accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp" style="display:none;" />
-                    <label for="catalog-cover-file" class="btn-admin-outline" id="btn-browse-catalog-cover" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;margin-bottom:4px;" tabindex="0" role="button">
-                      📁 Choose Image File
-                    </label>
+                    <div style="position:relative;display:inline-block;overflow:hidden;margin-bottom:4px;">
+                      <span class="btn-admin-outline" id="btn-browse-catalog-cover" style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;pointer-events:none;">
+                        📁 Choose Image File
+                      </span>
+                      <input type="file" id="catalog-cover-file" accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;font-size:0;" title="Choose Cover Image File" />
+                    </div>
                     <input type="text" id="catalog-cover-url" class="admin-input" placeholder="Or enter image URL" style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
                   </div>
                 </div>
@@ -1262,11 +1264,13 @@
                   <span>PDF Document *</span>
                 </label>
                 <div>
-                  <input type="file" id="catalog-pdf-file" accept="application/pdf,.pdf" style="display:none;" />
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-                    <label for="catalog-pdf-file" class="btn-admin-outline" id="btn-browse-catalog-pdf" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;" tabindex="0" role="button">
-                      📄 Choose PDF File
-                    </label>
+                    <div style="position:relative;display:inline-block;overflow:hidden;">
+                      <span class="btn-admin-outline" id="btn-browse-catalog-pdf" style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;pointer-events:none;">
+                        📄 Choose PDF File
+                      </span>
+                      <input type="file" id="catalog-pdf-file" accept="application/pdf,.pdf" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;font-size:0;" title="Choose PDF File" />
+                    </div>
                     <span id="catalog-pdf-help-text" style="font-size:0.72rem;color:var(--admin-text-secondary);">Direct PDF upload (auto-stored safely in browser engine)</span>
                   </div>
 
@@ -1474,10 +1478,12 @@
               <div style="display:flex;gap:0.75rem;align-items:center;">
                 <img id="offer-image-preview" src="assets/images/cat_hardware.jpg" alt="Preview" style="width:80px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #D6CFC4;cursor:pointer;" title="Click to choose slide image" />
                 <div style="flex:1;">
-                  <input type="file" id="offer-image-file" accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp" style="display:none;" />
-                  <label for="offer-image-file" class="btn-admin-outline" id="btn-browse-offer-image" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;margin-bottom:4px;" tabindex="0" role="button">
-                    📁 Upload Slide Image
-                  </label>
+                  <div style="position:relative;display:inline-block;overflow:hidden;margin-bottom:4px;">
+                    <span class="btn-admin-outline" id="btn-browse-offer-image" style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;pointer-events:none;">
+                      📁 Upload Slide Image
+                    </span>
+                    <input type="file" id="offer-image-file" accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;font-size:0;" title="Choose Slide Image" />
+                  </div>
                   <input type="text" id="offer-image-url" class="admin-input" placeholder="Or enter image URL (e.g. assets/images/cat_hardware.jpg)" style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
                 </div>
               </div>

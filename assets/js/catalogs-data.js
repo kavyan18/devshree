@@ -176,12 +176,13 @@ const DEVSHREE_CATEGORIES = [
 ];
 
 /* =========================================================================
-   IndexedDB Engine for Large PDF Document Payloads (Bypasses 5MB Quota)
+   IndexedDB Engine for Large PDF & Cover Payloads (Bypasses 5MB Quota)
    ========================================================================= */
 
 const DB_NAME = 'devshree_catalog_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'pdf_documents';
+const COVER_STORE_NAME = 'cover_documents';
 const CUSTOM_CATALOGS_KEY = 'devshree_custom_catalogs';
 
 let _pdfDbPromise = null;
@@ -200,6 +201,9 @@ function openPdfDb() {
         const db = e.target.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(COVER_STORE_NAME)) {
+          db.createObjectStore(COVER_STORE_NAME, { keyPath: 'id' });
         }
       };
       request.onsuccess = () => resolve(request.result);
@@ -304,6 +308,87 @@ async function deleteCatalogPdfBlob(id) {
     try {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
+      const req = store.delete(id);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => resolve(false);
+    } catch (_) {
+      resolve(false);
+    }
+  });
+}
+
+/**
+ * Save Cover image payload to IndexedDB
+ */
+async function saveCatalogCoverBlob(id, dataUrlOrBlob) {
+  const db = await openPdfDb();
+  if (!db) return false;
+  return new Promise((resolve) => {
+    try {
+      if (!db.objectStoreNames.contains(COVER_STORE_NAME)) {
+        resolve(false);
+        return;
+      }
+      const tx = db.transaction(COVER_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(COVER_STORE_NAME);
+      const entry = {
+        id,
+        payload: dataUrlOrBlob,
+        updatedAt: Date.now()
+      };
+      const req = store.put(entry);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => resolve(false);
+    } catch (err) {
+      console.warn('[Devshree Catalogs] Save cover IndexedDB exception:', err);
+      resolve(false);
+    }
+  });
+}
+
+/**
+ * Retrieve Cover image payload from IndexedDB
+ */
+async function getCatalogCoverBlob(id) {
+  const db = await openPdfDb();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    try {
+      if (!db.objectStoreNames.contains(COVER_STORE_NAME)) {
+        resolve(null);
+        return;
+      }
+      const tx = db.transaction(COVER_STORE_NAME, 'readonly');
+      const store = tx.objectStore(COVER_STORE_NAME);
+      const req = store.get(id);
+      req.onsuccess = () => {
+        if (req.result && req.result.payload) {
+          resolve(req.result.payload);
+        } else {
+          resolve(null);
+        }
+      };
+      req.onerror = () => resolve(null);
+    } catch (_) {
+      resolve(null);
+    }
+  });
+}
+
+/**
+ * Remove Cover image payload from IndexedDB
+ */
+async function deleteCatalogCoverBlob(id) {
+  const db = await openPdfDb();
+  if (!db) return false;
+  return new Promise((resolve) => {
+    try {
+      if (!db.objectStoreNames.contains(COVER_STORE_NAME)) {
+        resolve(false);
+        return;
+      }
+      const tx = db.transaction(COVER_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(COVER_STORE_NAME);
       const req = store.delete(id);
       req.onsuccess = () => resolve(true);
       req.onerror = () => resolve(false);
@@ -479,6 +564,65 @@ function getActiveCatalogs() {
 }
 
 /**
+ * Downscale a Base64 image data URL to a lightweight thumbnail using HTML5 Canvas
+ * @param {string} dataUrl 
+ * @param {number} maxDim 
+ * @param {number} quality 
+ * @returns {Promise<string>}
+ */
+function compressDataUrlThumbnail(dataUrl, maxDim = 480, quality = 0.82) {
+  return new Promise((resolve) => {
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+      resolve(dataUrl);
+      return;
+    }
+    if (typeof Image === 'undefined' || typeof document === 'undefined') {
+      resolve(dataUrl);
+      return;
+    }
+    if (dataUrl.length < 65000) {
+      resolve(dataUrl);
+      return;
+    }
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, w, h);
+            const thumb = canvas.toDataURL('image/jpeg', quality);
+            resolve(thumb);
+          } else {
+            resolve(dataUrl);
+          }
+        } catch (_) {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    } catch (_) {
+      resolve(dataUrl);
+    }
+  });
+}
+
+/**
  * Persist catalogs array: saves heavy PDF payloads to IndexedDB and stores lightweight metadata in localStorage
  * @param {Array} catalogs 
  */
@@ -489,34 +633,52 @@ async function saveActiveCatalogs(catalogs) {
   const sanitizedList = [];
   for (const c of catalogs) {
     const copy = { ...c };
+
+    // Separate bulky PDF payloads into IndexedDB
     if (copy.pdfUrl && typeof copy.pdfUrl === 'string' && copy.pdfUrl.startsWith('data:')) {
-      // Save large data URL into IndexedDB
       await saveCatalogPdfBlob(copy.id, copy.pdfUrl, { filename: copy.filename, size: copy.size });
       copy.pdfUrl = `indexeddb:${copy.id}`;
       copy.hasLocalPdf = true;
     }
+
+    // Safely compress bulky cover image payloads (> 65 KB) and store full version in IndexedDB
+    if (copy.coverImage && typeof copy.coverImage === 'string' && copy.coverImage.startsWith('data:image/') && copy.coverImage.length > 65000) {
+      await saveCatalogCoverBlob(copy.id, copy.coverImage);
+      copy.coverImage = await compressDataUrlThumbnail(copy.coverImage, 480, 0.82);
+    }
+
     sanitizedList.push(copy);
   }
 
-  // 2. Safely store clean metadata into localStorage (typically < 10 KB)
+  // 2. Safely store clean metadata into localStorage (typically < 25 KB)
   try {
     localStorage.setItem(CUSTOM_CATALOGS_KEY, JSON.stringify(sanitizedList));
   } catch (err) {
-    console.warn('[Devshree Catalogs] LocalStorage quota fallback, pruning cover data URLs:', err);
+    console.warn('[Devshree Catalogs] LocalStorage quota fallback, attempting compact compression:', err);
     try {
-      const slimList = sanitizedList.map(item => ({
-        ...item,
-        coverImage: (item.coverImage && item.coverImage.startsWith('data:')) 
-          ? 'assets/images/catalogs/catalog_acrysoft_genoa.jpg' 
-          : item.coverImage
+      const ultraSlim = await Promise.all(sanitizedList.map(async item => {
+        if (item.coverImage && typeof item.coverImage === 'string' && item.coverImage.startsWith('data:')) {
+          const ultra = await compressDataUrlThumbnail(item.coverImage, 320, 0.7);
+          return { ...item, coverImage: ultra };
+        }
+        return item;
       }));
-      localStorage.setItem(CUSTOM_CATALOGS_KEY, JSON.stringify(slimList));
+      localStorage.setItem(CUSTOM_CATALOGS_KEY, JSON.stringify(ultraSlim));
     } catch (e2) {
       console.error('[Devshree Catalogs] Critical LocalStorage save error:', e2);
     }
   }
 
-  // 3. Dispatch sync events
+  // 3. Keep caller's in-memory array elements in sync
+  catalogs.forEach((orig, idx) => {
+    if (sanitizedList[idx]) {
+      orig.pdfUrl = sanitizedList[idx].pdfUrl;
+      orig.coverImage = sanitizedList[idx].coverImage;
+      orig.hasLocalPdf = sanitizedList[idx].hasLocalPdf;
+    }
+  });
+
+  // 4. Dispatch sync events
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('devshree:catalogs-updated', { detail: { catalogs: sanitizedList } }));
   }
