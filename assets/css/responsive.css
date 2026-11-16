@@ -860,6 +860,34 @@
     font-variant-numeric: tabular-nums !important;
   }
 
+  /* Top Categories Bar Mobile (Square Images) */
+  .top-categories-bar-section {
+    padding: 0.70rem 0 0.60rem !important;
+  }
+  .top-categories-scroll-wrapper {
+    gap: 1.15rem !important;
+    justify-content: center !important;
+    padding: 0.15rem 0.25rem 0.25rem !important;
+  }
+  .top-cat-square-item,
+  .top-cat-item {
+    width: 72px !important;
+  }
+  .top-cat-square-img-box {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 13px !important;
+  }
+  .top-cat-square-label {
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    max-width: 74px !important;
+    margin-top: 0.35rem !important;
+  }
+  .top-cat-scroll-arrow {
+    display: none !important;
+  }
+
   /* Shop by Category Section Mobile */
   .shop-by-category-section {
     padding: 1.15rem 0 1.5rem !important;

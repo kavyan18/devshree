@@ -11,7 +11,7 @@
 - **Visual Design Identity:** Warm terracotta (`#C2623B`), deep architectural bronze, brushed gold accents, soft ivory backgrounds, crisp typography.
 - **Repository:** `https://github.com/kavyan18/devshree`
 - **Active Branch:** `main`
-- **Latest Remote Commit:** `309aefd39ee6db184fb6ecbe3eaeb93114128104`
+- **Latest Remote Commit:** `0096997eecb002f86c456fdf4fcc0957d1321cea`
 
 ---
 
@@ -215,6 +215,31 @@
   6. **Admin Login Usability & Quick Unlock:** Pre-filled default credentials (`admin@devshree.in` / `admin`) in `admin.html`, added a "⚡ One-Click Store Manager Access" quick-unlock button, and handled direct credential verification before strict schema validation.
   7. **Verified via Headless Browser CDP & Automated Tests:** Verified in Microsoft Edge headless CDP test that `gateDisplay` is `"none"`, `productsRows` is 6, and `ordersRows` is 5. All 274 unit/integration test assertions pass (100%).
   8. Synced all changes across `github_ready_folder` and `devshree_live_store`.
+  9. Successfully pushed commit `0096997` (123 files) to GitHub repository `kavyan18/devshree` on branch `main` with user approval.
+
+### Session Turn 22: Top Categories Bar with Square Images (4 Core Categories: Hardware, Electrical, Plumbing, Paint)
+- User requested: *"only show the four category 1-hardware 2-electrical 3-plumbing 4-panit only show this four category and under the second bar not a first bar"*.
+- Implemented comprehensive features:
+  1. **Top Categories Bar Under Second Bar (`index.html` & `assets/css/styles.css`):**
+     - Placed `.top-categories-bar-section` immediately below the Site Header (the second bar) and above the offers carousel, ensuring it is NOT placed under the top announcement bar (the first bar).
+     - Displayed strictly the four core categories requested by the user:
+       1. **Hardware** (`cat-hardware`, image: `assets/images/cat_hardware.jpg`)
+       2. **Electrical** (`cat-electrical`, image: `assets/images/cat_electrical.jpg`)
+       3. **Plumbing** (`cat-plumbing`, image: `assets/images/cat_plumbing.jpg`)
+       4. **Paint** (`cat-paints`, image: `assets/images/cat_paints.jpg`)
+     - Crafted explicit 1:1 square image boxes (`.top-cat-square-img-box`) with 16px squircle border-radius, warm architectural sand background, hover elevation (`translateY(-3px)` + subtle zoom), and terracotta active indicator borders.
+     - Perfectly centered layout (`justify-content: center; gap: 2.25rem;` on desktop, `gap: 1.15rem;` on mobile) fitting all screen sizes cleanly with zero clutter or horizontal overflow.
+  2. **Removed Category Tabs from Down Under (`index.html` & `assets/css/styles.css`):**
+     - Completely removed the redundant `#catalog-category-tabs` buttons from `#catalog-toolbar` in `#bestsellers-section` ("remoev from the under").
+     - Replaced with a dynamic, elegant Active Filter Indicator badge (`#catalog-active-filter-indicator`) that displays `"Filtered: [Category Name] [✕]"`, allowing users to see their active filter and clear it with a single click.
+  3. **Frontend Synchronization & Immediate Event Binding (`assets/js/home.js`):**
+     - Updated `initTopCategoriesBar()` to bind the 4 square category cards, manage active classes, execute filtering by category ID, and update the active filter indicator badge.
+     - Added toggle-off behavior: clicking an active category or the `✕` badge clears the filter back to All Products.
+     - Moved synchronous UI initializers (`initTopCategoriesBar()`, `initCatalogToolbar()`) before async database calls for instant 0ms event responsiveness.
+  4. **Verification & Tests:**
+     - Headless Microsoft Edge browser CDP test confirmed that `#top-categories-bar-section` renders with exactly the 4 square categories, clicking `"Hardware"` activates it and updates the toolbar indicator to `"Hardware"`, and clicking clear or re-clicking resets to All Products.
+     - All 274 unit and integration test assertions pass (100%).
+  5. Synced all changes across `github_ready_folder` and `devshree_live_store`.
 
 ---
 
@@ -222,6 +247,8 @@
 
 | Component | Status | Details |
 |---|---|---|
+| **Top Categories Bar** | Live with 4 Square Categories | Located under header (second bar); Hardware, Electrical, Plumbing, and Paint with 1:1 square images, centered layout |
+| **Catalog Toolbar** | Clean & Modern | Redundant category tabs removed from down below; dynamic active filter indicator badge (`Filtered: [Category Name] [✕]`) |
 | **Primary Database** | PostgreSQL 17.11 (Live) | Hosted on Supabase (`kbdjezowhuteumywjoep.supabase.co`); tables: `categories`, `products`, `catalogs`, `orders` (5 live rows), `offers`, `users` |
 | **Asset Storage & CDN** | Cloudflare Edge CDN (Live) | Supabase Storage buckets `products` & `catalogs` with global caching and instant HTTP 200 delivery |
 | **Admin Console** | Fully Operational & 0ms Paint | Products (6 live) and Orders (5 live) render instantly; active status dropdowns, invoice printing, WhatsApp dispatch |
@@ -229,7 +256,7 @@
 | **Product Hydration** | 100% Live & Pure | Supabase PostgreSQL authoritative; demo products completely purged from reloads and mobile |
 | **Catalog Hydration** | Live & Persistent | Supabase PostgreSQL + IndexedDB high-res engine + Supabase Storage CDN |
 | **Orders & Invoices** | PostgreSQL + Local Storage | Real-time order synchronization with Supabase `orders` table; 5 seed orders live |
-| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `309aefd` |
+| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `0096997` |
 | **Catalog Page UI** | Luxury Architectural Redesign | 3-column responsive grid, elevated search toolbar, terracotta pills, frosted glass badges |
 | **PDF Catalog Engine** | Fully Operational | Dual-storage engine (Supabase CDN + IndexedDB + LocalStorage metadata + Blob Object URL viewer) |
 | **Admin File Pickers** | Fully Operational | Transparent native `<input type="file">` overlay for Cover Image, PDF Document, and Slide Image; Dropzone for Products |
@@ -245,8 +272,8 @@
 ---
 
 ## 4. Where the Last Conversation Stopped
-- **Last Completed Task:** Fixed the Admin Console products and orders visibility: resolved the Temporal Dead Zone `ReferenceError: Cannot access 'DEFAULT_ADMIN_EMAIL' before initialization` in `assets/js/admin.js`, seeded 5 live customer orders into Supabase PostgreSQL `orders` table, upgraded `loadDashboardData()` with 0ms instant first-pass rendering, pre-rendered 6 products and 5 orders directly into `admin.html`, added Supabase CDN script tag for instant database connectivity, added a One-Click Store Manager Access unlock button, verified via Chrome/Edge DevTools Protocol (CDP) headless testing that products (6) and orders (5) render perfectly, and verified all 274 test assertions pass (100%).
-- **Pending Action:** Ready for user review or any next requests.
+- **Last Completed Task:** Updated the Top Categories Bar under the second bar (below the main header, NOT after the first announcement bar) to show strictly the 4 requested core categories (1. Hardware, 2. Electrical, 3. Plumbing, 4. Paint) using 1:1 square images with centered responsive layout, removed redundant category tabs from down below in the `#bestsellers-section` catalog toolbar and replaced with dynamic `Filtered: [Category] [✕]` badge, verified click-to-filter and toggle in headless Microsoft Edge via CDP, passed all 274 unit/integration tests (100%), and synced files to `github_ready_folder` and `devshree_live_store`.
+- **Pending Action:** Ready for user review. Awaiting user command to push to GitHub if desired.
 
 ---
 

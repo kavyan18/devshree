@@ -121,28 +121,29 @@ let currentCatalogOptions = {
 };
 
 async function initDevshreeHome() {
-  // 1. Prioritize immediate product & deals rendering so the catalog is NEVER blank
-  try { await renderCatalogGrid(); } catch (e) { console.warn('[Devshree] Catalog grid init error:', e); }
-  try { await renderDealsRail(); } catch (e) { console.warn('[Devshree] Deals rail init error:', e); }
-
-  // 2. Initialize all interactive controls with isolation
+  // 1. Initialize all interactive UI controls immediately on 0ms first paint
   try { checkCatalogSyncUrl(); } catch (e) {}
   try { initHeaderAndNavigation(); } catch (e) {}
   try { initSearchUI(); } catch (e) {}
   try { initAuthUI(); } catch (e) {}
   try { initTopCategoriesBar(); } catch (e) {}
+  try { initCatalogToolbar(); } catch (e) {}
   try { initShopByCategoryRail(); } catch (e) {}
   try { initOffersCarousel(); } catch (e) {}
   try { initHomeCatalogsCarousel(); } catch (e) {}
   try { initSyncButton(); } catch (e) {}
-  try { renderCategories(); } catch (e) {}
-  try { await renderProductSections(); } catch (e) {}
-  try { renderReviews(); } catch (e) {}
-  try { initFeedbackSystem(); } catch (e) {}
   try { initQuickViewModal(); } catch (e) {}
   try { initCartDrawer(); } catch (e) {}
   try { initTrackingAndCheckoutModals(); } catch (e) {}
   try { initNewsletterForm(); } catch (e) {}
+
+  // 2. Prioritize immediate product & deals rendering with pre-hydrated DOM
+  try { await renderCatalogGrid(); } catch (e) { console.warn('[Devshree] Catalog grid init error:', e); }
+  try { await renderDealsRail(); } catch (e) { console.warn('[Devshree] Deals rail init error:', e); }
+  try { renderCategories(); } catch (e) {}
+  try { await renderProductSections(); } catch (e) {}
+  try { renderReviews(); } catch (e) {}
+  try { initFeedbackSystem(); } catch (e) {}
   try { initCartBadge(); } catch (e) {}
   try { initWishlistBadge(); } catch (e) {}
   try { setupOrderNotificationsListener(); } catch (e) {}
@@ -973,12 +974,19 @@ function initCatalogToolbar() {
   const tabs = document.querySelectorAll('[data-catalog-cat]');
   const sortSelect = document.getElementById('catalog-sort-select');
   const stockCheckbox = document.getElementById('catalog-stock-checkbox');
+  const clearFilterBtn = document.getElementById('btn-clear-active-filter');
 
   tabs.forEach(btn => {
     btn.addEventListener('click', () => {
       const catId = btn.dataset.catalogCat;
       setCatalogCategoryFilter(catId);
     });
+  });
+
+  clearFilterBtn?.addEventListener('click', () => {
+    setCatalogCategoryFilter('');
+    const activeChip = document.getElementById('catalog-active-filter-indicator');
+    if (activeChip) activeChip.style.display = 'none';
   });
 
   sortSelect?.addEventListener('change', () => {
@@ -997,28 +1005,65 @@ function initCatalogToolbar() {
  */
 function initTopCategoriesBar() {
   const container = document.getElementById('top-categories-scroll');
+  const prevBtn = document.getElementById('top-cat-scroll-prev');
+  const nextBtn = document.getElementById('top-cat-scroll-next');
   if (!container) return;
 
-  const items = container.querySelectorAll('.top-cat-item');
+  const items = container.querySelectorAll('.top-cat-square-item, .top-cat-item');
   items.forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
+      const isAlreadyActive = item.classList.contains('active') && (item.dataset.topCat || item.dataset.catalogCat);
       items.forEach(i => i.classList.remove('active'));
+
+      if (isAlreadyActive) {
+        // Toggle off - return to All Products
+        setCatalogCategoryFilter('');
+        const allBtn = container.querySelector('[data-top-cat=""], [data-catalog-cat=""]');
+        if (allBtn) allBtn.classList.add('active');
+        const activeChip = document.getElementById('catalog-active-filter-indicator');
+        if (activeChip) activeChip.style.display = 'none';
+        return;
+      }
+
       item.classList.add('active');
+      const catId = item.dataset.topCat || item.dataset.catalogCat || '';
+      const keyword = (item.dataset.keyword || '').trim();
+      const label = item.querySelector('.top-cat-square-label')?.textContent?.trim() || 'Category';
 
-      const catId = item.dataset.topCat || '';
-      const keyword = item.dataset.keyword || '';
-
-      if (keyword) {
+      if (keyword && !catId) {
         const input = document.getElementById('master-search-input');
         if (input) input.value = keyword;
-        filterProductsByQuery(keyword, catId);
+        filterProductsByQuery(keyword, '');
       } else {
         setCatalogCategoryFilter(catId);
+        if (keyword) {
+          filterProductsByQuery(keyword, catId);
+        }
+      }
+
+      // Update active filter badge in catalog toolbar
+      const activeChip = document.getElementById('catalog-active-filter-indicator');
+      const activeName = document.getElementById('catalog-active-filter-name');
+      if (activeChip && activeName) {
+        if (catId || keyword) {
+          activeName.textContent = label;
+          activeChip.style.display = 'inline-flex';
+        } else {
+          activeChip.style.display = 'none';
+        }
       }
 
       document.getElementById('bestsellers-section')?.scrollIntoView({ behavior: 'smooth' });
     });
+  });
+
+  // Desktop Scroll Controls
+  prevBtn?.addEventListener('click', () => {
+    container.scrollBy({ left: -240, behavior: 'smooth' });
+  });
+  nextBtn?.addEventListener('click', () => {
+    container.scrollBy({ left: 240, behavior: 'smooth' });
   });
 }
 
@@ -1355,11 +1400,25 @@ function setCatalogCategoryFilter(catId) {
   });
 
   // Sync Top Category Horizontal Scrollbar active state
-  const topItems = document.querySelectorAll('#top-categories-scroll .top-cat-item');
+  const topItems = document.querySelectorAll('#top-categories-scroll .top-cat-square-item, #top-categories-scroll .top-cat-item');
   topItems.forEach(item => {
-    const itemCat = item.dataset.topCat || '';
+    const itemCat = item.dataset.topCat || item.dataset.catalogCat || '';
     item.classList.toggle('active', itemCat === (catId || ''));
   });
+
+  // Sync Active Filter Indicator in catalog toolbar
+  const activeChip = document.getElementById('catalog-active-filter-indicator');
+  const activeName = document.getElementById('catalog-active-filter-name');
+  if (activeChip && activeName) {
+    if (catId) {
+      const activeItem = document.querySelector(`#top-categories-scroll [data-top-cat="${catId}"], #top-categories-scroll [data-catalog-cat="${catId}"]`);
+      const label = activeItem?.querySelector('.top-cat-square-label')?.textContent?.trim() || catId.replace('cat-', '');
+      activeName.textContent = label;
+      activeChip.style.display = 'inline-flex';
+    } else {
+      activeChip.style.display = 'none';
+    }
+  }
 
   // Sync Shop by Category Rail active state
   const railCards = document.querySelectorAll('.cat-rail-card');

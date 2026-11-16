@@ -232,6 +232,47 @@
   </aside>
 
   <!-- =========================================================================
+       2B. Top Categories Bar (Under Second Bar) - 4 Core Categories
+       ========================================================================= -->
+  <section class="top-categories-bar-section" id="top-categories-bar-section" aria-label="Product Categories">
+    <div class="container top-categories-container">
+      <div class="top-categories-scroll-wrapper" id="top-categories-scroll">
+        <!-- 1. Hardware -->
+        <a href="#bestsellers-section" class="top-cat-square-item" data-top-cat="cat-hardware" data-catalog-cat="cat-hardware" title="Hardware Products">
+          <div class="top-cat-square-img-box">
+            <img src="assets/images/cat_hardware.jpg" alt="Hardware" class="top-cat-square-img" loading="eager" />
+          </div>
+          <span class="top-cat-square-label">Hardware</span>
+        </a>
+
+        <!-- 2. Electrical -->
+        <a href="#bestsellers-section" class="top-cat-square-item" data-top-cat="cat-electrical" data-catalog-cat="cat-electrical" title="Electrical Supplies">
+          <div class="top-cat-square-img-box">
+            <img src="assets/images/cat_electrical.jpg" alt="Electrical" class="top-cat-square-img" loading="eager" />
+          </div>
+          <span class="top-cat-square-label">Electrical</span>
+        </a>
+
+        <!-- 3. Plumbing -->
+        <a href="#bestsellers-section" class="top-cat-square-item" data-top-cat="cat-plumbing" data-catalog-cat="cat-plumbing" title="Plumbing Products">
+          <div class="top-cat-square-img-box">
+            <img src="assets/images/cat_plumbing.jpg" alt="Plumbing" class="top-cat-square-img" loading="eager" />
+          </div>
+          <span class="top-cat-square-label">Plumbing</span>
+        </a>
+
+        <!-- 4. Paint -->
+        <a href="#bestsellers-section" class="top-cat-square-item" data-top-cat="cat-paints" data-catalog-cat="cat-paints" title="Paint Products">
+          <div class="top-cat-square-img-box">
+            <img src="assets/images/cat_paints.jpg" alt="Paint" class="top-cat-square-img" loading="eager" />
+          </div>
+          <span class="top-cat-square-label">Paint</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
        3. Offers Auto-Scrolling Bar (Banner Carousel)
        ========================================================================= -->
   <section class="offers-carousel-section" id="offers-carousel-section" aria-label="Special Offers and Promotions">
@@ -786,12 +827,13 @@
 
       <!-- Interactive Catalog Controls & Filters -->
       <div class="catalog-toolbar" id="catalog-toolbar">
-        <div class="catalog-filter-tabs" id="catalog-category-tabs">
-          <button type="button" class="catalog-tab-btn active" data-catalog-cat="">All Products</button>
-          <button type="button" class="catalog-tab-btn" data-catalog-cat="cat-hardware">Hardware</button>
-          <button type="button" class="catalog-tab-btn" data-catalog-cat="cat-electrical">Electrical</button>
-          <button type="button" class="catalog-tab-btn" data-catalog-cat="cat-plumbing">Plumbing</button>
-          <button type="button" class="catalog-tab-btn" data-catalog-cat="cat-paints">Paints</button>
+        <!-- Active Category Filter Badge (Syncs with Top Categories Bar) -->
+        <div class="catalog-active-filter-indicator" id="catalog-active-filter-indicator" style="display:none;">
+          <span class="active-filter-label">Filtered:</span>
+          <span class="active-filter-name" id="catalog-active-filter-name">All Products</span>
+          <button type="button" class="btn-clear-active-filter" id="btn-clear-active-filter" aria-label="Clear category filter" title="Clear category filter">
+            &times;
+          </button>
         </div>
 
         <div class="catalog-sort-wrap">
