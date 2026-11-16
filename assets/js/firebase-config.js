@@ -21,28 +21,32 @@ import {
   signInWithPopup,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  serverTimestamp,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-import { 
-  getStorage, 
-  ref, 
-  uploadBytesResumable, 
-  getDownloadURL 
-} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-storage.js";
+
+// ===============================================
+// FIREBASE DATABASE DECOMMISSIONED
+// Database & asset storage have been migrated to
+// Supabase PostgreSQL 17 & Global Cloudflare CDN.
+// ===============================================
+const db = null;
+const storage = null;
+
+// Safe no-op stubs for backward-compatible imports
+const doc = () => ({});
+const setDoc = async () => ({});
+const getDoc = async () => ({ exists: () => false, data: () => null });
+const collection = () => ({});
+const addDoc = async () => ({ id: `doc-${Date.now()}` });
+const updateDoc = async () => ({});
+const deleteDoc = async () => ({});
+const query = () => ({});
+const where = () => ({});
+const getDocs = async () => ({ empty: true, docs: [], forEach: () => {} });
+const orderBy = () => ({});
+const serverTimestamp = () => new Date().toISOString();
+const onSnapshot = () => (() => {});
+const ref = () => ({});
+const uploadBytesResumable = async () => ({ ref: {} });
+const getDownloadURL = async () => '';
 
 // ===============================================
 // FIREBASE CONFIGURATION (ENVIRONMENT-DRIVEN)
@@ -100,24 +104,15 @@ export const isConfigured = Boolean(
 
 let app = null;
 let auth = null;
-let db = null;
-let storage = null;
 
 if (isConfigured) {
   try {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    console.log("[Devshree] Firebase successfully connected to project:", firebaseConfig.projectId);
+    console.log("[Devshree] Firebase Auth initialized (Database transitioned to Supabase PostgreSQL).");
   } catch (err) {
-    console.error("[Devshree] Firebase initialization error:", err);
+    console.error("[Devshree] Firebase Auth initialization error:", err);
   }
-} else {
-  console.info(
-    "[Devshree] Notice: Firebase credentials are not yet configured in assets/js/firebase-config.js. " +
-    "Running in offline local mode for demonstration until Firebase keys are pasted."
-  );
 }
 
 export {

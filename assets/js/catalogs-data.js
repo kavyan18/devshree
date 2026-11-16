@@ -6,6 +6,7 @@
  */
 
 import { db, collection, getDocs, isConfigured } from './firebase-config.js';
+import { getSupabaseClient, isSupabaseConfigured, getPublicStorageUrl, uploadFileToStorage } from './supabase-config.js';
 
 const DELETED_CATALOGS_KEY = 'devshree_deleted_catalog_ids';
 
@@ -582,7 +583,7 @@ function getActiveCatalogs() {
 }
 
 /**
- * Asynchronously fetch active catalogs from Cloud Firestore.
+ * Asynchronously fetch active catalogs from Supabase PostgreSQL & Cloud Firestore.
  * Prioritizes live database changes across mobile/desktop, synchronizes local cache,
  * and ensures deleted demo catalogs never resurrect.
  * @returns {Promise<Array>}
@@ -599,6 +600,49 @@ async function fetchActiveCatalogs() {
     }
   } catch (_) {}
 
+  // 1. Supabase PostgreSQL & Edge CDN
+  if (isSupabaseConfigured) {
+    try {
+      const client = await getSupabaseClient();
+      if (client) {
+        const { data, error } = await client.from('catalogs').select('*').order('created_at', { ascending: false });
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const supabaseCatalogs = [];
+          data.forEach(d => {
+            if (!deletedIds.has(String(d.id))) {
+              supabaseCatalogs.push({
+                id: d.id,
+                title: d.title,
+                brand: d.brand,
+                category: d.category,
+                categorySlug: d.category_slug || d.categorySlug,
+                description: d.description,
+                pages: Number(d.pages || 1),
+                size: d.size || 'PDF',
+                coverImage: d.cover_image || d.coverImage,
+                pdfUrl: d.pdf_url || d.pdfUrl,
+                filename: d.filename || 'catalog.pdf',
+                createdAt: d.created_at
+              });
+            }
+          });
+          if (supabaseCatalogs.length > 0) {
+            try {
+              localStorage.setItem(CUSTOM_CATALOGS_KEY, JSON.stringify(supabaseCatalogs));
+            } catch (_) {}
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('devshree:catalogs-updated', { detail: { catalogs: supabaseCatalogs } }));
+            }
+            return supabaseCatalogs;
+          }
+        }
+      }
+    } catch (sbErr) {
+      console.warn('[Devshree Catalogs] Supabase fetch fallback:', sbErr);
+    }
+  }
+
+  // 2. Cloud Firestore fallback
   let firestoreCatalogs = [];
   if (isConfigured && db) {
     try {

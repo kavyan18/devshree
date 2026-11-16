@@ -16,6 +16,11 @@ import {
   where, 
   serverTimestamp 
 } from './firebase-config.js';
+import { 
+  getSupabaseClient, 
+  isSupabaseConfigured, 
+  getPublicStorageUrl 
+} from './supabase-config.js';
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from './mock-data.js';
 import { showToast, getStorage, setStorage } from './utils.js';
 import { showSafeErrorToast } from './error-handler.js';
@@ -25,10 +30,35 @@ const CACHE_CATEGORIES_KEY = 'devshree_cached_categories';
 
 /**
  * Fetch the 4 main product categories
- * Reads from Cloud Firestore if available, falls back to mock data
+ * Reads from Supabase PostgreSQL first, then Cloud Firestore, then local storage / mock data
  * @returns {Promise<Array>}
  */
 export async function fetchCategories() {
+  // 1. Supabase PostgreSQL
+  if (isSupabaseConfigured) {
+    try {
+      const client = await getSupabaseClient();
+      if (client) {
+        const { data, error } = await client.from('categories').select('*').order('name');
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const formatted = data.map(c => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            description: c.description,
+            imageUrl: c.image_url,
+            badgeClass: c.id.replace('cat-', '')
+          }));
+          setStorage(CACHE_CATEGORIES_KEY, formatted);
+          return formatted;
+        }
+      }
+    } catch (sbErr) {
+      console.warn('[Devshree] Supabase fetchCategories fallback:', sbErr);
+    }
+  }
+
+  // 2. Cloud Firestore
   if (isConfigured && db) {
     try {
       const colRef = collection(db, 'categories');
@@ -44,12 +74,13 @@ export async function fetchCategories() {
     }
   }
 
-  // Fallback to local storage cache or mock data
+  // 3. Fallback to local storage cache or mock data
   return getStorage(CACHE_CATEGORIES_KEY, MOCK_CATEGORIES);
 }
 
 /**
  * Fetch products with dynamic filtering and sorting
+ * Reads from Supabase PostgreSQL first, falls back to Cloud Firestore and localStorage
  * @param {Object} options
  * @param {string} [options.categoryId]
  * @param {string} [options.brand]
@@ -60,10 +91,58 @@ export async function fetchCategories() {
  * @returns {Promise<Array>}
  */
 export async function fetchProducts(options = {}) {
-  let firestoreProducts = [];
+  let fetchedProducts = [];
   const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
 
-  if (isConfigured && db) {
+  // 1. Primary: Supabase PostgreSQL (fast query + Cloudflare CDN images)
+  if (isSupabaseConfigured) {
+    try {
+      const client = await getSupabaseClient();
+      if (client) {
+        let q = client.from('products').select('*');
+        if (options.categoryId) {
+          q = q.eq('category_id', options.categoryId);
+        }
+        const { data, error } = await q;
+        if (!error && Array.isArray(data) && data.length > 0) {
+          data.forEach(d => {
+            if (deletedIds.has(String(d.id))) return;
+            const img = d.image_url || d.image || 'assets/images/placeholder.webp';
+            fetchedProducts.push({
+              id: d.id,
+              name: d.name,
+              categoryId: d.category_id,
+              brand: d.brand || 'Devshree',
+              sku: d.sku || '',
+              description: d.description || '',
+              price: Number(d.price),
+              compareAtPrice: d.compare_at_price ? Number(d.compare_at_price) : undefined,
+              basePrice: d.base_price ? Number(d.base_price) : undefined,
+              discountPercentage: d.discount_percentage ? Number(d.discount_percentage) : undefined,
+              gstRate: Number(d.gst_rate || 18),
+              stock: Number(d.stock || 0),
+              isInStock: Boolean(d.is_in_stock),
+              isFeatured: Boolean(d.is_featured),
+              featured: Boolean(d.is_featured),
+              isBestseller: Boolean(d.is_bestseller),
+              isNew: Boolean(d.is_new),
+              rating: Number(d.rating || 4.8),
+              reviewCount: Number(d.review_count || 1),
+              image: img,
+              imageUrl: d.image_url || img,
+              createdAt: d.created_at,
+              updatedAt: d.updated_at
+            });
+          });
+        }
+      }
+    } catch (sbErr) {
+      console.warn('[Devshree] Supabase fetchProducts notice, falling back:', sbErr);
+    }
+  }
+
+  // 2. Secondary fallback: Cloud Firestore
+  if (fetchedProducts.length === 0 && isConfigured && db) {
     try {
       const colRef = collection(db, 'products');
       let q = colRef;
@@ -80,7 +159,7 @@ export async function fetchProducts(options = {}) {
           if (createdAt && typeof createdAt.toDate === 'function') {
             createdAt = createdAt.toDate().toISOString();
           }
-          firestoreProducts.push({ id: d.id, ...data, ...(createdAt ? { createdAt } : {}) });
+          fetchedProducts.push({ id: d.id, ...data, ...(createdAt ? { createdAt } : {}) });
         });
       }
     } catch (err) {
@@ -88,18 +167,18 @@ export async function fetchProducts(options = {}) {
     }
   }
 
-  // Combine seed products, local storage cache, and Firestore products into a complete catalog
+  // Combine database products, local storage cache, and fallback into a complete catalog
   const catalogMap = new Map();
 
-  if (firestoreProducts.length > 0) {
-    // 1. Live Firestore products are authoritative — never pollute with demo products
-    firestoreProducts.forEach(p => {
+  if (fetchedProducts.length > 0) {
+    // Live database products are authoritative — never pollute with demo products
+    fetchedProducts.forEach(p => {
       if (!deletedIds.has(String(p.id))) {
         catalogMap.set(String(p.id), p);
       }
     });
   } else {
-    // 2. Cached items from admin / localStorage when Firestore is offline or loading
+    // Cached items from admin / localStorage when database is offline or loading
     const cached = getStorage(CACHE_PRODUCTS_KEY, null);
     if (Array.isArray(cached) && cached.length > 0) {
       cached.forEach(p => {
@@ -108,7 +187,7 @@ export async function fetchProducts(options = {}) {
         }
       });
     } else {
-      // 3. Fallback to mock products ONLY if both Firestore and local storage are completely empty
+      // Fallback to mock products ONLY if both databases and local storage are completely empty
       MOCK_PRODUCTS.forEach(p => {
         if (!deletedIds.has(String(p.id))) {
           catalogMap.set(String(p.id), p);
@@ -196,6 +275,7 @@ export async function fetchProducts(options = {}) {
 
 /**
  * Get a single product by ID
+ * Checks Supabase PostgreSQL first, then Firestore, then localStorage, then mock
  * @param {string} productId
  * @returns {Promise<Object|null>}
  */
@@ -205,6 +285,47 @@ export async function getProductById(productId) {
     return null;
   }
 
+  // 1. Supabase PostgreSQL
+  if (isSupabaseConfigured) {
+    try {
+      const client = await getSupabaseClient();
+      if (client) {
+        const { data, error } = await client.from('products').select('*').eq('id', productId).maybeSingle();
+        if (!error && data) {
+          const img = data.image_url || data.image || 'assets/images/placeholder.webp';
+          return {
+            id: data.id,
+            name: data.name,
+            categoryId: data.category_id,
+            brand: data.brand || 'Devshree',
+            sku: data.sku || '',
+            description: data.description || '',
+            price: Number(data.price),
+            compareAtPrice: data.compare_at_price ? Number(data.compare_at_price) : undefined,
+            basePrice: data.base_price ? Number(data.base_price) : undefined,
+            discountPercentage: data.discount_percentage ? Number(data.discount_percentage) : undefined,
+            gstRate: Number(data.gst_rate || 18),
+            stock: Number(data.stock || 0),
+            isInStock: Boolean(data.is_in_stock),
+            isFeatured: Boolean(data.is_featured),
+            featured: Boolean(data.is_featured),
+            isBestseller: Boolean(data.is_bestseller),
+            isNew: Boolean(data.is_new),
+            rating: Number(data.rating || 4.8),
+            reviewCount: Number(data.review_count || 1),
+            image: img,
+            imageUrl: data.image_url || img,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
+          };
+        }
+      }
+    } catch (sbErr) {
+      console.warn('[Devshree] Supabase getProductById notice:', sbErr);
+    }
+  }
+
+  // 2. Cloud Firestore
   if (isConfigured && db) {
     try {
       const docRef = doc(db, 'products', productId);
@@ -217,15 +338,73 @@ export async function getProductById(productId) {
     }
   }
 
-  // Check cached products in localStorage (which includes admin additions)
+  // 3. Check cached products in localStorage (which includes admin additions)
   const cached = getStorage(CACHE_PRODUCTS_KEY, []);
   if (Array.isArray(cached) && cached.length > 0) {
     const found = cached.find(p => String(p.id) === String(productId));
     if (found && !deletedIds.has(String(found.id))) return found;
   }
 
-  // Fallback to MOCK_PRODUCTS so product detail pages always resolve
+  // 4. Fallback to MOCK_PRODUCTS so product detail pages always resolve
   return MOCK_PRODUCTS.find(p => String(p.id) === String(productId) && !deletedIds.has(String(p.id))) || null;
+}
+
+/**
+ * Add or update a product in Supabase PostgreSQL (Admin Functionality)
+ * @param {Object} productData
+ * @returns {Promise<Object>}
+ */
+export async function saveProductToSupabase(productData) {
+  const client = await getSupabaseClient();
+  if (!client) throw new Error('Supabase client is not available');
+
+  const targetId = productData.id || `prod-${Date.now()}`;
+  const nowIso = new Date().toISOString();
+
+  const row = {
+    id: targetId,
+    name: productData.name,
+    category_id: productData.categoryId || productData.category_id || 'cat-hardware',
+    brand: productData.brand || 'Devshree',
+    sku: productData.sku || '',
+    description: productData.description || '',
+    price: Number(productData.price),
+    compare_at_price: productData.compareAtPrice ? Number(productData.compareAtPrice) : null,
+    base_price: productData.basePrice ? Number(productData.basePrice) : null,
+    discount_percentage: productData.discountPercentage ? Number(productData.discountPercentage) : null,
+    gst_rate: Number(productData.gstRate || 18),
+    stock: Number(productData.stock || 0),
+    is_in_stock: productData.isInStock !== undefined ? Boolean(productData.isInStock) : true,
+    is_featured: Boolean(productData.isFeatured || productData.featured),
+    is_bestseller: Boolean(productData.isBestseller),
+    is_new: Boolean(productData.isNew),
+    rating: Number(productData.rating || 4.8),
+    review_count: Number(productData.reviewCount || 1),
+    image_url: productData.imageUrl || productData.image || '',
+    image: productData.imageUrl || productData.image || '',
+    updated_at: nowIso
+  };
+
+  const { error } = await client.from('products').upsert(row);
+  if (error) {
+    console.error('[Devshree] Supabase product upsert error:', error);
+    throw error;
+  }
+
+  return { id: targetId, ...productData };
+}
+
+/**
+ * Delete a product from Supabase PostgreSQL (Admin Functionality)
+ * @param {string} productId
+ */
+export async function deleteProductFromSupabase(productId) {
+  const client = await getSupabaseClient();
+  if (!client) return;
+  const { error } = await client.from('products').delete().eq('id', productId);
+  if (error) {
+    console.warn('[Devshree] Supabase product delete error:', error);
+  }
 }
 
 /**

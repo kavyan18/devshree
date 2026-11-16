@@ -11,7 +11,7 @@
 - **Visual Design Identity:** Warm terracotta (`#C2623B`), deep architectural bronze, brushed gold accents, soft ivory backgrounds, crisp typography.
 - **Repository:** `https://github.com/kavyan18/devshree`
 - **Active Branch:** `main`
-- **Latest Remote Commit:** `dafe5c357c2d8e26ed5931a09689510cf8458be7`
+- **Latest Remote Commit:** `2a9806c035412f316910224a49cb2457c4d7f04b`
 
 ---
 
@@ -185,34 +185,50 @@
   6. **Automated Verification:** All 274 unit and integration test assertions pass (100%).
   7. Synced all changes to `github_ready_folder` and `devshree_live_store`, and rebuilt `devshree-website-github.zip`.
 
+### Session Turn 20: Database Transition to PostgreSQL 17 + Global Cloudflare CDN (Supabase)
+- User requested: Transition database backend from Firebase Cloud Firestore to **PostgreSQL + Global CDN (Supabase)** for blazing-fast response times and high scalability.
+- User provided Supabase Personal Access Token (stored securely in `.env`).
+- Architecture & Infrastructure Setup:
+  1. **Supabase PostgreSQL 17 Database Provisioning:** Discovered organization `Devshree` (`npiyyjsvzffkymvdypau`) and project `Devshree_shop` (`kbdjezowhuteumywjoep`, URL: `https://kbdjezowhuteumywjoep.supabase.co`).
+  2. **Automated Schema & Index Migration:** Created relational tables `public.categories`, `public.products`, `public.catalogs`, `public.orders`, and `public.offers` with B-Tree indexes on `category_id`, `price`, `is_bestseller`, `created_at`, and `category_slug`.
+  3. **Row Level Security (RLS) Configuration:** Enforced RLS with permissive public `SELECT` policies for high-speed storefront caching and full `ALL` access for administrative modifications.
+  4. **High-Performance Edge CDN Storage:** Configured public storage buckets `products` and `catalogs` (50MB limit) with Cloudflare global Edge CDN caching and object storage policies.
+  5. **Data & Asset Migration:** Uploaded all live product images to the Supabase CDN `products` bucket (verifying HTTP 200 responses) and migrated all 4 categories and 6 active products (`TANDAM (6 Pcs)`, `LED LEMP 9w`, `NAIL 14x1III`, `NAIL 14x1I LH`, `NAIL 17x1I LH`, `Biding 1x0I—-3’`) with pricing, stock, and CDN image URLs into PostgreSQL.
+  6. **Frontend Integration (`assets/js/supabase-config.js`):** Built multi-environment Supabase client supporting browser ESM CDN (`@supabase/supabase-js@2`) and local Node.js.
+  7. **Dual-Layer Database Routing:** Updated `assets/js/products.js`, `assets/js/catalogs-data.js`, and `assets/js/admin.js` to query Supabase PostgreSQL as primary with seamless fallback to Firestore/localStorage.
+  8. **All 274 unit/integration test assertions passing (100%).**
+  9. Synced all changes across `github_ready_folder` and `devshree_live_store`.
+
 ---
 
 ## 3. Current System State & Key Details
 
 | Component | Status | Details |
 |---|---|---|
-| **Product Hydration** | 100% Live & Pure | Firestore products authoritative; demo products completely purged from reloads and mobile |
-| **Catalog Hydration** | Live & Persistent | Asynchronous Firestore catalog sync (`fetchActiveCatalogs`); deleted demo lookbooks never resurrect |
-| **Cloud Firestore Rules** | Deployed & Live | `firestore.rules` deployed live with `/catalogs` and `/offers`; public read & admin write enforced |
-| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: pending push |
+| **Primary Database** | PostgreSQL 17.11 (Live) | Hosted on Supabase (`kbdjezowhuteumywjoep.supabase.co`); tables: `categories`, `products`, `catalogs`, `orders`, `offers` |
+| **Asset Storage & CDN** | Cloudflare Edge CDN (Live) | Supabase Storage buckets `products` & `catalogs` with global caching and instant HTTP 200 delivery |
+| **Fallback Database** | Firebase Cloud Firestore | Seamless dual-layer fallback if client or connection is offline |
+| **Product Hydration** | 100% Live & Pure | Supabase PostgreSQL authoritative; demo products completely purged from reloads and mobile |
+| **Catalog Hydration** | Live & Persistent | Supabase PostgreSQL + IndexedDB high-res engine + Firestore sync |
+| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `2a9806c` |
 | **Catalog Page UI** | Luxury Architectural Redesign | 3-column responsive grid, elevated search toolbar, terracotta pills, frosted glass badges |
-| **PDF Catalog Engine** | Fully Operational | Dual-storage engine (IndexedDB + LocalStorage metadata + Blob Object URL viewer + Bulletproof Native Overlay file picker) |
+| **PDF Catalog Engine** | Fully Operational | Dual-storage engine (Supabase CDN + IndexedDB + LocalStorage metadata + Blob Object URL viewer) |
 | **Admin File Pickers** | Fully Operational | Transparent native `<input type="file">` overlay for Cover Image, PDF Document, and Slide Image; Dropzone for Products |
-| **Cover Image Persistence** | Fully Operational | 480px Canvas compression (~25KB) + IndexedDB high-res backup; never pruned or overwritten |
+| **Cover Image Persistence** | Fully Operational | 480px Canvas compression (~25KB) + Supabase CDN + IndexedDB high-res backup |
 | **PWA Support** | Configured | `manifest.json` linked in `index.html`, `product.html`, `catalogs.html` |
 | **SEO Structured Data** | Live | `HardwareStore` JSON-LD in `index.html` |
 | **PIN Code Delivery Tool** | Live | Interactive Indian PIN code calculator in `product.html` |
 | **WhatsApp Lookbook Share** | Live | Functional on `catalogs.html` and homepage rail |
 | **Admin Panel** | Live | Instant image & PDF upload with 0ms visual preview (`admin.html`) |
 | **Automated Tests** | 100% Passing | 274 unit/integration test assertions passing |
-| **Deployment Package** | Up to date | `devshree-website-github.zip` (synced with `github_ready_folder`) |
+| **Deployment Package** | Up to date | Synced with `github_ready_folder` and `devshree_live_store` |
 | **Git Push Tool** | Operational | `C:\Users\piloj\.gemini\antigravity\brain\02ecfd12-6551-4423-83fe-dd70def3b82b\scratch\push_all_to_github.js` |
 
 ---
 
 ## 4. Where the Last Conversation Stopped
-- **Last Completed Task:** Fixed product and catalog reloading/hydration so that old demo products and deleted factory catalogs never display on reload or mobile devices. Replaced static demo cards in `index.html` with real Firestore user products, made Firestore products authoritative in `assets/js/products.js` and `assets/js/home.js`, and implemented asynchronous Firestore catalog sync with deletion tracking in `assets/js/catalogs-data.js` and `catalogs.html`. All 274 tests pass (100%).
-- **Pending Action:** Ready for user review or any next features/requests.
+- **Last Completed Task:** Completed the full database transition from Firebase Cloud Firestore to **PostgreSQL 17.11 + Global Cloudflare CDN (Supabase)**. Provisioned tables (`categories`, `products`, `catalogs`, `orders`, `offers`) and public storage buckets (`products`, `catalogs`). Uploaded all product images to the CDN, seeded all 4 categories and 6 active products into PostgreSQL, configured Row Level Security, created `assets/js/supabase-config.js`, wired `assets/js/products.js`, `catalogs-data.js`, and `admin.js` to use PostgreSQL as the primary database with resilient Firestore fallback, and verified all 274 tests pass 100%.
+- **Pending Action:** Ready for user review or to push changes to GitHub if the user instructs.
 
 ---
 

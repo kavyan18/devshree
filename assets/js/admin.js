@@ -4,7 +4,20 @@
  */
 
 import { fetchAllOrders, updateOrderStatus, cancelOrder, openInvoiceViewer } from './orders.js';
-import { fetchProducts, createProductInFirestore, seedFirestoreCatalog } from './products.js';
+import { 
+  fetchProducts, 
+  createProductInFirestore, 
+  seedFirestoreCatalog, 
+  saveProductToSupabase, 
+  deleteProductFromSupabase 
+} from './products.js';
+import { 
+  getSupabaseClient, 
+  isSupabaseConfigured, 
+  uploadFileToStorage, 
+  getPublicStorageUrl, 
+  removeStorageFile 
+} from './supabase-config.js';
 import { 
   db, 
   doc, 
@@ -472,7 +485,19 @@ function initProductForm() {
     reader.readAsDataURL(file);
 
     // 3. Background optimization & Cloud Storage upload (non-blocking)
-    if (isConfigured && storage) {
+    if (isSupabaseConfigured) {
+      try {
+        const safeName = `product_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const { publicUrl } = await uploadFileToStorage('products', safeName, file);
+        if (publicUrl) {
+          if (hiddenImgInput) hiddenImgInput.value = publicUrl;
+          if (urlInput) urlInput.value = publicUrl;
+          if (previewImg) previewImg.src = publicUrl;
+        }
+      } catch (sbErr) {
+        console.warn('[Admin] Supabase CDN product image upload notice:', sbErr);
+      }
+    } else if (isConfigured && storage) {
       try {
         const safeName = `product_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
         const fileRef = ref(storage, `products/${safeName}`);
@@ -597,6 +622,14 @@ function initProductForm() {
           updatedAt: new Date().toISOString()
         };
 
+        if (isSupabaseConfigured) {
+          try {
+            await saveProductToSupabase({ id: editId, ...updatedFields });
+          } catch (sbErr) {
+            console.warn('[Admin] Supabase update fallback:', sbErr);
+          }
+        }
+
         if (db) {
           try {
             await updateDoc(doc(db, 'products', editId), updatedFields);
@@ -636,6 +669,14 @@ function initProductForm() {
           reviewCount: 0,
           createdAt: new Date().toISOString()
         };
+
+        if (isSupabaseConfigured) {
+          try {
+            await saveProductToSupabase(newProd);
+          } catch (sbErr) {
+            console.warn('[Admin] Supabase create product fallback:', sbErr);
+          }
+        }
 
         if (db) {
           try {
@@ -789,6 +830,14 @@ async function removeProduct(prodId) {
   }
 
   try {
+    if (isSupabaseConfigured) {
+      try {
+        await deleteProductFromSupabase(prodId);
+      } catch (sbErr) {
+        console.warn('[Admin] Supabase delete product fallback:', sbErr);
+      }
+    }
+
     if (db) {
       try {
         await deleteDoc(doc(db, 'products', prodId));
@@ -2480,6 +2529,15 @@ function initCatalogsTab() {
           await saveActiveCatalogs(allCatalogs);
         }
 
+        if (isSupabaseConfigured) {
+          try {
+            const client = await getSupabaseClient();
+            if (client) await client.from('catalogs').delete().eq('id', id);
+          } catch (sbErr) {
+            console.warn('[Admin] Supabase catalog delete fallback:', sbErr);
+          }
+        }
+
         if (db) {
           try {
             await deleteDoc(doc(db, 'catalogs', id));
@@ -2707,6 +2765,44 @@ function initCatalogsTab() {
 
     if (typeof saveActiveCatalogs === 'function') {
       await saveActiveCatalogs(allCatalogs);
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        const client = await getSupabaseClient();
+        if (client) {
+          let cdnPdfUrl = catalogData.pdfUrl;
+          if (pendingPdfFile) {
+            const safePdfName = `catalog_${catalogData.id}_${pendingPdfFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+            const { publicUrl } = await uploadFileToStorage('catalogs', safePdfName, pendingPdfFile, {
+              contentType: 'application/pdf'
+            });
+            if (publicUrl) cdnPdfUrl = publicUrl;
+          }
+          let cdnCoverUrl = catalogData.coverImage;
+          if (pendingCoverFile) {
+            const safeCoverName = `cover_${catalogData.id}_${pendingCoverFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+            const { publicUrl } = await uploadFileToStorage('catalogs', safeCoverName, pendingCoverFile);
+            if (publicUrl) cdnCoverUrl = publicUrl;
+          }
+          const sbCatalog = {
+            id: catalogData.id,
+            title: catalogData.title,
+            brand: catalogData.brand,
+            category: catalogData.category,
+            category_slug: catalogData.categorySlug || 'hardware',
+            description: catalogData.description || '',
+            pages: Number(catalogData.pages || 1),
+            size: catalogData.size || 'PDF',
+            cover_image: cdnCoverUrl,
+            pdf_url: cdnPdfUrl,
+            filename: catalogData.filename || 'catalog.pdf'
+          };
+          await client.from('catalogs').upsert(sbCatalog);
+        }
+      } catch (sbErr) {
+        console.warn('[Admin] Supabase catalog save fallback:', sbErr);
+      }
     }
 
     if (db) {

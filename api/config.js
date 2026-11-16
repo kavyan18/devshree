@@ -15,6 +15,10 @@ async function handler(req, res) {
 
   return res.status(200).json({
     success: true,
+    supabase: {
+      supabaseUrl: process.env.SUPABASE_URL || 'https://kbdjezowhuteumywjoep.supabase.co',
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZGplem93aHV0ZXVteXdqb2VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4MDk3MzcsImV4cCI6MjExMDM4NTczN30.HYi_-O3k3eRgtoHqRctbAY8g6lG1ESnGTrrsxZdHV64'
+    },
     firebase: {
       apiKey: process.env.FIREBASE_API_KEY || '',
       authDomain: process.env.FIREBASE_AUTH_DOMAIN || 'devshree-2dfae.firebaseapp.com',

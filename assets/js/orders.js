@@ -4,19 +4,7 @@
  * using Cloud Firestore and local fallbacks.
  */
 
-import { 
-  db, 
-  isConfigured, 
-  collection, 
-  addDoc, 
-  doc,
-  getDoc,
-  updateDoc,
-  query, 
-  where, 
-  getDocs, 
-  serverTimestamp 
-} from './firebase-config.js';
+import { getSupabaseClient, isSupabaseConfigured } from './supabase-config.js';
 import { getCurrentUser } from './auth.js';
 import { formatINR, getStorage, setStorage, showToast, escapeHTML } from './utils.js';
 import { STORE_INFO } from './mock-data.js';
@@ -60,23 +48,45 @@ export async function createOrderAndInvoice(orderData) {
     createdAtIso: new Date().toISOString()
   };
 
-  if (isConfigured && db) {
+  // 1. Persist to Supabase PostgreSQL (Primary Cloud Database)
+  if (isSupabaseConfigured) {
     try {
-      const docRef = await addDoc(collection(db, "orders"), {
-        ...invoicePayload,
-        createdAt: serverTimestamp()
-      });
-      invoicePayload.id = docRef.id;
-      console.log("[Devshree] Invoice saved to Firestore with ID:", docRef.id);
-    } catch (err) {
-      console.error("[Devshree] Firestore invoice save error:", err);
-      // Fallback to local storage if Firestore error occurs
-      saveLocalInvoice(user.uid, invoicePayload);
+      const client = await getSupabaseClient();
+      if (client) {
+        const orderRow = {
+          id: invoiceNumber,
+          order_number: invoiceNumber,
+          invoice_number: invoiceNumber,
+          user_id: user.uid,
+          customer_name: invoicePayload.customerName,
+          customer_phone: invoicePayload.customerPhone,
+          customer_email: invoicePayload.customerEmail,
+          shipping_address: typeof invoicePayload.shippingAddress === 'object' ? invoicePayload.shippingAddress : { address: invoicePayload.shippingAddress },
+          items: invoicePayload.itemsSnapshot,
+          subtotal: Number(invoicePayload.subtotal || 0),
+          gst_amount: Number(invoicePayload.gstAmount || 0),
+          delivery_fee: Number(invoicePayload.shippingCost || 0),
+          total_amount: Number(invoicePayload.total || 0),
+          payment_method: invoicePayload.paymentMethod,
+          payment_status: invoicePayload.paymentStatus,
+          order_status: invoicePayload.orderStatus,
+          metadata: { ...invoicePayload }
+        };
+        const { error } = await client.from('orders').upsert(orderRow);
+        if (error) {
+          console.warn('[Devshree Orders] Supabase save notice:', error);
+        } else {
+          invoicePayload.id = invoiceNumber;
+          console.log('[Devshree] Order & invoice saved to Supabase PostgreSQL:', invoiceNumber);
+        }
+      }
+    } catch (sbErr) {
+      console.warn('[Devshree Orders] Supabase error:', sbErr);
     }
-  } else {
-    // Save to user-specific localStorage bucket
-    saveLocalInvoice(user.uid, invoicePayload);
   }
+
+  // 2. Save to user-specific localStorage bucket (instant offline resilience)
+  saveLocalInvoice(user.uid, invoicePayload);
 
   // Also sync to master all-orders cache for admin visibility
   saveMasterOrder(invoicePayload);
@@ -124,21 +134,38 @@ export async function fetchUserInvoices() {
   if (!user) return [];
 
   let list = [];
-  if (isConfigured && db) {
+  if (isSupabaseConfigured) {
     try {
-      const q = query(
-        collection(db, "orders"),
-        where("userId", "==", user.uid)
-      );
-      const snapshot = await Promise.race([
-        getDocs(q),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 2500))
-      ]);
-      snapshot.forEach(docSnap => {
-        list.push({ id: docSnap.id, ...docSnap.data() });
-      });
-    } catch (err) {
-      console.warn("[Devshree] Error reading Firestore invoices, checking local storage:", err);
+      const client = await getSupabaseClient();
+      if (client) {
+        const { data, error } = await client
+          .from('orders')
+          .select('*')
+          .eq('user_id', user.uid)
+          .order('created_at', { ascending: false });
+        if (!error && Array.isArray(data) && data.length > 0) {
+          list = data.map(d => ({
+            id: d.id,
+            invoiceNumber: d.invoice_number || d.order_number || d.id,
+            customerName: d.customer_name,
+            customerPhone: d.customer_phone,
+            customerEmail: d.customer_email,
+            shippingAddress: typeof d.shipping_address === 'object' ? (d.shipping_address.address || JSON.stringify(d.shipping_address)) : d.shipping_address,
+            itemsSnapshot: d.items || [],
+            subtotal: Number(d.subtotal || 0),
+            shippingCost: Number(d.delivery_fee || 0),
+            gstAmount: Number(d.gst_amount || 0),
+            total: Number(d.total_amount || 0),
+            paymentMethod: d.payment_method,
+            paymentStatus: d.payment_status,
+            orderStatus: d.order_status,
+            createdAtIso: d.created_at,
+            ...(d.metadata || {})
+          }));
+        }
+      }
+    } catch (sbErr) {
+      console.warn("[Devshree] Error reading Supabase invoices, checking local storage:", sbErr);
     }
   }
 
@@ -692,26 +719,38 @@ export async function fetchOrderById(identifier) {
   if (!identifier) return null;
   const cleanId = identifier.trim();
 
-  if (isConfigured && db) {
+  if (isSupabaseConfigured) {
     try {
-      // 1. Try finding by invoiceNumber
-      const q = query(collection(db, "orders"), where("invoiceNumber", "==", cleanId));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const d = snap.docs[0];
-        return { id: d.id, ...d.data() };
-      }
-
-      // 2. Try direct doc ID
-      try {
-        const docRef = doc(db, "orders", cleanId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          return { id: docSnap.id, ...docSnap.data() };
+      const client = await getSupabaseClient();
+      if (client) {
+        const { data, error } = await client
+          .from('orders')
+          .select('*')
+          .or(`id.eq.${cleanId},order_number.eq.${cleanId},invoice_number.eq.${cleanId}`)
+          .maybeSingle();
+        if (!error && data) {
+          return {
+            id: data.id,
+            invoiceNumber: data.invoice_number || data.order_number || data.id,
+            customerName: data.customer_name,
+            customerPhone: data.customer_phone,
+            customerEmail: data.customer_email,
+            shippingAddress: typeof data.shipping_address === 'object' ? (data.shipping_address.address || JSON.stringify(data.shipping_address)) : data.shipping_address,
+            itemsSnapshot: data.items || [],
+            subtotal: Number(data.subtotal || 0),
+            shippingCost: Number(data.delivery_fee || 0),
+            gstAmount: Number(data.gst_amount || 0),
+            total: Number(data.total_amount || 0),
+            paymentMethod: data.payment_method,
+            paymentStatus: data.payment_status,
+            orderStatus: data.order_status,
+            createdAtIso: data.created_at,
+            ...(data.metadata || {})
+          };
         }
-      } catch (_) {}
+      }
     } catch (err) {
-      console.warn("[Devshree] Error searching Firestore order:", err);
+      console.warn("[Devshree] Error searching Supabase order:", err);
     }
   }
 
@@ -730,15 +769,37 @@ export async function fetchOrderById(identifier) {
  * @returns {Promise<Array>}
  */
 export async function fetchAllOrders() {
-  if (isConfigured && db) {
+  if (isSupabaseConfigured) {
     try {
-      const snap = await getDocs(collection(db, "orders"));
-      const orders = [];
-      snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
-      orders.sort((a, b) => new Date(b.createdAtIso || 0) - new Date(a.createdAtIso || 0));
-      if (orders.length > 0) return orders;
+      const client = await getSupabaseClient();
+      if (client) {
+        const { data, error } = await client
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!error && Array.isArray(data) && data.length > 0) {
+          return data.map(d => ({
+            id: d.id,
+            invoiceNumber: d.invoice_number || d.order_number || d.id,
+            customerName: d.customer_name,
+            customerPhone: d.customer_phone,
+            customerEmail: d.customer_email,
+            shippingAddress: typeof d.shipping_address === 'object' ? (d.shipping_address.address || JSON.stringify(d.shipping_address)) : d.shipping_address,
+            itemsSnapshot: d.items || [],
+            subtotal: Number(d.subtotal || 0),
+            shippingCost: Number(d.delivery_fee || 0),
+            gstAmount: Number(d.gst_amount || 0),
+            total: Number(d.total_amount || 0),
+            paymentMethod: d.payment_method,
+            paymentStatus: d.payment_status,
+            orderStatus: d.order_status,
+            createdAtIso: d.created_at,
+            ...(d.metadata || {})
+          }));
+        }
+      }
     } catch (err) {
-      console.warn("[Devshree] Error reading all orders from Firestore:", err);
+      console.warn("[Devshree] Error reading all orders from Supabase:", err);
     }
   }
 
@@ -754,9 +815,7 @@ export async function fetchAllOrders() {
 }
 
 /**
- * Update an order's fulfillment status
-/**
- * Update order status across Firestore and Local Storage
+ * Update order status across Supabase and Local Storage
  * @param {string} orderId
  * @param {string} newStatus
  * @param {Object} [extraData]
@@ -791,25 +850,21 @@ export async function updateOrderStatus(orderId, newStatus, extraData = {}) {
     }
   }
 
-  // 3. Sync to Cloud Firestore if connected
-  if (isConfigured && db && orderId) {
+  // 3. Sync to Supabase PostgreSQL
+  if (isSupabaseConfigured && orderId) {
     try {
-      const docRef = doc(db, "orders", orderId);
-      await updateDoc(docRef, { orderStatus: newStatus, ...extraData, updatedAt: serverTimestamp() });
-      return true;
-    } catch (err) {
-      // If doc not found directly by doc ID, query by invoiceNumber
-      try {
-        const q = query(collection(db, "orders"), where("invoiceNumber", "==", orderId));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          const matchedDoc = snap.docs[0];
-          await updateDoc(matchedDoc.ref, { orderStatus: newStatus, ...extraData, updatedAt: serverTimestamp() });
-          return true;
-        }
-      } catch (qErr) {
-        console.warn("[Devshree] Error updating order status in Firestore by invoiceNumber:", qErr);
+      const client = await getSupabaseClient();
+      if (client) {
+        await client
+          .from('orders')
+          .update({
+            order_status: newStatus,
+            metadata: extraData
+          })
+          .or(`id.eq.${orderId},order_number.eq.${orderId},invoice_number.eq.${orderId}`);
       }
+    } catch (sbErr) {
+      console.warn("[Devshree] Error updating order status in Supabase:", sbErr);
     }
   }
   return true;
