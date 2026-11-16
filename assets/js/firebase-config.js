@@ -40,10 +40,10 @@ const updateDoc = async () => ({});
 const deleteDoc = async () => ({});
 const query = () => ({});
 const where = () => ({});
-const getDocs = async () => ({ empty: true, docs: [], forEach: () => {} });
+const getDocs = async () => ({ empty: true, docs: [], forEach: () => { } });
 const orderBy = () => ({});
 const serverTimestamp = () => new Date().toISOString();
-const onSnapshot = () => (() => {});
+const onSnapshot = () => (() => { });
 const ref = () => ({});
 const uploadBytesResumable = async () => ({ ref: {} });
 const getDownloadURL = async () => '';
@@ -62,7 +62,7 @@ try {
       localStorage.removeItem('devshree_firebase_runtime_config');
     }
   }
-} catch (_) {}
+} catch (_) { }
 
 const runtimeConfig = (typeof window !== 'undefined' && window.__DEVSHREE_FIREBASE_CONFIG) || {};
 const envConfig = (typeof process !== 'undefined' && process.env) || {};
@@ -73,7 +73,7 @@ try {
     const raw = localStorage.getItem('devshree_firebase_runtime_config');
     if (raw) storedConfig = JSON.parse(raw);
   }
-} catch (_) {}
+} catch (_) { }
 
 function cleanConfigVal(val, fallback) {
   if (typeof val === 'string' && val.trim() && !val.startsWith('YOUR_') && val !== 'your-project-id') {
