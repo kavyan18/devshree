@@ -9990,3 +9990,117 @@ h6 {
     display: none;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   DEVSHREE WHATSAPP FLOATING 1-CLICK ACTION NOTIFICATION BANNER
+   Ensures 100% delivery even if browser popup-blocker intercepts
+   ───────────────────────────────────────────────────────────── */
+.wa-floating-notice {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  max-width: 440px;
+  background: #FFFFFF;
+  border: 1.5px solid #22C55E;
+  border-radius: 14px;
+  box-shadow: 0 12px 35px rgba(22, 101, 52, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 0.95rem 1.15rem;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  animation: waSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes waSlideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.wa-notice-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #DCFCE7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wa-notice-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.wa-notice-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #14532D;
+  line-height: 1.25;
+}
+
+.wa-notice-sub {
+  font-size: 0.78rem;
+  color: #166534;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wa-notice-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #25D366 0%, #16A34A 100%);
+  color: #FFFFFF !important;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  text-decoration: none !important;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(37, 211, 102, 0.35);
+  transition: transform 0.15s ease;
+}
+
+.wa-notice-action-btn:hover {
+  transform: scale(1.03);
+}
+
+.wa-notice-dismiss {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.wa-notice-dismiss:hover {
+  color: #1E293B;
+}
+
+@media (max-width: 600px) {
+  .wa-floating-notice {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    max-width: none;
+    flex-wrap: wrap;
+  }
+  .wa-notice-action-btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+}

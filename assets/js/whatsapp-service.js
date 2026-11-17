@@ -236,16 +236,62 @@ export function buildOrderSmsText(order) {
 }
 
 /**
+ * Show a sleek floating 1-click notification banner in DOM
+ * Guarantees the user/store owner can open WhatsApp with 1 tap if browser popup blocker intervened
+ */
+export function showWhatsAppFloatingNotice(url, phone, title = 'WhatsApp Notification Ready') {
+  if (typeof document === 'undefined') return;
+  const existing = document.getElementById('devshree-wa-floating-notice');
+  if (existing) existing.remove();
+
+  const banner = document.createElement('div');
+  banner.id = 'devshree-wa-floating-notice';
+  banner.className = 'wa-floating-notice';
+  banner.setAttribute('role', 'alert');
+  banner.innerHTML = `
+    <div class="wa-notice-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="#25D366">
+        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.53c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.38-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.45 1.03 2.62.13.17 1.77 2.71 4.29 3.8.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1 1.02-.15 1.47-.83 1.68-1.16.21-.34.21-.63.15-.76-.07-.13-.25-.2-.5-.33z"/>
+      </svg>
+    </div>
+    <div class="wa-notice-text">
+      <div class="wa-notice-title">${escapeHTML(title)}</div>
+      <div class="wa-notice-sub">Alert for Store Owner (+${escapeHTML(phone)})</div>
+    </div>
+    <a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer" class="wa-notice-action-btn" id="wa-notice-open-link">
+      Open WhatsApp 📲
+    </a>
+    <button type="button" class="wa-notice-dismiss" aria-label="Dismiss alert">&times;</button>
+  `;
+
+  document.body.appendChild(banner);
+
+  banner.querySelector('.wa-notice-dismiss')?.addEventListener('click', () => {
+    banner.remove();
+  });
+  banner.querySelector('#wa-notice-open-link')?.addEventListener('click', () => {
+    setTimeout(() => banner.remove(), 1000);
+  });
+
+  // Auto dismiss after 15 seconds
+  setTimeout(() => {
+    if (document.body.contains(banner)) banner.remove();
+  }, 15000);
+}
+
+/**
  * 6. Direct Universal WhatsApp Chat Launcher
  * Uses official Meta wa.me Click-to-Chat deep links with popup-blocker resilience
  */
-export function openWhatsAppChat(phone, message) {
+export function openWhatsAppChat(phone, message, { fallbackNotice = true, title = 'WhatsApp Alert Ready' } = {}) {
   const cleanPhone = cleanIndianPhone(phone);
   const encodedText = encodeURIComponent(message || '');
   // wa.me is the universal format across iOS, Android, and Desktop
   const url = cleanPhone 
     ? `https://wa.me/${cleanPhone}?text=${encodedText}`
     : `https://wa.me/?text=${encodedText}`;
+
+  if (typeof window === 'undefined') return url;
 
   // 1. Attempt standard window.open
   let newWin = null;
@@ -266,10 +312,19 @@ export function openWhatsAppChat(phone, message) {
       a.click();
       setTimeout(() => a.remove(), 250);
     } catch (_) {
-      // 3. Fallback: navigate directly
-      window.location.assign(url);
+      // 3. Fallback: navigate directly if on mobile standalone
+      try {
+        window.location.assign(url);
+      } catch (_) {}
     }
   }
+
+  // 4. Always show floating quick-action pill so user has 100% guarantee to open with 1 tap
+  if (fallbackNotice && typeof document !== 'undefined') {
+    showWhatsAppFloatingNotice(url, cleanPhone, title);
+  }
+
+  return url;
 }
 
 /**
@@ -289,25 +344,25 @@ export function getStoreOwnerWhatsAppUrl(order) {
  * 6d. Automated / Direct Store Owner WhatsApp Notification Dispatch
  * Gives the shop owner (+91 88661 30409) notification on WhatsApp when an order is placed
  * - Triggers automated Webhook if configured
- * - Opens WhatsApp with pre-filled order dispatch alert if requested
+ * - Opens WhatsApp with pre-filled order dispatch alert
  * @param {Object} order
  * @param {Object} [options]
- * @param {boolean} [options.openChat=false]
+ * @param {boolean} [options.openChat=true]
  * @returns {Promise<Object>}
  */
-export async function notifyStoreOwnerOrderPlaced(order, options = { openChat: false }) {
+export async function notifyStoreOwnerOrderPlaced(order, options = { openChat: true }) {
   if (!order) return null;
   const ownerPhone = getStoreOwnerPhone(); // default 918866130409
   const message = buildStoreOwnerOrderWhatsAppMessage(order);
   const webhookUrl = getStorage('devshree_wa_webhook_url', '');
   const waUrl = getStoreOwnerWhatsAppUrl(order);
 
-  console.log(`[WhatsApp Service] Preparing WhatsApp notification for Shop Owner (+${ownerPhone}) for order ${order.invoiceNumber}...`);
+  console.log(`[WhatsApp Service] Dispatching WhatsApp notification for Shop Owner (+${ownerPhone}) for order ${order.invoiceNumber || order.id}...`);
 
   // Record dispatch in local log
   try {
     const dispatchRecord = {
-      invoiceNumber: order.invoiceNumber,
+      invoiceNumber: order.invoiceNumber || order.id,
       ownerPhone: ownerPhone,
       timestamp: Date.now(),
       status: 'prepared'
@@ -326,7 +381,7 @@ export async function notifyStoreOwnerOrderPlaced(order, options = { openChat: f
           recipient: 'store_owner',
           phone: ownerPhone,
           message: message,
-          invoiceNumber: order.invoiceNumber,
+          invoiceNumber: order.invoiceNumber || order.id,
           customerName: order.customerName,
           customerPhone: order.customerPhone,
           total: order.total,
@@ -344,12 +399,92 @@ export async function notifyStoreOwnerOrderPlaced(order, options = { openChat: f
     }
   }
 
-  // 2. Open WhatsApp chat to store owner if requested
+  // 2. Open WhatsApp chat to store owner if requested (default true)
   if (options.openChat) {
     try {
-      openWhatsAppChat(ownerPhone, message);
+      openWhatsAppChat(ownerPhone, message, { title: 'New Order Placed Alert' });
     } catch (openErr) {
       console.warn('[WhatsApp Service] Failed to open WhatsApp chat window:', openErr);
+    }
+  }
+
+  return {
+    phone: ownerPhone,
+    message: message,
+    waUrl: waUrl,
+    webhookSent: !!webhookUrl
+  };
+}
+
+/**
+ * 6e. Automated / Direct Store Owner WhatsApp Cancellation Dispatch
+ * Gives the shop owner (+91 88661 30409) notification on WhatsApp when an order is cancelled
+ * - Triggers automated Webhook if configured
+ * - Opens WhatsApp with pre-filled cancellation request alert
+ * @param {Object} order
+ * @param {string} [reason]
+ * @param {Object} [options]
+ * @param {boolean} [options.openChat=true]
+ * @returns {Promise<Object>}
+ */
+export async function notifyStoreOwnerOrderCancelled(order, reason = '', options = { openChat: true }) {
+  if (!order) return null;
+  const ownerPhone = getStoreOwnerPhone(); // default 918866130409
+  const message = buildCustomerCancellationRequestWhatsAppMessage(order, reason);
+  const webhookUrl = getStorage('devshree_wa_webhook_url', '');
+  const cleanPhone = cleanIndianPhone(ownerPhone);
+  const encodedText = encodeURIComponent(message || '');
+  const waUrl = `https://wa.me/${cleanPhone}?text=${encodedText}`;
+
+  console.log(`[WhatsApp Service] Dispatching Cancellation Notification for Shop Owner (+${ownerPhone}) for order ${order.invoiceNumber || order.id}...`);
+
+  // Record dispatch in local log
+  try {
+    const dispatchRecord = {
+      invoiceNumber: order.invoiceNumber || order.id,
+      ownerPhone: ownerPhone,
+      reason: reason || order.cancellationReason || 'Customer requested order cancellation',
+      timestamp: Date.now(),
+      status: 'cancellation_notified'
+    };
+    setStorage('devshree_last_cancellation_wa_notification', dispatchRecord);
+  } catch (_) {}
+
+  // 1. Webhook trigger if configured
+  if (webhookUrl) {
+    try {
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'order_cancelled',
+          recipient: 'store_owner',
+          phone: ownerPhone,
+          message: message,
+          invoiceNumber: order.invoiceNumber || order.id,
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          reason: reason || order.cancellationReason,
+          total: order.total,
+          orderSnapshot: order,
+          timestamp: Date.now()
+        })
+      }).then(() => {
+        console.log('[WhatsApp Service] Webhook cancellation notification dispatched to:', webhookUrl);
+      }).catch(err => {
+        console.warn('[WhatsApp Service] Webhook cancellation error:', err);
+      });
+    } catch (whErr) {
+      console.warn('[WhatsApp Service] Webhook cancellation error:', whErr);
+    }
+  }
+
+  // 2. Open WhatsApp chat to store owner if requested (default true)
+  if (options.openChat) {
+    try {
+      openWhatsAppChat(ownerPhone, message, { title: 'Order Cancelled Alert' });
+    } catch (openErr) {
+      console.warn('[WhatsApp Service] Failed to open WhatsApp cancellation window:', openErr);
     }
   }
 

@@ -8,7 +8,9 @@ import {
   getStoreOwnerPhone, 
   getStoreOwnerWhatsAppUrl, 
   buildOrderCancellationWhatsAppMessage,
-  buildCustomerCancellationRequestWhatsAppMessage 
+  buildCustomerCancellationRequestWhatsAppMessage,
+  notifyStoreOwnerOrderPlaced,
+  notifyStoreOwnerOrderCancelled
 } from '../assets/js/whatsapp-service.js';
 
 let passed = 0;
@@ -106,6 +108,41 @@ it('Validates cancellation metadata payload contract', () => {
   assert.strictEqual(typeof extra.cancelledAt, 'string');
   assert.strictEqual(extra.cancellationReason, 'Customer requested cancellation via portal');
   assert.strictEqual(extra.cancelledBy, 'Customer');
+});
+
+console.log('\n--- 4. AUTOMATED STORE OWNER NOTIFICATION DISPATCH ---');
+
+it('notifyStoreOwnerOrderPlaced generates store alert with correct phone and invoice', async () => {
+  const sampleOrder = {
+    invoiceNumber: 'INV-DEV-20261117-009',
+    customerName: 'Sanjay Hardware Morbi',
+    customerPhone: '+91 98250 11223',
+    total: 8900,
+    itemsSnapshot: [{ name: 'Mortise Brass Handle Set', quantity: 4, price: 2225 }]
+  };
+  const result = await notifyStoreOwnerOrderPlaced(sampleOrder, { openChat: false });
+  assert.ok(result, 'Should return dispatch result object');
+  assert.strictEqual(result.phone, '918866130409', 'Should target Devshree Store Owner phone');
+  assert.ok(result.message.includes('INV-DEV-20261117-009'), 'Message should include invoice number');
+  assert.ok(result.message.includes('Sanjay Hardware Morbi'), 'Message should include customer name');
+  assert.ok(result.waUrl.startsWith('https://wa.me/918866130409?text='), 'Deep link should point to store owner wa.me');
+});
+
+it('notifyStoreOwnerOrderCancelled alerts store owner with cancellation reason and total', async () => {
+  const sampleOrder = {
+    invoiceNumber: 'INV-DEV-20261117-010',
+    customerName: 'Pooja Interior Studio',
+    customerPhone: '+91 98980 99887',
+    total: 12400,
+    paymentMethod: 'UPI QR Payment'
+  };
+  const result = await notifyStoreOwnerOrderCancelled(sampleOrder, 'Client revised project specifications', { openChat: false });
+  assert.ok(result, 'Should return cancellation dispatch result object');
+  assert.strictEqual(result.phone, '918866130409', 'Should target Devshree Store Owner phone');
+  assert.ok(result.message.includes('INV-DEV-20261117-010'), 'Message should include invoice number');
+  assert.ok(result.message.includes('Client revised project specifications'), 'Message should include cancellation reason');
+  assert.ok(result.message.includes('Pooja Interior Studio'), 'Message should include customer name');
+  assert.ok(result.waUrl.startsWith('https://wa.me/918866130409?text='), 'Deep link should point to store owner wa.me');
 });
 
 console.log('\n======================================================');

@@ -11,7 +11,7 @@
 - **Visual Design Identity:** Warm terracotta (`#C2623B`), deep architectural bronze, brushed gold accents, soft ivory backgrounds, crisp typography.
 - **Repository:** `https://github.com/kavyan18/devshree`
 - **Active Branch:** `main`
-- **Latest Remote Commit:** `0096997eecb002f86c456fdf4fcc0957d1321cea`
+- **Latest Remote Commit:** `8ea53a96188048ad58e846b3e9d8fe55ea513283`
 
 ---
 
@@ -239,7 +239,30 @@
   4. **Verification & Tests:**
      - Headless Microsoft Edge browser CDP test confirmed that `#top-categories-bar-section` renders with exactly the 4 square categories, clicking `"Hardware"` activates it and updates the toolbar indicator to `"Hardware"`, and clicking clear or re-clicking resets to All Products.
      - All 274 unit and integration test assertions pass (100%).
-  5. Synced all changes across `github_ready_folder` and `devshree_live_store`.
+  5. **GitHub Push Execution:**
+     - Pushed commit `8ea53a96188048ad58e846b3e9d8fe55ea513283` directly to GitHub repository `kavyan18/devshree` on branch `main` with 123 files updated.
+  6. Synced all changes across `github_ready_folder` and `devshree_live_store`.
+
+---
+
+
+### Session Turn 23: Store Owner WhatsApp Order & Cancellation Notifications
+- **User Request:** "when i order the i don't resive notification on the whatsapp show mistake and tell me what is the mistake and fix it but when customer cancel the order it will give me notification fix ti"
+- **Root Cause Analysis (The Mistakes):**
+  1. **Order Placement Mistake 1 (`checkout.js`):** Line 1058 called `notifyStoreOwnerOrderPlaced(invoice, { openChat: false })` with `openChat: false`, deliberately suppressing any WhatsApp chat window from opening.
+  2. **Order Placement Mistake 2 (`whatsapp-service.js`):** `notifyStoreOwnerOrderPlaced()` only sent alerts if an external webhook URL was configured in Admin or if `options.openChat` was true. Since no webhook URL was configured and `openChat` was false, zero notifications were dispatched anywhere.
+  3. **Order Placement Mistake 3 (Confirmation Screen):** On Step 3 confirmation screen, the only WhatsApp button shown was configured for the *customer* to receive their own copy (`co-whatsapp-receipt-btn`), with no button or automated prompt for the store owner (+91 88661 30409).
+  4. **Browser Popup Blocker:** Modern browsers silently block `window.open()` if called after asynchronous network database calls (`await createOrderAndInvoice` or `await cancelOrder`), meaning even fallback programmatic link clicks were blocked without a user-interactive action.
+  5. **Cancellation Mistake (`whatsapp-service.js` & `orders.js`):** There was no dedicated `notifyStoreOwnerOrderCancelled()` function. When a customer cancelled an order via their account portal or live tracking, it did not execute an automated dispatch to the store owner's WhatsApp number.
+- **Architectural Fixes Implemented:**
+  1. **Created `notifyStoreOwnerOrderCancelled(order, reason, options)` in `assets/js/whatsapp-service.js`:** Formats cancellation alerts with invoice number, customer name, cancellation reason, items count, and total amount, dispatches to webhook (if set), logs to storage, and opens WhatsApp chat to the store owner (+91 88661 30409).
+  2. **Updated `notifyStoreOwnerOrderPlaced(order, options)` in `assets/js/whatsapp-service.js`:** Defaulted `options.openChat = true` and enabled automatic store dispatch.
+  3. **Added Pop-up Resilience (`showWhatsAppFloatingNotice()` in `assets/js/whatsapp-service.js` & `assets/css/styles.css`):** If a browser popup blocker intercepts programmatic window opening, a sleek 1-click floating action banner appears instantly on screen, allowing 1-tap WhatsApp launch to the store owner.
+  4. **Enabled Auto-Dispatch on Checkout (`assets/js/checkout.js`):** Changed `notifyStoreOwnerOrderPlaced(invoice, { openChat: true })` upon order creation.
+  5. **Added Primary Store Owner Button to Step 3 Confirmation Screen:** Highlighted "📲 Send Order Alert to Store (+91 88661 30409)" with instant 1-click execution.
+  6. **Integrated Cancellation Alerts in `assets/js/orders.js`:** Linked `cancelOrder()`, Customer Order Invoices portal modal, and Live Order Tracking modal to automatically invoke `notifyStoreOwnerOrderCancelled(order, reason, { openChat: true })`.
+  7. **Expanded Automated Tests (`test/order-cancellation-whatsapp.test.js`):** Added automated tests for both order placed and order cancelled store owner dispatch functions. All 276 test assertions pass (100%).
+  8. Synced all modified files to `github_ready_folder` and `devshree_live_store`.
 
 ---
 
@@ -256,7 +279,7 @@
 | **Product Hydration** | 100% Live & Pure | Supabase PostgreSQL authoritative; demo products completely purged from reloads and mobile |
 | **Catalog Hydration** | Live & Persistent | Supabase PostgreSQL + IndexedDB high-res engine + Supabase Storage CDN |
 | **Orders & Invoices** | PostgreSQL + Local Storage | Real-time order synchronization with Supabase `orders` table; 5 seed orders live |
-| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `0096997` |
+| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `8ea53a9` |
 | **Catalog Page UI** | Luxury Architectural Redesign | 3-column responsive grid, elevated search toolbar, terracotta pills, frosted glass badges |
 | **PDF Catalog Engine** | Fully Operational | Dual-storage engine (Supabase CDN + IndexedDB + LocalStorage metadata + Blob Object URL viewer) |
 | **Admin File Pickers** | Fully Operational | Transparent native `<input type="file">` overlay for Cover Image, PDF Document, and Slide Image; Dropzone for Products |
@@ -265,14 +288,14 @@
 | **SEO Structured Data** | Live | `HardwareStore` JSON-LD in `index.html` |
 | **PIN Code Delivery Tool** | Live | Interactive Indian PIN code calculator in `product.html` |
 | **WhatsApp Lookbook Share** | Live | Functional on `catalogs.html` and homepage rail |
-| **Automated Tests** | 100% Passing | 274 unit/integration test assertions passing |
+| **Automated Tests** | 100% Passing | 276 unit/integration test assertions passing (11 in WhatsApp suite) |
 | **Deployment Package** | Up to date | Synced with `github_ready_folder` and `devshree_live_store` |
 | **Git Push Tool** | Operational | `scratch/push_all_to_github.js` (Requires user permission before pushing) |
 
 ---
 
 ## 4. Where the Last Conversation Stopped
-- **Last Completed Task:** Updated the Top Categories Bar under the second bar (below the main header, NOT after the first announcement bar) to show strictly the 4 requested core categories (1. Hardware, 2. Electrical, 3. Plumbing, 4. Paint) using 1:1 square images with centered responsive layout, removed redundant category tabs from down below in the `#bestsellers-section` catalog toolbar and replaced with dynamic `Filtered: [Category] [✕]` badge, verified click-to-filter and toggle in headless Microsoft Edge via CDP, passed all 274 unit/integration tests (100%), and synced files to `github_ready_folder` and `devshree_live_store`.
+- **Last Completed Task:** Fixed WhatsApp order placement and order cancellation notifications to the Devshree Store Owner (+91 88661 30409). Resolved the `openChat: false` suppression in `checkout.js`, built `notifyStoreOwnerOrderCancelled()` in `whatsapp-service.js`, connected cancellation triggers across `orders.js` (User Invoices modal, Live Tracking, and `cancelOrder()`), created popup-resilient floating 1-click notice banner, added primary store alert button on Step 3 confirmation screen, and passed all 276 automated unit/integration tests (100%).
 - **Pending Action:** Ready for user review. Awaiting user command to push to GitHub if desired.
 
 ---
@@ -282,4 +305,3 @@
 2. **Never push to GitHub without explicit user approval** (ask first or follow explicit user command).
 3. **Preserve the 0ms instant preview engine** in admin forms.
 4. **When you finish significant work**, append the updates to Section 2 and update Section 3 & 4 of this file.
-

@@ -12,7 +12,8 @@ import { triggerOrderNotification, isCurrentContextAdmin } from './order-notific
 import {
   openWhatsAppChat,
   getStoreOwnerPhone,
-  buildCustomerCancellationRequestWhatsAppMessage
+  buildCustomerCancellationRequestWhatsAppMessage,
+  notifyStoreOwnerOrderCancelled
 } from './whatsapp-service.js';
 
 /**
@@ -376,16 +377,16 @@ export async function createOrderAndInvoice(orderData) {
           try {
             btn.disabled = true;
             btn.textContent = 'Cancelling...';
-            await cancelOrder(invNum, 'Customer requested cancellation via portal', 'Customer');
+            const reason = 'Customer requested cancellation via portal';
+            await cancelOrder(invNum, reason, 'Customer');
             showToast(`Order ${invNum} has been cancelled successfully.`, 'success');
 
             // Refresh user invoices view
             await openUserInvoicesModal();
 
-            // Prompt to notify WhatsApp trade desk
-            const ownerPhone = getStoreOwnerPhone();
-            const msg = buildCustomerCancellationRequestWhatsAppMessage(targetInv || { invoiceNumber: invNum });
-            openWhatsAppChat(ownerPhone, msg);
+            // Prompt and ensure WhatsApp cancellation alert to Store Owner (+91 88661 30409)
+            const target = targetInv || { invoiceNumber: invNum, id: invNum, total: 0 };
+            notifyStoreOwnerOrderCancelled(target, reason, { openChat: true });
           } catch (err) {
             console.error('[Orders] Error cancelling customer order:', err);
             showToast('Unable to cancel order. Please contact support.', 'error');
@@ -1006,7 +1007,19 @@ export async function fetchAllOrders() {
                   cancellationReason: reason,
                   cancelledBy: cancelledBy
                 };
-                return await updateOrderStatus(orderId, 'Cancelled', extra);
+                const result = await updateOrderStatus(orderId, 'Cancelled', extra);
+
+                // Automatically trigger WhatsApp cancellation alert for store owner
+                try {
+                  const order = await fetchOrderById(orderId);
+                  if (order) {
+                    notifyStoreOwnerOrderCancelled(order, reason, { openChat: true });
+                  }
+                } catch (notifErr) {
+                  console.warn('[Orders] Could not auto-notify cancellation:', notifErr);
+                }
+
+                return result;
               }
 
               /**
@@ -1349,9 +1362,7 @@ export async function fetchAllOrders() {
                     showToast(`Order ${invNum} has been cancelled successfully.`, 'success');
                     renderTrackingResults(order);
 
-                    const ownerPhone = getStoreOwnerPhone();
-                    const msg = buildCustomerCancellationRequestWhatsAppMessage(order);
-                    openWhatsAppChat(ownerPhone, msg);
+                    notifyStoreOwnerOrderCancelled(order, 'Customer requested cancellation via Tracking', { openChat: true });
                   } catch (err) {
                     console.error('[Tracking] Cancel error:', err);
                     showToast('Unable to cancel order. Please try again.', 'error');
