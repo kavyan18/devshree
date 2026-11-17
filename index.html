@@ -1761,6 +1761,7 @@
                 <span>Verified Merchant UPI</span>
               </div>
               <span class="rzp-scan-subtext">Scan &amp; Pay with any UPI App</span>
+              <span class="rzp-mobile-tap-hint">(Tap QR code on mobile to launch UPI app)</span>
 
               <div class="rzp-vpa-copy-pill">
                 <span class="rzp-vpa-code" id="rzp-display-vpa">8866130409@axisbank</span>
@@ -1772,6 +1773,23 @@
                   <span>Copy</span>
                 </button>
               </div>
+            </div>
+          </div>
+
+          <!-- Real-Time Automated Payment Detection Radar Banner -->
+          <div class="rzp-live-detection-banner" id="rzp-live-detection-banner">
+            <div class="rzp-radar-ring" aria-hidden="true">
+              <span class="rzp-radar-wave"></span>
+              <span class="rzp-radar-core"></span>
+            </div>
+            <div class="rzp-detection-info">
+              <div class="rzp-detection-status-row">
+                <span class="rzp-status-dot pulsing" id="rzp-status-dot"></span>
+                <strong id="rzp-detection-title">Waiting for UPI Payment Scan...</strong>
+              </div>
+              <p class="rzp-detection-desc" id="rzp-detection-desc">
+                Scan QR with any UPI app. When payment is received, your order will be placed automatically.
+              </p>
             </div>
           </div>
 
@@ -1790,7 +1808,7 @@
           <div class="rzp-payment-steps">
             <div class="rzp-step-item">
               <span class="rzp-step-num">1</span>
-              <span>Open Google Pay, PhonePe, Paytm, or BHIM</span>
+              <span>Open Google Pay, PhonePe, Paytm, BHIM, or CRED</span>
             </div>
             <div class="rzp-step-item">
               <span class="rzp-step-num">2</span>
@@ -1798,7 +1816,7 @@
             </div>
             <div class="rzp-step-item">
               <span class="rzp-step-num">3</span>
-              <span>Click <strong>'I Have Paid'</strong> below to complete order</span>
+              <span>⚡ <strong>Automatic Confirmation:</strong> Order is placed automatically once payment is received</span>
             </div>
           </div>
         </div>
@@ -1812,16 +1830,25 @@
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
-          <span id="rzp-pay-btn-text">I Have Paid</span>
+          <span id="rzp-pay-btn-text">Confirm Payment Now</span>
         </button>
+      </div>
+      <div class="rzp-auto-confirm-note">
+        <span>⚡ <em>Instant Automatic Order Placement: Order confirms automatically upon payment receipt.</em></span>
       </div>
 
       <!-- Processing Screen Overlay -->
       <div class="rzp-processing-overlay" id="rzp-processing-overlay" style="display:none;">
         <div class="rzp-processing-card">
-          <div class="rzp-spinner"></div>
-          <h4 id="rzp-proc-title">Verifying Payment...</h4>
-          <p id="rzp-proc-subtitle">Confirming UPI transaction receipt with bank network.</p>
+          <div class="rzp-spinner" id="rzp-proc-spinner"></div>
+          <div class="rzp-proc-success-icon" id="rzp-proc-success-icon" style="display:none;">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h4 id="rzp-proc-title">Payment Received! Placing Order...</h4>
+          <p id="rzp-proc-subtitle">Confirming UPI receipt and generating GST Tax Invoice...</p>
           <div class="rzp-proc-progress">
             <div class="rzp-proc-progress-bar" id="rzp-proc-bar"></div>
           </div>

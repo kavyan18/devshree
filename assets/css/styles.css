@@ -9641,6 +9641,170 @@ h6 {
   margin: 0.35rem 0 0.55rem;
 }
 
+.rzp-mobile-tap-hint {
+  display: block;
+  font-size: 0.72rem;
+  color: #64748B;
+  font-style: italic;
+  margin-top: -0.35rem;
+  margin-bottom: 0.45rem;
+}
+
+/* Automated Payment Detection Radar Banner */
+.rzp-live-detection-banner {
+  width: 100%;
+  max-width: 320px;
+  margin: 0.85rem 0 0.25rem;
+  background: #F0FDF4;
+  border: 1.5px solid #BBF7D0;
+  border-radius: 12px;
+  padding: 0.75rem 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+  transition: all 0.3s ease;
+}
+
+.rzp-live-detection-banner.scanning {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.08);
+}
+
+.rzp-live-detection-banner.success {
+  background: #DCFCE7;
+  border-color: #86EFAC;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
+}
+
+.rzp-radar-ring {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rzp-radar-core {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #16A34A;
+  box-shadow: 0 0 6px rgba(22, 163, 74, 0.6);
+  transition: background-color 0.3s ease;
+}
+
+.rzp-live-detection-banner.scanning .rzp-radar-core {
+  background: #D97706;
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.6);
+}
+
+.rzp-live-detection-banner.success .rzp-radar-core {
+  background: #15803D;
+  box-shadow: 0 0 8px rgba(21, 128, 61, 0.8);
+}
+
+.rzp-radar-wave {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #16A34A;
+  animation: radarWave 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.rzp-live-detection-banner.scanning .rzp-radar-wave {
+  border-color: #D97706;
+}
+
+.rzp-live-detection-banner.success .rzp-radar-wave {
+  border-color: #16A34A;
+  animation: radarWave 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes radarWave {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.rzp-detection-info {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.rzp-detection-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rzp-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16A34A;
+  flex-shrink: 0;
+}
+
+.rzp-status-dot.pulsing {
+  animation: dotPulse 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes dotPulse {
+  from {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.rzp-detection-info strong {
+  font-size: 0.82rem;
+  color: #0F172A;
+  font-weight: 700;
+  display: block;
+  line-height: 1.2;
+}
+
+.rzp-detection-desc {
+  font-size: 0.73rem;
+  color: #475569;
+  margin: 0.2rem 0 0;
+  line-height: 1.3;
+}
+
+.rzp-auto-confirm-note {
+  text-align: center;
+  font-size: 0.73rem;
+  color: #16A34A;
+  font-weight: 600;
+  padding: 0.35rem 0.5rem 0.5rem;
+}
+
+.rzp-proc-success-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #DCFCE7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.15rem;
+  animation: scaleIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 .rzp-vpa-copy-pill {
   display: inline-flex;
   align-items: center;
