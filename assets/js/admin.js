@@ -2129,6 +2129,7 @@ function initAdminSettings() {
   const rzpKeyInput = document.getElementById('settings-razorpay-key');
   const waWebhookInput = document.getElementById('settings-wa-webhook');
   const ownerPhoneInput = document.getElementById('settings-owner-phone');
+  const callmebotInput = document.getElementById('settings-callmebot-key');
   const saveBtn = document.getElementById('settings-save-btn');
   const testWaBtn = document.getElementById('settings-test-wa-btn');
 
@@ -2138,6 +2139,7 @@ function initAdminSettings() {
   if (rzpKeyInput) rzpKeyInput.value = getStorage('devshree_razorpay_key_id', '');
   if (waWebhookInput) waWebhookInput.value = getStorage('devshree_wa_webhook_url', '');
   if (ownerPhoneInput) ownerPhoneInput.value = getStoreOwnerPhone();
+  if (callmebotInput) callmebotInput.value = getStorage('devshree_callmebot_key', '');
 
   // Save Settings handler
   saveBtn?.addEventListener('click', () => {
@@ -2146,11 +2148,13 @@ function initAdminSettings() {
     const rzpKey = rzpKeyInput?.value.trim() || '';
     const webhookUrl = waWebhookInput?.value.trim() || '';
     const ownerPhone = ownerPhoneInput?.value.trim() || '';
+    const callmebotKey = callmebotInput?.value.trim() || '';
 
     setStorage('devshree_upi_vpa', upiVpa);
     setStorage('devshree_upi_name', upiName);
     setStorage('devshree_razorpay_key_id', rzpKey);
     setStorage('devshree_wa_webhook_url', webhookUrl);
+    setStorage('devshree_callmebot_key', callmebotKey);
     if (ownerPhone) setStoreOwnerPhone(ownerPhone);
 
     // Also persist to Firestore settings collection

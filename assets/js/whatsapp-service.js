@@ -100,34 +100,44 @@ Have a productive build! 🛠️`;
  * 2. Build Store Owner / Dispatcher New Order Alert
  */
 export function buildStoreOwnerOrderWhatsAppMessage(order) {
-  const invNum = order.invoiceNumber || 'INV-DEV';
+  const invNum = order.invoiceNumber || order.id || 'INV-DEV';
   const custName = order.customerName || 'Customer';
   const phone = order.customerPhone || 'N/A';
   const totalStr = formatINR(order.total || 0);
   const items = order.itemsSnapshot || [];
   const itemsCount = items.reduce((sum, i) => sum + (i.quantity || 1), 0);
+  const address = typeof order.shippingAddress === 'object'
+    ? (order.shippingAddress.address || Object.values(order.shippingAddress).join(', '))
+    : (order.shippingAddress || 'Not specified');
 
-  const itemsPreview = items.map(i => `• ${i.quantity || 1}x ${i.name || 'Item'} (₹${i.price || 0})`).join('\n');
+  const itemsPreview = items.length > 0
+    ? items.map(i => `• ${i.quantity || 1}x ${i.name || i.productSnapshot?.name || 'Item'} (₹${(i.price || 0).toLocaleString('en-IN')})`).join('\n')
+    : '• Hardware & Trade Supplies';
 
-  return `🚨 *NEW ORDER RECEIVED — DEVSHREE STORE*
+  return `🔔 *YOU HAVE A NEW ORDER!*
 ━━━━━━━━━━━━━━━━━━━━━━━━
-⚡ *Action:* Prepare Dispatch Packing
+🏬 *DEVSHREE STORE DISPATCH ALERT*
+📞 *Store WhatsApp:* +91 88661 30409
+⚡ *Action Required:* Prepare Order Packing & Dispatch
 
-📄 *Invoice:* *${invNum}*
-👤 *Customer:* *${custName}*
-📞 *Phone:* ${phone}
-📍 *Address:* ${order.shippingAddress || 'Not specified'}
+📋 *Order Details:*
+• *Invoice Number:* *${invNum}*
+• *Customer Name:* *${custName}*
+• *Customer Contact:* ${phone}
+• *Delivery Address:* ${address}
 
 📦 *Items Ordered (${itemsCount} units):*
 ${itemsPreview}
 
-💵 *Total Payable:* *${totalStr}*
-💳 *Payment Method:* ${order.paymentMethod || 'COD'}
-🚚 *Logistics Partner:* ${order.courierPartner || 'Delhivery Express'}
+💰 *Bill Summary:*
+• *Total Payable:* *${totalStr}*
+• *Payment Mode:* ${order.paymentMethod || 'Cash on Delivery (COD)'}
+• *Payment Status:* ${order.paymentStatus || 'Pending'}
+• *Logistics Courier:* ${order.courierPartner || 'Delhivery Express'}
 
-🔗 *Admin Link:* https://devshree.in/admin.html
 ━━━━━━━━━━━━━━━━━━━━━━━━
-_Tap customer phone to call or WhatsApp directly for verification._`;
+🔗 *Admin Order Console:* https://devshree.in/admin.html
+_Auto-dispatched for Devshree Store Owner (+91 88661 30409)_`;
 }
 
 /**
@@ -399,6 +409,29 @@ export async function notifyStoreOwnerOrderPlaced(order, options = { openChat: t
     }
   }
 
+  // 1b. Serverless Background WhatsApp Dispatcher API
+  if (typeof window !== 'undefined') {
+    try {
+      const callmebotKey = getStorage('devshree_callmebot_key', '');
+      fetch('/api/notifications/whatsapp-dispatch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'new_order_placed',
+          phone: ownerPhone,
+          message: message,
+          order: order,
+          callmebotApiKey: callmebotKey || undefined,
+          webhookUrl: webhookUrl || undefined
+        })
+      }).then(r => r.json()).then(res => {
+        console.log('[WhatsApp Service] Background API response:', res);
+      }).catch(err => {
+        console.warn('[WhatsApp Service] Background API notice:', err);
+      });
+    } catch (_) {}
+  }
+
   // 2. Open WhatsApp chat to store owner if requested (default true)
   if (options.openChat) {
     try {
@@ -477,6 +510,30 @@ export async function notifyStoreOwnerOrderCancelled(order, reason = '', options
     } catch (whErr) {
       console.warn('[WhatsApp Service] Webhook cancellation error:', whErr);
     }
+  }
+
+  // 1b. Serverless Background WhatsApp Dispatcher API
+  if (typeof window !== 'undefined') {
+    try {
+      const callmebotKey = getStorage('devshree_callmebot_key', '');
+      fetch('/api/notifications/whatsapp-dispatch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'order_cancelled',
+          phone: ownerPhone,
+          message: message,
+          order: order,
+          reason: reason,
+          callmebotApiKey: callmebotKey || undefined,
+          webhookUrl: webhookUrl || undefined
+        })
+      }).then(r => r.json()).then(res => {
+        console.log('[WhatsApp Service] Background Cancellation API response:', res);
+      }).catch(err => {
+        console.warn('[WhatsApp Service] Background Cancellation API notice:', err);
+      });
+    } catch (_) {}
   }
 
   // 2. Open WhatsApp chat to store owner if requested (default true)
