@@ -2441,5 +2441,155 @@ body.admin-body {
   transform: translateX(24px);
 }
 
+/* ==========================================================================
+   Interactive Low Stock KPI & Alert Filter Styles
+   ========================================================================== */
+.kpi-card-clickable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.kpi-card-clickable:hover {
+  border-color: #F59E0B;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.18);
+  transform: translateY(-2px);
+}
+
+.admin-kpi-card.active-filter {
+  background-color: #FFFBEB !important;
+  border: 2px solid #D97706 !important;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.18) !important;
+}
+
+.btn-kpi-alert-settings {
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-kpi-alert-settings:hover {
+  background-color: #FDE68A;
+  color: #78350F;
+  transform: translateY(-1px);
+}
+
+.kpi-filter-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #B45309;
+  text-decoration: underline;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.admin-kpi-card.active-filter .kpi-filter-badge {
+  color: #92400E;
+  text-decoration: none;
+  background-color: #FDE68A;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Active Filter Banner above Table */
+.admin-active-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 1.15rem;
+  background-color: #FFFBEB;
+  border: 1.5px solid #FDE68A;
+  border-radius: var(--admin-radius-md);
+  margin-bottom: 1.15rem;
+  animation: slideDownFade 0.25s ease-out;
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filter-alert-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.btn-clear-low-stock-filter {
+  background-color: #D97706;
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--admin-radius-sm);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-clear-low-stock-filter:hover {
+  background-color: #B45309;
+}
+
+.btn-admin-xs-outline {
+  background-color: #FFFFFF;
+  color: #78350F;
+  border: 1px solid #FCD34D;
+  border-radius: var(--admin-radius-sm);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-admin-xs-outline:hover {
+  background-color: #FEF3C7;
+}
+
+.admin-stock-threshold-badge {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748B;
+  margin-top: 1px;
+}
+
+/* 4-column form row */
+.form-row-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.15rem;
+}
+
+@media (max-width: 900px) {
+  .form-row-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .form-row-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 
 

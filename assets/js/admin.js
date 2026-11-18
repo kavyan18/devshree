@@ -4,26 +4,26 @@
  */
 
 import { fetchAllOrders, updateOrderStatus, cancelOrder, openInvoiceViewer, DEFAULT_DEVSHREE_ORDERS } from './orders.js';
-import { 
-  fetchProducts, 
-  createProductInFirestore, 
-  seedFirestoreCatalog, 
-  saveProductToSupabase, 
-  deleteProductFromSupabase 
+import {
+  fetchProducts,
+  createProductInFirestore,
+  seedFirestoreCatalog,
+  saveProductToSupabase,
+  deleteProductFromSupabase
 } from './products.js';
-import { 
-  getSupabaseClient, 
-  isSupabaseConfigured, 
-  uploadFileToStorage, 
-  getPublicStorageUrl, 
-  removeStorageFile 
+import {
+  getSupabaseClient,
+  isSupabaseConfigured,
+  uploadFileToStorage,
+  getPublicStorageUrl,
+  removeStorageFile
 } from './supabase-config.js';
-import { 
-  db, 
-  doc, 
-  deleteDoc, 
-  updateDoc, 
-  collection, 
+import {
+  db,
+  doc,
+  deleteDoc,
+  updateDoc,
+  collection,
   onSnapshot,
   storage,
   ref,
@@ -33,40 +33,40 @@ import {
   getDoc,
   isConfigured
 } from './firebase-config.js';
-import { 
-  getCurrentUser, 
-  logoutCustomer, 
-  loginCustomer, 
-  registerCustomer, 
-  listenAuthState, 
-  isAdminEmail, 
-  checkIsUserAdmin 
+import {
+  getCurrentUser,
+  logoutCustomer,
+  loginCustomer,
+  registerCustomer,
+  listenAuthState,
+  isAdminEmail,
+  checkIsUserAdmin
 } from './auth.js';
 import { formatINR, showToast, escapeHTML, getStorage, setStorage } from './utils.js';
 import { showSafeErrorToast } from './error-handler.js';
 import { sanitizeAndOptimizeImage, verifyStorageIsolation } from './file-validator.js';
 import { MOCK_PRODUCTS } from './mock-data.js';
-import { 
-  initAdminNotificationCenter, 
-  triggerOrderNotification, 
-  sendTestOrderNotification 
+import {
+  initAdminNotificationCenter,
+  triggerOrderNotification,
+  sendTestOrderNotification
 } from './order-notifications.js';
 import { openWhatsAppDispatchModal, openWhatsAppChat, buildOrderCancellationWhatsAppMessage, getStoreOwnerPhone, setStoreOwnerPhone } from './whatsapp-service.js';
-import { 
-  DEVSHREE_CATALOGS, 
-  DEVSHREE_CATEGORIES, 
-  getActiveCatalogs, 
+import {
+  DEVSHREE_CATALOGS,
+  DEVSHREE_CATEGORIES,
+  getActiveCatalogs,
   fetchActiveCatalogs,
-  saveActiveCatalogs, 
-  resetCatalogsToDefault, 
-  openPdfViewerModal, 
-  closePdfViewerModal 
+  saveActiveCatalogs,
+  resetCatalogsToDefault,
+  openPdfViewerModal,
+  closePdfViewerModal
 } from './catalogs-data.js';
-import { 
-  DEFAULT_OFFERS, 
-  getActiveOffers, 
-  saveActiveOffers, 
-  resetOffersToDefault 
+import {
+  DEFAULT_OFFERS,
+  getActiveOffers,
+  saveActiveOffers,
+  resetOffersToDefault
 } from './offers-data.js';
 
 const CACHE_PRODUCTS_KEY = 'devshree_cached_products';
@@ -74,6 +74,72 @@ const CACHE_PRODUCTS_KEY = 'devshree_cached_products';
 let allOrders = [];
 let allProducts = [];
 let activeTab = 'products';
+
+// --- Low Stock Configuration & Filter State ---
+export const GLOBAL_LOW_STOCK_DEFAULT = 10;
+export const STORAGE_KEY_GLOBAL_THRESHOLD = 'devshree_global_low_stock_threshold';
+export const STORAGE_KEY_PRODUCT_THRESHOLDS = 'devshree_product_low_stock_thresholds';
+let isLowStockFilterActive = false;
+
+export function getGlobalLowStockThreshold() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_GLOBAL_THRESHOLD);
+    if (saved !== null && !isNaN(parseInt(saved, 10))) {
+      return Math.max(1, parseInt(saved, 10));
+    }
+  } catch (e) { }
+  return GLOBAL_LOW_STOCK_DEFAULT;
+}
+
+export function setGlobalLowStockThreshold(val) {
+  const num = Math.max(1, parseInt(val, 10) || GLOBAL_LOW_STOCK_DEFAULT);
+  try {
+    localStorage.setItem(STORAGE_KEY_GLOBAL_THRESHOLD, String(num));
+  } catch (e) { }
+  return num;
+}
+
+export function getProductLowStockThresholdsMap() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PRODUCT_THRESHOLDS);
+    if (raw) {
+      return JSON.parse(raw) || {};
+    }
+  } catch (e) { }
+  return {};
+}
+
+export function saveProductLowStockThresholdsMap(map) {
+  try {
+    localStorage.setItem(STORAGE_KEY_PRODUCT_THRESHOLDS, JSON.stringify(map || {}));
+  } catch (e) { }
+}
+
+export function getProductLowStockThreshold(product) {
+  if (!product) return getGlobalLowStockThreshold();
+  if (product.lowStockThreshold != null && !isNaN(parseInt(product.lowStockThreshold, 10))) {
+    return Math.max(1, parseInt(product.lowStockThreshold, 10));
+  }
+  if (product.id) {
+    const map = getProductLowStockThresholdsMap();
+    if (map[product.id] != null && !isNaN(parseInt(map[product.id], 10))) {
+      return Math.max(1, parseInt(map[product.id], 10));
+    }
+  }
+  return getGlobalLowStockThreshold();
+}
+
+export function setProductLowStockThreshold(productId, threshold) {
+  if (!productId) return;
+  const num = Math.max(1, parseInt(threshold, 10) || getGlobalLowStockThreshold());
+  const map = getProductLowStockThresholdsMap();
+  map[productId] = num;
+  saveProductLowStockThresholdsMap(map);
+  const prod = allProducts.find(p => p.id === productId);
+  if (prod) {
+    prod.lowStockThreshold = num;
+  }
+}
 
 function syncProductsCache() {
   try {
@@ -244,7 +310,7 @@ function isAdminSessionActive() {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.email) return true;
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // 2. Check localStorage persistent session token & re-hydrate
   try {
@@ -252,10 +318,10 @@ function isAdminSessionActive() {
     if (saved && saved.email) {
       try {
         sessionStorage.setItem('devshree_admin_session_auth', JSON.stringify(saved));
-      } catch (_) {}
+      } catch (_) { }
       return true;
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // 3. Check devshree_admin_session
   try {
@@ -263,7 +329,7 @@ function isAdminSessionActive() {
     if (adminSess && adminSess.authenticated === true) {
       return true;
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // 4. Check active authenticated user in localStorage
   try {
@@ -271,7 +337,7 @@ function isAdminSessionActive() {
     if (user && (user.role === 'admin' || isAdminEmail(user.email))) {
       return true;
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // 5. Seamless Store Management Mode:
   // If the store administrator has not explicitly logged out, keep session active
@@ -281,7 +347,7 @@ function isAdminSessionActive() {
       setAdminSessionActive(DEFAULT_ADMIN_EMAIL);
       return true;
     }
-  } catch (_) {}
+  } catch (_) { }
 
   return false;
 }
@@ -297,7 +363,7 @@ function setAdminSessionActive(email) {
   try {
     sessionStorage.removeItem('devshree_admin_logged_out');
     sessionStorage.setItem('devshree_admin_session_auth', JSON.stringify(sessionData));
-  } catch (_) {}
+  } catch (_) { }
 
   setStorage('devshree_admin_session_auth', sessionData);
   setStorage('devshree_admin_session', sessionData);
@@ -314,12 +380,12 @@ function clearAdminSession() {
     sessionStorage.setItem('devshree_admin_logged_out', '1');
     sessionStorage.removeItem('devshree_admin_session_auth');
     sessionStorage.removeItem('devshree_admin_authenticated');
-  } catch (_) {}
+  } catch (_) { }
   try {
     localStorage.removeItem('devshree_admin_session_auth');
     localStorage.removeItem('devshree_admin_session');
     localStorage.removeItem('devshree_current_user');
-  } catch (_) {}
+  } catch (_) { }
 }
 
 function showAdminGate(state, user = null) {
@@ -672,7 +738,7 @@ function initProductForm() {
     try {
       const objUrl = URL.createObjectURL(file);
       if (previewImg) previewImg.src = objUrl;
-    } catch (_) {}
+    } catch (_) { }
 
     // 2. Read as persistent Base64 Data URL
     const reader = new FileReader();
@@ -775,6 +841,7 @@ function initProductForm() {
     const basePrice = parseFloat(document.getElementById('prod-price')?.value) || 0;
     const gstRate = parseFloat(document.getElementById('prod-gst-rate')?.value) || 0;
     const stock = parseInt(document.getElementById('prod-stock')?.value, 10) || 0;
+    const lowStockThreshold = parseInt(document.getElementById('prod-low-stock-threshold')?.value, 10) || getGlobalLowStockThreshold();
     const description = document.getElementById('prod-desc')?.value.trim() || 'Quality hardware supplies.';
     const image = hiddenImgInput?.value.trim() || previewImg?.src || DEFAULT_BULB_IMG;
 
@@ -814,6 +881,7 @@ function initProductForm() {
           basePrice,
           gstRate,
           stock,
+          lowStockThreshold,
           sku: skuCode,
           description,
           image,
@@ -825,6 +893,8 @@ function initProductForm() {
           isRegularDeal,
           updatedAt: new Date().toISOString()
         };
+
+        setProductLowStockThreshold(editId, lowStockThreshold);
 
         if (isSupabaseConfigured) {
           try {
@@ -851,8 +921,9 @@ function initProductForm() {
         showToast(`Product "${name}" updated successfully!`, 'success');
       } else {
         // Add Mode
+        const targetId = 'prod-' + Date.now();
         const newProd = {
-          id: 'prod-' + Date.now(),
+          id: targetId,
           name,
           categoryId,
           brand,
@@ -860,6 +931,7 @@ function initProductForm() {
           basePrice,
           gstRate,
           stock,
+          lowStockThreshold,
           sku: skuCode,
           description,
           image,
@@ -873,6 +945,8 @@ function initProductForm() {
           reviewCount: 0,
           createdAt: new Date().toISOString()
         };
+
+        setProductLowStockThreshold(targetId, lowStockThreshold);
 
         if (isSupabaseConfigured) {
           try {
@@ -897,7 +971,7 @@ function initProductForm() {
 
       resetProductForm();
       updateKpis();
-      renderProductsTable();
+      applyTableFilters();
     } catch (err) {
       showSafeErrorToast(err, 'Unable to save product. Please try again.');
     } finally {
@@ -941,6 +1015,9 @@ function resetProductForm() {
   if (featuredCheckbox) featuredCheckbox.checked = false;
   if (regularDealCheckbox) regularDealCheckbox.checked = false;
 
+  const lowStockThresholdInput = document.getElementById('prod-low-stock-threshold');
+  if (lowStockThresholdInput) lowStockThresholdInput.value = getGlobalLowStockThreshold();
+
   // Trigger price recalculation to defaults
   document.getElementById('prod-price')?.dispatchEvent(new Event('input'));
 }
@@ -977,7 +1054,7 @@ function editProduct(prod) {
   if (nameInput) nameInput.value = prod.name || '';
   if (catInput) catInput.value = prod.categoryId || 'cat-electrical';
   if (brandInput) brandInput.value = prod.brand || '';
-  
+
   // If basePrice is recorded use it, else calculate from customer price
   const basePrice = prod.basePrice || (prod.price ? +(prod.price / 1.18).toFixed(2) : 0);
   if (priceInput) priceInput.value = basePrice;
@@ -1004,6 +1081,11 @@ function editProduct(prod) {
   if (newCheckbox) newCheckbox.checked = !!prod.isNew;
   if (featuredCheckbox) featuredCheckbox.checked = !!prod.isFeatured;
   if (regularDealCheckbox) regularDealCheckbox.checked = !!prod.isRegularDeal;
+
+  const lowStockThresholdInput = document.getElementById('prod-low-stock-threshold');
+  if (lowStockThresholdInput) {
+    lowStockThresholdInput.value = getProductLowStockThreshold(prod);
+  }
 
   const img = prod.image || DEFAULT_BULB_IMG;
   if (previewImg) previewImg.src = img;
@@ -1059,7 +1141,7 @@ async function removeProduct(prodId) {
     allProducts = allProducts.filter(p => p.id !== prodId);
     syncProductsCache();
     updateKpis();
-    renderProductsTable();
+    applyTableFilters();
     showToast(`Removed "${name}" from products.`, 'info');
   } catch (err) {
     showSafeErrorToast(err, 'Unable to remove product. Please try again.');
@@ -1197,7 +1279,10 @@ function renderProductsTable(products = null) {
   const tbody = document.getElementById('admin-products-tbody');
   if (!tbody) return;
 
-  const list = products || allProducts;
+  let list = products !== null ? products : allProducts;
+  if (products === null && isLowStockFilterActive) {
+    list = list.filter(p => (Number(p.stock) || 0) <= getProductLowStockThreshold(p));
+  }
 
   if (list.length === 0) {
     tbody.innerHTML = `
@@ -1205,7 +1290,7 @@ function renderProductsTable(products = null) {
         <td colspan="8" style="text-align:center;padding:2.5rem;color:var(--admin-text-secondary);">
           <div style="font-size:1.75rem;margin-bottom:0.5rem;">📦</div>
           <div style="font-weight:700;color:var(--admin-text-main);margin-bottom:0.25rem;">No products found</div>
-          <span style="font-size:0.8rem;">No items match your search or category filter.</span>
+          <span style="font-size:0.8rem;">${isLowStockFilterActive ? 'No items are currently at or below low stock alert levels.' : 'No items match your search or category filter.'}</span>
         </td>
       </tr>
     `;
@@ -1213,14 +1298,15 @@ function renderProductsTable(products = null) {
   }
 
   tbody.innerHTML = list.map(prod => {
-    const stock = prod.stock || 0;
+    const stock = Number(prod.stock || 0);
+    const threshold = getProductLowStockThreshold(prod);
     let stockStatusClass = 'in-stock';
     let stockStatusText = 'In Stock';
 
     if (stock <= 0) {
       stockStatusClass = 'out-of-stock';
       stockStatusText = 'Out of Stock';
-    } else if (stock <= 10) {
+    } else if (stock <= threshold) {
       stockStatusClass = 'low-stock';
       stockStatusText = 'Low Stock';
     }
@@ -1231,8 +1317,8 @@ function renderProductsTable(products = null) {
     // Price & MRP
     const currentPrice = Number(prod.price || 0);
     const mrpPrice = Number(prod.compareAtPrice || 0);
-    const mrpHtml = (mrpPrice > currentPrice) 
-      ? `<div class="admin-table-mrp">MRP: ₹ ${mrpPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>` 
+    const mrpHtml = (mrpPrice > currentPrice)
+      ? `<div class="admin-table-mrp">MRP: ₹ ${mrpPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>`
       : '';
 
     // Discount %
@@ -1240,13 +1326,13 @@ function renderProductsTable(products = null) {
     if (!discount && mrpPrice > currentPrice) {
       discount = Math.round(((mrpPrice - currentPrice) / mrpPrice) * 100);
     }
-    const discountHtml = discount > 0 
-      ? `<span class="admin-table-discount-badge">${discount}% OFF</span>` 
+    const discountHtml = discount > 0
+      ? `<span class="admin-table-discount-badge">${discount}% OFF</span>`
       : `<span style="color:var(--admin-text-secondary);font-size:0.8rem;">—</span>`;
 
     // Bestseller toggle button
     const isBestseller = !!prod.isBestseller;
-    const bestsellerHtml = isBestseller 
+    const bestsellerHtml = isBestseller
       ? `<button type="button" class="btn-toggle-bestseller active" data-bestseller-toggle-id="${prod.id}" title="Click to remove from Bestsellers">
           <span>🔥 BESTSELLER</span>
         </button>`
@@ -1256,7 +1342,7 @@ function renderProductsTable(products = null) {
 
     // Regular Hardware Deal toggle button
     const isDeal = !!prod.isRegularDeal;
-    const dealToggleHtml = isDeal 
+    const dealToggleHtml = isDeal
       ? `<button type="button" class="btn-toggle-deal active" data-deal-toggle-id="${prod.id}" title="Click to remove from Regular Hardware Deals" style="margin-top:4px;display:inline-flex;align-items:center;gap:3px;font-size:0.7rem;font-weight:700;background:#FFF3EB;color:#C2410C;border:1px solid #FFD8BE;border-radius:4px;padding:3px 6px;cursor:pointer;">
           <span>🏷️ REGULAR DEAL</span>
         </button>`
@@ -1295,6 +1381,7 @@ function renderProductsTable(products = null) {
             <span class="dot"></span>
             <span>${stockStatusText}</span>
           </span>
+          <span class="admin-stock-threshold-badge" title="Stock alert trigger: ≤ ${threshold} units">Alert ≤ ${threshold}</span>
         </td>
         <td style="text-align:right;">
           <div class="admin-row-actions">
@@ -1347,9 +1434,9 @@ function renderProductsTable(products = null) {
 
       if (db) {
         try {
-          await updateDoc(doc(db, 'products', id), { 
-            isBestseller: newStatus, 
-            updatedAt: target.updatedAt 
+          await updateDoc(doc(db, 'products', id), {
+            isBestseller: newStatus,
+            updatedAt: target.updatedAt
           });
         } catch (err) {
           console.warn('[Admin] Firestore bestseller toggle fallback:', err);
@@ -1357,7 +1444,7 @@ function renderProductsTable(products = null) {
       }
 
       syncProductsCache();
-      renderProductsTable();
+      applyTableFilters();
       showToast(`"${target.name}" ${newStatus ? 'marked as BESTSELLER! 🔥' : 'removed from bestsellers.'}`, newStatus ? 'success' : 'info');
     });
   });
@@ -1375,9 +1462,9 @@ function renderProductsTable(products = null) {
 
       if (db) {
         try {
-          await updateDoc(doc(db, 'products', id), { 
-            isRegularDeal: newStatus, 
-            updatedAt: target.updatedAt 
+          await updateDoc(doc(db, 'products', id), {
+            isRegularDeal: newStatus,
+            updatedAt: target.updatedAt
           });
         } catch (err) {
           console.warn('[Admin] Firestore regular deal toggle fallback:', err);
@@ -1385,46 +1472,285 @@ function renderProductsTable(products = null) {
       }
 
       syncProductsCache();
-      renderProductsTable();
+      applyTableFilters();
       showToast(`"${target.name}" ${newStatus ? 'promoted as Regular Hardware Deal! 🏷️' : 'removed from regular deals.'}`, newStatus ? 'success' : 'info');
     });
   });
 }
 
 /**
- * 5. Table Search & Category Filter
+ * 5. Table Search & Category & Low Stock Filter
  */
+export function applyTableFilters() {
+  const searchInput = document.getElementById('admin-products-search');
+  const catFilter = document.getElementById('admin-products-cat-filter');
+  const lowStockFilterBar = document.getElementById('admin-low-stock-filter-bar');
+  const lowStockCard = document.getElementById('kpi-card-low-stock');
+  const filterCountEl = document.getElementById('admin-low-stock-filter-count');
+  const lowStockBadge = document.getElementById('kpi-low-stock-badge');
+
+  const q = (searchInput?.value || '').toLowerCase().trim();
+  const cat = catFilter?.value || 'all';
+
+  if (lowStockCard) {
+    lowStockCard.classList.toggle('active-filter', isLowStockFilterActive);
+  }
+  if (lowStockFilterBar) {
+    lowStockFilterBar.style.display = isLowStockFilterActive ? 'flex' : 'none';
+  }
+  if (lowStockBadge) {
+    lowStockBadge.textContent = isLowStockFilterActive ? 'Filter Active ✓' : 'Click to view →';
+  }
+
+  const filtered = allProducts.filter(p => {
+    const matchCat = cat === 'all' || p.categoryId === cat;
+    const matchText = !q ||
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.brand && p.brand.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q));
+
+    let matchLowStock = true;
+    if (isLowStockFilterActive) {
+      const threshold = getProductLowStockThreshold(p);
+      const stock = Number(p.stock || 0);
+      matchLowStock = stock <= threshold;
+    }
+
+    return matchCat && matchText && matchLowStock;
+  });
+
+  if (filterCountEl && isLowStockFilterActive) {
+    filterCountEl.textContent = `(${filtered.length} item${filtered.length === 1 ? '' : 's'} need attention)`;
+  }
+
+  renderProductsTable(filtered);
+}
+
 function initTableFilters() {
   const searchInput = document.getElementById('admin-products-search');
   const catFilter = document.getElementById('admin-products-cat-filter');
+  const lowStockCard = document.getElementById('kpi-card-low-stock');
+  const clearFilterBtn = document.getElementById('btn-clear-low-stock-filter');
+  const openModalBtn = document.getElementById('btn-open-low-stock-modal');
+  const openModalFromFilterBtn = document.getElementById('btn-filter-set-alert-modal');
 
-  const filterAction = () => {
-    const q = (searchInput?.value || '').toLowerCase().trim();
-    const cat = catFilter?.value || 'all';
+    searchInput?.addEventListener('input', applyTableFilters);
+    catFilter?.addEventListener('change', applyTableFilters);
 
-    const filtered = allProducts.filter(p => {
-      const matchCat = cat === 'all' || p.categoryId === cat;
-      const matchText = !q ||
-        (p.name && p.name.toLowerCase().includes(q)) ||
-        (p.brand && p.brand.toLowerCase().includes(q)) ||
-        (p.sku && p.sku.toLowerCase().includes(q));
-      return matchCat && matchText;
-    });
+    // Click on Low Stock KPI card to toggle filter
+    lowStockCard?.addEventListener('click', (e) => {
+      if (e.target.closest('#btn-open-low-stock-modal')) return;
 
-    renderProductsTable(filtered);
-  };
+    isLowStockFilterActive = !isLowStockFilterActive;
+    applyTableFilters();
 
-  searchInput?.addEventListener('input', filterAction);
-  catFilter?.addEventListener('change', filterAction);
+    if (isLowStockFilterActive) {
+      const tableCard = document.querySelector('.admin-table-card');
+      if (tableCard) {
+        tableCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  });
+
+  // Clear filter button in banner
+  clearFilterBtn?.addEventListener('click', () => {
+    isLowStockFilterActive = false;
+    applyTableFilters();
+  });
+
+  // Modal open buttons
+  openModalBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openLowStockModal();
+  });
+
+  openModalFromFilterBtn?.addEventListener('click', () => {
+    openLowStockModal();
+  });
+
+  initLowStockModal();
 }
 
 /**
- * 6. KPI Summary Calculation
+ * 6. Low Stock Alert Modal Management
+ */
+function initLowStockModal() {
+  const modal = document.getElementById('admin-low-stock-modal');
+  const closeBtn = document.getElementById('admin-low-stock-modal-close');
+  const cancelBtn = document.getElementById('admin-low-stock-modal-cancel');
+  const saveBtn = document.getElementById('admin-low-stock-modal-save');
+  const applyAllBtn = document.getElementById('btn-apply-global-to-all');
+  const searchInput = document.getElementById('modal-threshold-search');
+
+  closeBtn?.addEventListener('click', closeLowStockModal);
+  cancelBtn?.addEventListener('click', closeLowStockModal);
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeLowStockModal();
+  });
+
+  saveBtn?.addEventListener('click', saveModalThresholds);
+  applyAllBtn?.addEventListener('click', applyGlobalThresholdToAll);
+
+  searchInput?.addEventListener('input', () => {
+    renderModalThresholdTable(searchInput.value);
+  });
+}
+
+export function openLowStockModal() {
+  const modal = document.getElementById('admin-low-stock-modal');
+  const globalInput = document.getElementById('modal-global-low-stock-input');
+  const searchInput = document.getElementById('modal-threshold-search');
+  if (!modal) return;
+
+  if (globalInput) {
+    globalInput.value = getGlobalLowStockThreshold();
+  }
+  if (searchInput) {
+    searchInput.value = '';
+  }
+
+  renderModalThresholdTable();
+  modal.style.display = 'flex';
+}
+
+if (typeof window !== 'undefined') {
+  window.openLowStockModal = openLowStockModal;
+}
+
+export function closeLowStockModal() {
+  const modal = document.getElementById('admin-low-stock-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function renderModalThresholdTable(query = '') {
+  const tbody = document.getElementById('modal-threshold-tbody');
+  if (!tbody) return;
+
+  const q = (query || '').toLowerCase().trim();
+  const globalThresh = getGlobalLowStockThreshold();
+  const map = getProductLowStockThresholdsMap();
+
+  const list = allProducts.filter(p => {
+    if (!q) return true;
+    return (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q));
+  });
+
+  if (!list.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align:center;padding:1.5rem;color:#64748B;">
+          No matching products found.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = list.map(p => {
+    const stock = Number(p.stock || 0);
+    const customVal = map[p.id] != null ? map[p.id] : (p.lowStockThreshold != null ? p.lowStockThreshold : globalThresh);
+    const isLow = stock <= customVal;
+    const isOut = stock <= 0;
+
+    let statusPill = `<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:700;background:#DCFCE7;color:#166534;">In Stock</span>`;
+    if (isOut) {
+      statusPill = `<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:700;background:#FEE2E2;color:#991B1B;">Out of Stock</span>`;
+    } else if (isLow) {
+      statusPill = `<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:700;background:#FEF3C7;color:#92400E;">Low Stock</span>`;
+    }
+
+    return `
+      <tr style="border-bottom:1px solid #F1F5F9;">
+        <td style="padding:8px 12px;display:flex;align-items:center;gap:8px;">
+          <img src="${p.image || DEFAULT_BULB_IMG}" alt="" style="width:32px;height:32px;object-fit:cover;border-radius:4px;border:1px solid #E2E8F0;" />
+          <div>
+            <div style="font-weight:700;color:#1E293B;">${escapeHTML(p.name)}</div>
+            <div style="font-size:0.72rem;color:#64748B;">${p.sku ? 'Code: ' + escapeHTML(p.sku) : (p.id ? 'ID: ' + p.id.slice(0, 8) : '')}</div>
+          </div>
+        </td>
+        <td style="padding:8px 12px;text-align:center;font-weight:800;color:${stock <= 0 ? '#DC2626' : (isLow ? '#D97706' : '#1E293B')};">
+          ${stock}
+        </td>
+        <td style="padding:8px 12px;text-align:center;">
+          <div style="display:inline-flex;align-items:center;gap:4px;">
+            <span style="color:#64748B;font-size:0.8rem;font-weight:700;">&le;</span>
+            <input type="number" 
+                   class="admin-input modal-row-threshold-input" 
+                   data-prod-id="${p.id}" 
+                   value="${customVal}" 
+                   min="1" 
+                   max="999" 
+                   style="width:70px;padding:4px 6px;text-align:center;font-weight:800;font-size:0.85rem;" />
+            <span style="color:#94A3B8;font-size:0.72rem;">units</span>
+          </div>
+        </td>
+        <td style="padding:8px 12px;text-align:center;">
+          ${statusPill}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function saveModalThresholds() {
+  const globalInput = document.getElementById('modal-global-low-stock-input');
+  if (globalInput) {
+    const val = parseInt(globalInput.value, 10);
+    if (!isNaN(val) && val > 0) {
+      setGlobalLowStockThreshold(val);
+    }
+  }
+
+  const rowInputs = document.querySelectorAll('.modal-row-threshold-input');
+  const map = getProductLowStockThresholdsMap();
+
+  rowInputs.forEach(input => {
+    const prodId = input.dataset.prodId;
+    const val = parseInt(input.value, 10);
+    if (prodId && !isNaN(val) && val > 0) {
+      map[prodId] = val;
+      const p = allProducts.find(item => item.id === prodId);
+      if (p) p.lowStockThreshold = val;
+    }
+  });
+
+  saveProductLowStockThresholdsMap(map);
+  syncProductsCache();
+  updateKpis();
+  applyTableFilters();
+  closeLowStockModal();
+  showToast('Low stock alert thresholds saved successfully!', 'success');
+}
+
+function applyGlobalThresholdToAll() {
+  const globalInput = document.getElementById('modal-global-low-stock-input');
+  const val = parseInt(globalInput?.value, 10) || GLOBAL_LOW_STOCK_DEFAULT;
+  setGlobalLowStockThreshold(val);
+
+  const map = {};
+  allProducts.forEach(p => {
+    map[p.id] = val;
+    p.lowStockThreshold = val;
+  });
+  saveProductLowStockThresholdsMap(map);
+
+  document.querySelectorAll('.modal-row-threshold-input').forEach(input => {
+    input.value = val;
+  });
+
+  renderModalThresholdTable();
+  showToast(`Applied ${val} units alert threshold to all products!`, 'success');
+}
+
+/**
+ * 7. KPI Summary Calculation
  */
 function updateKpis() {
   const totalProducts = allProducts.length;
-  const inStockCount = allProducts.filter(p => (p.stock || 0) > 10).length;
-  const lowStockCount = allProducts.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= 10).length;
+  const inStockCount = allProducts.filter(p => (Number(p.stock) || 0) > getProductLowStockThreshold(p)).length;
+  const lowStockCount = allProducts.filter(p => (Number(p.stock) || 0) <= getProductLowStockThreshold(p)).length;
 
   const totalEl = document.getElementById('kpi-total-products');
   const inStockEl = document.getElementById('kpi-in-stock');
@@ -1628,7 +1954,7 @@ function renderOrdersTable(data = null) {
   if (pillCanc) pillCanc.textContent = allOrders.filter(o => o.orderStatus === 'Cancelled').length;
 
   tbody.innerHTML = orders.map(order => {
-    const dateStr = order.createdAtIso 
+    const dateStr = order.createdAtIso
       ? new Date(order.createdAtIso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
       : 'Recent';
 
@@ -1895,7 +2221,7 @@ function initUserDropdown() {
 
   document.getElementById('admin-signout-btn')?.addEventListener('click', async () => {
     clearAdminSession();
-    await logoutCustomer().catch(() => {});
+    await logoutCustomer().catch(() => { });
     showToast('Signed out of admin portal.', 'info');
     showAdminGate('unauthenticated');
   });
@@ -2015,7 +2341,7 @@ function initAdminGate() {
         showToast('Welcome to Devshree Admin Portal!', 'success');
         return;
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // Invalid credentials: show clear feedback and reject
     if (deniedBox) {
@@ -2057,8 +2383,15 @@ async function loadDashboardData() {
     if (o.invoiceNumber) knownOrderInvoices.add(o.invoiceNumber);
   });
 
+  // Hydrate per-product thresholds
+  const thresholdMap = getProductLowStockThresholdsMap();
+  const globalThreshold = getGlobalLowStockThreshold();
+  allProducts.forEach(p => {
+    p.lowStockThreshold = thresholdMap[p.id] != null ? thresholdMap[p.id] : (p.lowStockThreshold != null ? p.lowStockThreshold : globalThreshold);
+  });
+
   updateKpis();
-  renderProductsTable();
+  applyTableFilters();
   renderOrdersTable();
 
   // --- Step 2: Asynchronous Live Cloud Hydration from Supabase PostgreSQL ---
@@ -2070,6 +2403,11 @@ async function loadDashboardData() {
 
     if (products && products.length > 0) {
       allProducts = products.filter(p => !deletedIds.has(String(p.id)));
+      const liveMap = getProductLowStockThresholdsMap();
+      const liveGlobal = getGlobalLowStockThreshold();
+      allProducts.forEach(p => {
+        p.lowStockThreshold = liveMap[p.id] != null ? liveMap[p.id] : (p.lowStockThreshold != null ? p.lowStockThreshold : liveGlobal);
+      });
       syncProductsCache();
     }
 
@@ -2084,7 +2422,7 @@ async function loadDashboardData() {
     });
 
     updateKpis();
-    renderProductsTable();
+    applyTableFilters();
     renderOrdersTable();
   } catch (err) {
     console.warn('[Admin] Cloud records update notice:', err);
@@ -2209,8 +2547,8 @@ function initAdminSettings() {
             if (adminPassInput) adminPassInput.value = authData.adminPassword;
           }
         }
-      }).catch(() => {});
-    } catch (_) {}
+      }).catch(() => { });
+    } catch (_) { }
   }
 
   adminPassToggleBtn?.addEventListener('click', () => {
@@ -2235,8 +2573,8 @@ function initAdminSettings() {
           adminEmail: newEmail.toLowerCase(),
           adminPassword: newPass,
           updatedAt: new Date().toISOString()
-        }, { merge: true }).catch(() => {});
-      } catch (_) {}
+        }, { merge: true }).catch(() => { });
+      } catch (_) { }
     }
 
     if (adminCredsStatus) {
@@ -2459,8 +2797,8 @@ function initCatalogsTab() {
     });
   }
 
-  let allCatalogs = (typeof getActiveCatalogs === 'function') 
-    ? getActiveCatalogs() 
+  let allCatalogs = (typeof getActiveCatalogs === 'function')
+    ? getActiveCatalogs()
     : (typeof DEVSHREE_CATALOGS !== 'undefined' ? DEVSHREE_CATALOGS.slice() : []);
 
   if (typeof fetchActiveCatalogs === 'function') {
@@ -2639,12 +2977,12 @@ function initCatalogsTab() {
         if (typeof deleteCatalogPdfBlob === 'function') {
           try {
             await deleteCatalogPdfBlob(id);
-          } catch (_) {}
+          } catch (_) { }
         }
         if (typeof deleteCatalogCoverBlob === 'function') {
           try {
             await deleteCatalogCoverBlob(id);
-          } catch (_) {}
+          } catch (_) { }
         }
         if (typeof saveActiveCatalogs === 'function') {
           await saveActiveCatalogs(allCatalogs);
@@ -2691,7 +3029,7 @@ function initCatalogsTab() {
     try {
       const objUrl = URL.createObjectURL(file);
       if (coverPreview) coverPreview.src = objUrl;
-    } catch (_) {}
+    } catch (_) { }
 
     // 2. Compress image using Canvas to high-res, lightweight JPEG thumbnail (max 480px, ~25KB)
     try {
@@ -2729,7 +3067,7 @@ function initCatalogsTab() {
     if (filenameInput && (!filenameInput.value || filenameInput.value.trim() === '')) {
       filenameInput.value = file.name;
     }
-    const sizeStr = file.size > 1024 * 1024 
+    const sizeStr = file.size > 1024 * 1024
       ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
       : (file.size / 1024).toFixed(1) + ' KB';
     if (sizeInput) sizeInput.value = sizeStr;
@@ -2802,11 +3140,11 @@ function initCatalogsTab() {
     if (pendingCoverFile && typeof saveCatalogCoverBlob === 'function') {
       try {
         await saveCatalogCoverBlob(catalogId, pendingCoverFile);
-      } catch (_) {}
+      } catch (_) { }
     } else if (pendingCoverDataUrl && typeof saveCatalogCoverBlob === 'function') {
       try {
         await saveCatalogCoverBlob(catalogId, pendingCoverDataUrl);
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // 2. PDF Document Resolution
@@ -3222,7 +3560,7 @@ function initOffersTab() {
     try {
       const objUrl = URL.createObjectURL(file);
       if (imagePreview) imagePreview.src = objUrl;
-    } catch (_) {}
+    } catch (_) { }
     const reader = new FileReader();
     reader.onload = (event) => {
       if (imagePreview) imagePreview.src = event.target.result;

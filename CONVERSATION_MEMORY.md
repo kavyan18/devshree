@@ -11,7 +11,7 @@
 - **Visual Design Identity:** Warm terracotta (`#C2623B`), deep architectural bronze, brushed gold accents, soft ivory backgrounds, crisp typography.
 - **Repository:** `https://github.com/kavyan18/devshree`
 - **Active Branch:** `main`
-- **Latest Remote Commit:** `d41aae74a6ed2f38fd3312ae7056edb06e86fbf1`
+- **Latest Remote Commit:** `d6bac76bffbb41a5f277eb19d65c40cceee67da1`
 
 ---
 
@@ -315,6 +315,65 @@
      - Verified end-to-end flow in Microsoft Edge headless browser via CDP WebSocket.
      - Confirmed: Modal opens -> Dynamic QR renders -> Radar transitions to scanning -> Payment detected -> Modal closes -> Step 3 renders with `INV-DEV-...` and status `Online UPI QR Payment (...) • Paid`.
   8. Synced all changes across `github_ready_folder` and `devshree_live_store`.
+  9. **Purged Test Order (`INV-DEV-2026-5311`):** Permanently deleted the automated test invoice record for "Kavya Patel" ("Brass Pull Handle", ₹1,900) from the Supabase database upon user confirmation.
+
+### Session Turn 26: Interactive Low Stock Button & Store-Wide / Per-Product Manual Alert Management
+- **User Request:** *"this low stock chnage into the button when admi clike that it will show the all low stock and admi can set manuly low stock alert in all the product"* (with screenshot of the Admin Low Stock KPI card showing 2 items).
+- **Core Architecture Implemented:**
+  1. **Interactive Low Stock KPI Button (`#kpi-card-low-stock`):**
+     - Transformed the static KPI card into a clickable, accessible interactive button with hover glow and active state ring.
+     - Added a direct `⚙️ Set Alert` button right on the card for 1-click modal access.
+     - When clicked, it activates the Low Stock filter, highlights the card with `.active-filter` amber border, and smoothly scrolls to the products table.
+  2. **Active Filter Banner (`#admin-low-stock-filter-bar`):**
+     - Renders directly above the products table showing `⚠️ Showing Low Stock Products Only (X items need attention)`.
+     - Includes a `⚙️ Set Alert Rules` shortcut and a quick `Show All Products ✕` button to instantly clear the filter.
+  3. **Manual Store-Wide Alert Setting:**
+     - Admin can set a default minimum stock warning level (e.g. 5, 10, 15, or 25 units) that applies to all products.
+     - Includes a 1-click `⚡ Apply to ALL Products` batch updater.
+  4. **Per-Product Custom Threshold Controls:**
+     - Added `Low Stock Alert ≤` input (`#prod-low-stock-threshold`) to the Add/Edit Product form (Row 2).
+     - Added a dedicated "Low Stock Alert Configuration" modal (`#admin-low-stock-modal`) with live search and an editable table allowing individual fine-tuning per hardware SKU.
+  5. **Dynamic Real-Time KPI & Status Engine:**
+     - `updateKpis()` dynamically evaluates inventory against each product's specific threshold (or global fallback).
+     - Product table rows render live status badges (`In Stock`, `Low Stock`, `Out of Stock`) and an alert threshold indicator (`Alert ≤ X`).
+  6. **Automated Test Suite (`test/low-stock-alert.test.js`):**
+     - Added 17 unit & integration tests covering threshold fallback, per-product overrides, dynamic stock status, KPI recalculations, search-filter composition, and HTML DOM contract accessibility.
+     - **All 298 test assertions pass 100% (0 failures)** across 9 test suites.
+  7. **Headless Browser CDP Verification:**
+     - Verified in Microsoft Edge headless browser via CDP WebSocket.
+     - Confirmed: Clicking card filters table to low-stock items -> Setting threshold shifts count dynamically in real time -> Clearing filter restores full catalog.
+  8. Synced all changes across `github_ready_folder` and `devshree_live_store`.
+
+### Session Turn 27: Admin Console Layout & Grid Restoration
+- **User Request:** *"look at the admin side it is not look good fix it and look proprly for the admin and dont make any mistake"* (with screenshot showing huge blank vertical space and elements squeezed into a narrow 25% column on the right).
+- **Root Cause Diagnosed:**
+  - In `admin.html`, an unclosed tag inside the Low Stock card had caused the `<!-- 4. Categories -->` card to nest inside it, and the parent `.admin-kpi-row` container was left unclosed before the Add Product form.
+  - As a result, CSS Grid treated the entire Add Product form and Products table as the 4th column of the 4-column KPI grid, pushing the cards down and squeezing the main content into a 25% narrow right column.
+- **Fixes Applied:**
+  1. **Clean HTML Tag Hierarchy in `admin.html`:**
+     - Closed each of the 4 KPI cards independently (`#kpi-total-products`, `#kpi-in-stock`, `#kpi-card-low-stock`, and `#kpi-categories`).
+     - Properly closed `.admin-kpi-row` so it forms a clean horizontal 4-column row at the top.
+     - Restored `.admin-product-form-card` and `.admin-table-card` as full-width siblings spanning 100% of the main content.
+     - Cleaned up `<div class="form-row-4">` in the Add/Edit Product form.
+  2. **Headless Browser Verification via CDP:**
+     - Measured layout bounding boxes:
+       - `.admin-kpi-row`: 1079px wide, 114px high, top: 170px.
+       - All 4 KPI cards aligned on the exact same horizontal plane (top: 170px, width: 255px each).
+       - `.admin-product-form-card`: spans full 1079px width at top 308px directly below KPIs.
+       - `.admin-table-card`: spans full 1079px width at top 1358px directly below the form.
+     - Captured and inspected full-page screenshot (`scratch/admin_rendered.png`).
+  3. **Automated Tests:**
+     - All 298 tests passing 100% across all 9 test suites.
+  4. Synced all modified files across `github_ready_folder` and `devshree_live_store`.
+
+### Session Turn 28: Full GitHub Push & Incremental Git Tree Synchronization
+- **User Request:** *"now add new upadate all files in the github"*
+- **Implementation & Push Pipeline:**
+  1. Built local Git SHA-1 hashing (`gitBlobSha`) in `scratch/push_all_to_github.js` to inspect remote tree against local files without redundant network re-uploads.
+  2. Reused 121 verified remote blob SHAs; uploaded only changed/new files directly to GitHub Git Database API with zero socket drops or throttling.
+  3. Synchronized all workspace updates across `github_ready_folder` and `devshree_live_store`.
+  4. Verified all 298 tests passing (100%).
+  5. Created commit and updated branch `main` on GitHub repository `kavyan18/devshree`.
 
 ---
 
@@ -322,17 +381,18 @@
 
 | Component | Status | Details |
 |---|---|---|
+| **Low Stock Button & Alerts** | Fully Operational | Interactive KPI card (`#kpi-card-low-stock`), table filter banner, modal threshold manager, per-product form setting |
 | **Online Payment Gateway** | Automated UPI QR & Auto-Placement | Dynamic QR (8866130409@axisbank), live radar scanner, auto-detects payment, auto-places order, advances to Step 3 |
 | **Top Categories Bar** | Live with 4 Square Categories | Located under header (second bar); Hardware, Electrical, Plumbing, and Paint with 1:1 square images, centered layout |
 | **Catalog Toolbar** | Clean & Modern | Redundant category tabs removed from down below; dynamic active filter indicator badge (`Filtered: [Category Name] [✕]`) |
-| **Primary Database** | PostgreSQL 17.11 (Live) | Hosted on Supabase (`kbdjezowhuteumywjoep.supabase.co`); tables: `categories`, `products`, `catalogs`, `orders` (5 live rows), `offers`, `users` |
+| **Primary Database** | PostgreSQL 17.11 (Live) | Hosted on Supabase (`kbdjezowhuteumywjoep.supabase.co`); tables: `categories`, `products`, `catalogs`, `orders`, `offers`, `users` |
 | **Asset Storage & CDN** | Cloudflare Edge CDN (Live) | Supabase Storage buckets `products` & `catalogs` with global caching and instant HTTP 200 delivery |
-| **Admin Console** | Fully Operational & 0ms Paint | Products (6 live) and Orders (5 live) render instantly; active status dropdowns, invoice printing, WhatsApp dispatch |
+| **Admin Console** | Fully Operational & 0ms Paint | Layout completely restored; Products (25 live) and Orders render instantly; active status dropdowns, invoice printing, WhatsApp dispatch, low stock filters |
 | **Firebase Database** | Completely Decommissioned | Cloud Firestore & Firebase Storage decoupled and replaced with Supabase PostgreSQL & Edge CDN |
 | **Product Hydration** | 100% Live & Pure | Supabase PostgreSQL authoritative; demo products completely purged from reloads and mobile |
 | **Catalog Hydration** | Live & Persistent | Supabase PostgreSQL + IndexedDB high-res engine + Supabase Storage CDN |
-| **Orders & Invoices** | PostgreSQL + Local Storage | Real-time order synchronization with Supabase `orders` table; 5 seed orders live |
-| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, HEAD Commit: `d41aae7` |
+| **Orders & Invoices** | PostgreSQL + Local Storage | Real-time order synchronization with Supabase `orders` table |
+| **GitHub Repository** | `kavyan18/devshree` | Branch `main`, synchronized with latest commit |
 | **Catalog Page UI** | Luxury Architectural Redesign | 3-column responsive grid, elevated search toolbar, terracotta pills, frosted glass badges |
 | **PDF Catalog Engine** | Fully Operational | Dual-storage engine (Supabase CDN + IndexedDB + LocalStorage metadata + Blob Object URL viewer) |
 | **Admin File Pickers** | Fully Operational | Transparent native `<input type="file">` overlay for Cover Image, PDF Document, and Slide Image; Dropzone for Products |
@@ -342,15 +402,15 @@
 | **PIN Code Delivery Tool** | Live | Interactive Indian PIN code calculator in `product.html` |
 | **WhatsApp Lookbook Share** | Live | Functional on `catalogs.html` and homepage rail |
 | **Store WhatsApp Alerts** | Auto-Dispatched | WhatsApp alerts configured for Store Owner (+91 88661 30409) for new orders and cancellations |
-| **Automated Tests** | 100% Passing | 281 unit/integration test assertions passing across 8 test suites |
+| **Automated Tests** | 100% Passing | 298 unit/integration test assertions passing across 9 test suites |
 | **Deployment Package** | Up to date | Synced with `github_ready_folder` and `devshree_live_store` |
-| **Git Push Tool** | Operational | `scratch/push_all_to_github.js` (Requires user permission before pushing) |
+| **Git Push Tool** | Operational | Incremental git SHA-1 differential push pipeline (`scratch/push_all_to_github.js`) |
 
 ---
 
 ## 4. Where the Last Conversation Stopped
-- **Last Completed Task:** Implemented automatic online payment detection and auto-order placement flow. When a customer selects Online Payment (UPI QR), the system renders the dynamic merchant UPI QR (`8866130409@axisbank`), displays a live detection radar banner, automatically detects the payment upon scan / completion, and **automatically advances to Step 3 (Order Placed)** with full invoice, Delhivery tracking, and automatic WhatsApp order alert to Store Owner (`+91 88661 30409`). Verified in headless Microsoft Edge via CDP; all 281 tests passing (100%). Synced across mirrors.
-- **Pending Action:** Awaiting user approval to push commits live to GitHub `kavyan18/devshree` on branch `main`.
+- **Last Completed Task:** Restored the Admin console grid layout, balancing all unclosed HTML tags so that KPI cards align horizontally in a clean 4-column row and Add Product form / Your Products table span full width beneath them. Filtered and verified Low Stock alert controls and manual threshold overrides. Ran full 298 automated tests (100% pass rate). Pushed all latest updates cleanly to GitHub repository `kavyan18/devshree` on branch `main`.
+- **Pending Action:** Awaiting further user requests or feature enhancements.
 
 ---
 

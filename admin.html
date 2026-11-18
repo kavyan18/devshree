@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,12 +11,15 @@
   <!-- Google Fonts: Manrope, Inter, Noto Sans Gujarati & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800;900&family=Noto+Sans+Gujarati:wght@600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800;900&family=Noto+Sans+Gujarati:wght@600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
+    rel="stylesheet" />
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="assets/css/styles.css" />
   <link rel="stylesheet" href="assets/css/admin.css" />
 </head>
+
 <body class="admin-body">
 
   <!-- =========================================================================
@@ -25,7 +29,8 @@
   <aside class="admin-sidebar" id="admin-sidebar">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <a href="admin.html" class="admin-sidebar-brand" style="display:flex;align-items:center;gap:0.75rem;">
-        <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" style="height:48px;width:auto;max-width:160px;object-fit:contain;" />
+        <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery"
+          style="height:48px;width:auto;max-width:160px;object-fit:contain;" />
       </a>
       <button type="button" class="admin-sidebar-close-btn" id="admin-sidebar-close" aria-label="Close menu">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -47,7 +52,9 @@
 
       <button type="button" class="admin-nav-item active" id="nav-products" data-target="products">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <path
+            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+          </path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
           <line x1="12" y1="22.08" x2="12" y2="12"></line>
         </svg>
@@ -99,7 +106,9 @@
 
       <button type="button" class="admin-nav-item" id="nav-offers" data-target="offers">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          <polygon
+            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+          </polygon>
         </svg>
         <span>Offers &amp; Carousel</span>
         <span class="admin-nav-badge" id="nav-offers-count">4</span>
@@ -108,7 +117,9 @@
       <button type="button" class="admin-nav-item" id="nav-settings" data-target="settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
         </svg>
         <span>Store Settings</span>
       </button>
@@ -119,7 +130,9 @@
       <div class="admin-help-card">
         <div class="admin-help-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            <path
+              d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+            </path>
           </svg>
         </div>
         <div class="admin-help-content">
@@ -139,7 +152,8 @@
     <!-- Topbar -->
     <header class="admin-topbar">
       <div style="display:flex;align-items:center;gap:12px;">
-        <button type="button" class="btn-admin-outline" id="admin-mobile-toggle" style="display:none;padding:6px 10px;" aria-label="Toggle menu">
+        <button type="button" class="btn-admin-outline" id="admin-mobile-toggle" style="display:none;padding:6px 10px;"
+          aria-label="Toggle menu">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -156,14 +170,16 @@
 
       <div class="admin-topbar-right">
         <!-- Store Maintenance Mode 1-Click Status Pill -->
-        <button type="button" class="admin-mode-pill live" id="btn-admin-topbar-maintenance" title="Store Status — Click to toggle Maintenance Mode">
+        <button type="button" class="admin-mode-pill live" id="btn-admin-topbar-maintenance"
+          title="Store Status — Click to toggle Maintenance Mode">
           <span class="mode-pill-dot"></span>
           <span class="mode-pill-text" id="admin-topbar-mode-text">Store Online</span>
         </button>
 
         <!-- Real-Time Order Notifications Bell -->
         <div class="admin-notif-dropdown" id="admin-notif-dropdown">
-          <button type="button" class="admin-notif-trigger-btn" id="admin-notif-btn" aria-label="Order Notifications" title="Live Order Notifications & Alerts">
+          <button type="button" class="admin-notif-trigger-btn" id="admin-notif-btn" aria-label="Order Notifications"
+            title="Live Order Notifications & Alerts">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -208,7 +224,9 @@
             <a href="index.html" target="_blank" class="admin-dropdown-item">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
-                <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                <path
+                  d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                </path>
               </svg>
               <span>View Storefront</span>
             </a>
@@ -230,7 +248,8 @@
     <div class="admin-page-header">
       <div>
         <h1 class="admin-page-title" id="admin-page-title">Manage Products</h1>
-        <p class="admin-page-sub" id="admin-page-sub">Add, update, or remove items from your store &mdash; no technical skills needed.</p>
+        <p class="admin-page-sub" id="admin-page-sub">Add, update, or remove items from your store &mdash; no technical
+          skills needed.</p>
       </div>
 
       <div class="admin-header-actions">
@@ -266,7 +285,9 @@
           <div class="admin-kpi-card">
             <div class="admin-kpi-icon-circle beige">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <path
+                  d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                </path>
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                 <line x1="12" y1="22.08" x2="12" y2="12"></line>
               </svg>
@@ -281,7 +302,9 @@
           <div class="admin-kpi-card">
             <div class="admin-kpi-icon-circle green">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <path
+                  d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                </path>
                 <path d="M9 12l2 2 4-4"></path>
               </svg>
             </div>
@@ -291,18 +314,29 @@
             </div>
           </div>
 
-          <!-- 3. Low Stock -->
-          <div class="admin-kpi-card">
+          <!-- 3. Low Stock (Interactive Filter Button & Alert Config Trigger) -->
+          <div class="admin-kpi-card kpi-card-clickable" id="kpi-card-low-stock" role="button" tabindex="0"
+            title="Click to view all low stock products in table">
             <div class="admin-kpi-icon-circle amber">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                </path>
                 <line x1="12" y1="9" x2="12" y2="13"></line>
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
               </svg>
             </div>
-            <div>
-              <div class="admin-kpi-label">Low Stock</div>
-              <div class="admin-kpi-value" id="kpi-low-stock">0</div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <div class="admin-kpi-label">Low Stock</div>
+                <button type="button" class="btn-kpi-alert-settings" id="btn-open-low-stock-modal"
+                  title="Configure Low Stock Alert Threshold for Products">
+                  ⚙️ Set Alert
+                </button>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
+                <div class="admin-kpi-value" id="kpi-low-stock">0</div>
+                <span class="kpi-filter-badge" id="kpi-low-stock-badge">Click to view &rarr;</span>
+              </div>
             </div>
           </div>
 
@@ -367,14 +401,15 @@
                   </div>
                 </div>
 
-                <!-- Row 2: Selling Price, GST Rate, Stock Quantity -->
-                <div class="form-row-3">
+                <!-- Row 2: Selling Price, GST Rate, Stock Quantity, Low Stock Alert Level -->
+                <div class="form-row-4">
                   <div class="form-group">
                     <label class="admin-numbered-label" for="prod-price">
                       <span class="step-num">4</span>
                       <span>Selling Price (₹) *</span>
                     </label>
-                    <input type="number" id="prod-price" class="admin-input" placeholder="120" min="0" step="any" required />
+                    <input type="number" id="prod-price" class="admin-input" placeholder="120" min="0" step="any"
+                      required />
                   </div>
 
                   <div class="form-group">
@@ -398,469 +433,581 @@
                     </label>
                     <input type="number" id="prod-stock" class="admin-input" placeholder="25" min="0" required />
                   </div>
-                </div>
 
-                <!-- Row 3: Original MRP (₹) & Discount (% OFF) -->
-                <div class="form-row-3" style="background:#FAF7F2;padding:0.85rem 1rem;border-radius:10px;border:1px dashed #D6CFC4;margin-bottom:1.15rem;">
-                  <div class="form-group" style="margin-bottom:0;">
-                    <label class="admin-numbered-label" for="prod-compare-price">
-                      <span class="step-num" style="background:#C2410C;">7</span>
-                      <span>Original MRP (₹) <span class="step-optional">(Strikethrough)</span></span>
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="prod-low-stock-threshold">
+                      <span class="step-num" style="background:#D97706;">⚠️</span>
+                      <span>Low Stock Alert &le;</span>
                     </label>
-                    <input type="number" id="prod-compare-price" class="admin-input" placeholder="e.g. 180" min="0" step="any" />
-                    <small style="font-size:0.72rem;color:var(--admin-text-secondary);display:block;margin-top:3px;">
-                      Enter MRP or set % OFF below
+                    <input type="number" id="prod-low-stock-threshold" class="admin-input" placeholder="10"
+                      min="1" max="999" value="10"
+                      title="Alert admin when stock reaches or drops below this number" />
+                    <small
+                      style="font-size:0.72rem;color:var(--admin-text-secondary);display:block;margin-top:3px;">
+                      Warn when stock &le; this number
                     </small>
                   </div>
-
-                  <div class="form-group" style="margin-bottom:0;">
-                    <label class="admin-numbered-label" for="prod-discount-percent">
-                      <span class="step-num" style="background:#C2410C;">8</span>
-                      <span>Discount (% OFF) <span class="step-optional">(Card Badge)</span></span>
-                    </label>
-                    <div style="position:relative;">
-                      <input type="number" id="prod-discount-percent" class="admin-input" placeholder="e.g. 25" min="0" max="99" style="padding-right:2.85rem;" />
-                      <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-weight:700;color:#C2410C;font-size:0.8rem;pointer-events:none;">% OFF</span>
-                    </div>
-                    <small style="font-size:0.72rem;color:var(--admin-text-secondary);display:block;margin-top:3px;">
-                      Auto-computes MRP or set directly
-                    </small>
-                  </div>
-
-                  <div class="form-group" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:center;">
-                    <span style="font-size:0.75rem;font-weight:700;color:var(--admin-text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Live Badge Preview</span>
-                    <div id="admin-badge-preview-tag" style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                      <span class="badge badge-discount" id="preview-discount-pill" style="display:none;background:#C2410C;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">0% OFF</span>
-                      <span class="badge badge-bestseller" id="preview-bestseller-pill" style="display:none;background:#1E293B;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">BESTSELLER</span>
-                      <span class="badge badge-new" id="preview-new-pill" style="display:none;background:#87553B;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">NEW</span>
-                    </div>
-                  </div>
                 </div>
 
-                <!-- Row 4: Storefront Badges & Status (Bestseller, New Arrival, Featured) -->
-                <div class="form-group" style="background:#FFFFFF;border:1px solid #ECE7DF;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.15rem;">
-                  <label class="admin-numbered-label" style="margin-bottom:0.5rem;">
-                    <span class="step-num" style="background:#1E293B;">9</span>
-                    <span>Storefront Badges &amp; Highlights</span>
-                  </label>
-                  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;">
-                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#1E293B;user-select:none;">
-                      <input type="checkbox" id="prod-is-bestseller" style="width:18px;height:18px;accent-color:#1E293B;cursor:pointer;" />
-                      <span>🔥 Mark as Bestseller (Shows black BESTSELLER badge)</span>
-                    </label>
+                      <!-- Row 3: Original MRP (₹) & Discount (% OFF) -->
+                      <div class="form-row-3"
+                        style="background:#FAF7F2;padding:0.85rem 1rem;border-radius:10px;border:1px dashed #D6CFC4;margin-bottom:1.15rem;">
+                        <div class="form-group" style="margin-bottom:0;">
+                          <label class="admin-numbered-label" for="prod-compare-price">
+                            <span class="step-num" style="background:#C2410C;">7</span>
+                            <span>Original MRP (₹) <span class="step-optional">(Strikethrough)</span></span>
+                          </label>
+                          <input type="number" id="prod-compare-price" class="admin-input" placeholder="e.g. 180"
+                            min="0" step="any" />
+                          <small
+                            style="font-size:0.72rem;color:var(--admin-text-secondary);display:block;margin-top:3px;">
+                            Enter MRP or set % OFF below
+                          </small>
+                        </div>
 
-                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#87553B;user-select:none;">
-                      <input type="checkbox" id="prod-is-new" style="width:18px;height:18px;accent-color:#87553B;cursor:pointer;" />
-                      <span>✨ Mark as New Arrival (Shows brown NEW badge)</span>
-                    </label>
+                        <div class="form-group" style="margin-bottom:0;">
+                          <label class="admin-numbered-label" for="prod-discount-percent">
+                            <span class="step-num" style="background:#C2410C;">8</span>
+                            <span>Discount (% OFF) <span class="step-optional">(Card Badge)</span></span>
+                          </label>
+                          <div style="position:relative;">
+                            <input type="number" id="prod-discount-percent" class="admin-input" placeholder="e.g. 25"
+                              min="0" max="99" style="padding-right:2.85rem;" />
+                            <span
+                              style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-weight:700;color:#C2410C;font-size:0.8rem;pointer-events:none;">%
+                              OFF</span>
+                          </div>
+                          <small
+                            style="font-size:0.72rem;color:var(--admin-text-secondary);display:block;margin-top:3px;">
+                            Auto-computes MRP or set directly
+                          </small>
+                        </div>
 
-                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#357653;user-select:none;">
-                      <input type="checkbox" id="prod-is-featured" style="width:18px;height:18px;accent-color:#357653;cursor:pointer;" />
-                      <span>⭐ Featured Item</span>
-                    </label>
-
-                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#C2410C;user-select:none;">
-                      <input type="checkbox" id="prod-is-regular-deal" style="width:18px;height:18px;accent-color:#C2410C;cursor:pointer;" />
-                      <span>🏷️ Regular Hardware Deal (Shows in Home Regular Deals Shelf)</span>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- Row 5: Product Description -->
-                <div class="form-group">
-                  <label class="admin-numbered-label" for="prod-desc">
-                    <span class="step-num">10</span>
-                    <span>Product Description <span class="step-optional">(Optional)</span></span>
-                  </label>
-                  <textarea id="prod-desc" class="admin-textarea" rows="2" placeholder="Energy efficient LED bulb, long life, best for home and office."></textarea>
-                </div>
-
-                <!-- Row 6: Product Image Upload & Preview -->
-                <div class="form-group" style="margin-bottom:0;">
-                  <label class="admin-numbered-label">
-                    <span class="step-num">11</span>
-                    <span>Product Image *</span>
-                  </label>
-
-                  <input type="file" id="prod-image-file" accept="image/png, image/jpeg, image/webp, image/*, .png, .jpg, .jpeg, .webp" style="display:none;" />
-                  <input type="hidden" id="prod-image" value="" />
-
-                  <div class="admin-image-upload-row">
-                    <!-- Dropzone click box -->
-                    <div class="admin-dropzone-box" id="admin-choose-image-btn" role="button" tabindex="0" style="cursor:pointer;">
-                      <div class="admin-cloud-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                          <polyline points="17 8 12 3 7 8"></polyline>
-                          <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
+                        <div class="form-group"
+                          style="margin-bottom:0;display:flex;flex-direction:column;justify-content:center;">
+                          <span
+                            style="font-size:0.75rem;font-weight:700;color:var(--admin-text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Live
+                            Badge Preview</span>
+                          <div id="admin-badge-preview-tag"
+                            style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                            <span class="badge badge-discount" id="preview-discount-pill"
+                              style="display:none;background:#C2410C;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">0%
+                              OFF</span>
+                            <span class="badge badge-bestseller" id="preview-bestseller-pill"
+                              style="display:none;background:#1E293B;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">BESTSELLER</span>
+                            <span class="badge badge-new" id="preview-new-pill"
+                              style="display:none;background:#87553B;color:#fff;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:800;letter-spacing:0.5px;">NEW</span>
+                          </div>
+                        </div>
                       </div>
-                      <div class="admin-dropzone-text">
-                        <strong>Choose image</strong>
-                        <span>Click to upload or drag and drop</span>
-                        <span class="subtext">Supported formats: JPG, PNG, WebP (Max size: 5MB)</span>
+
+                      <!-- Row 4: Storefront Badges & Status (Bestseller, New Arrival, Featured) -->
+                      <div class="form-group"
+                        style="background:#FFFFFF;border:1px solid #ECE7DF;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.15rem;">
+                        <label class="admin-numbered-label" style="margin-bottom:0.5rem;">
+                          <span class="step-num" style="background:#1E293B;">9</span>
+                          <span>Storefront Badges &amp; Highlights</span>
+                        </label>
+                        <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;">
+                          <label
+                            style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#1E293B;user-select:none;">
+                            <input type="checkbox" id="prod-is-bestseller"
+                              style="width:18px;height:18px;accent-color:#1E293B;cursor:pointer;" />
+                            <span>🔥 Mark as Bestseller (Shows black BESTSELLER badge)</span>
+                          </label>
+
+                          <label
+                            style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#87553B;user-select:none;">
+                            <input type="checkbox" id="prod-is-new"
+                              style="width:18px;height:18px;accent-color:#87553B;cursor:pointer;" />
+                            <span>✨ Mark as New Arrival (Shows brown NEW badge)</span>
+                          </label>
+
+                          <label
+                            style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#357653;user-select:none;">
+                            <input type="checkbox" id="prod-is-featured"
+                              style="width:18px;height:18px;accent-color:#357653;cursor:pointer;" />
+                            <span>⭐ Featured Item</span>
+                          </label>
+
+                          <label
+                            style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:700;color:#C2410C;user-select:none;">
+                            <input type="checkbox" id="prod-is-regular-deal"
+                              style="width:18px;height:18px;accent-color:#C2410C;cursor:pointer;" />
+                            <span>🏷️ Regular Hardware Deal (Shows in Home Regular Deals Shelf)</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <!-- Row 5: Product Description -->
+                      <div class="form-group">
+                        <label class="admin-numbered-label" for="prod-desc">
+                          <span class="step-num">10</span>
+                          <span>Product Description <span class="step-optional">(Optional)</span></span>
+                        </label>
+                        <textarea id="prod-desc" class="admin-textarea" rows="2"
+                          placeholder="Energy efficient LED bulb, long life, best for home and office."></textarea>
+                      </div>
+
+                      <!-- Row 6: Product Image Upload & Preview -->
+                      <div class="form-group" style="margin-bottom:0;">
+                        <label class="admin-numbered-label">
+                          <span class="step-num">11</span>
+                          <span>Product Image *</span>
+                        </label>
+
+                        <input type="file" id="prod-image-file"
+                          accept="image/png, image/jpeg, image/webp, image/*, .png, .jpg, .jpeg, .webp"
+                          style="display:none;" />
+                        <input type="hidden" id="prod-image" value="" />
+
+                        <div class="admin-image-upload-row">
+                          <!-- Dropzone click box -->
+                          <div class="admin-dropzone-box" id="admin-choose-image-btn" role="button" tabindex="0"
+                            style="cursor:pointer;">
+                            <div class="admin-cloud-icon">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                              </svg>
+                            </div>
+                            <div class="admin-dropzone-text">
+                              <strong>Choose image</strong>
+                              <span>Click to upload or drag and drop</span>
+                              <span class="subtext">Supported formats: JPG, PNG, WebP (Max size: 5MB)</span>
+                            </div>
+                          </div>
+
+                          <!-- Image Preview Box with Remove 'X' Button -->
+                          <div class="admin-preview-box" id="admin-image-preview-wrap">
+                            <img id="admin-image-preview"
+                              src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80"
+                              alt="Selected product preview" />
+                            <button type="button" class="admin-preview-remove-btn" id="admin-remove-image-btn"
+                              title="Remove image">&times;</button>
+                          </div>
+                        </div>
+
+                        <!-- Direct Image URL Input for maximum flexibility -->
+                        <div style="margin-top:0.6rem;">
+                          <input type="text" id="prod-image-url" class="admin-input"
+                            placeholder="Or enter / paste image URL (e.g. https://... or assets/images/...)"
+                            style="font-size:0.78rem;padding:0.45rem 0.75rem;" />
+                        </div>
                       </div>
                     </div>
 
-                    <!-- Image Preview Box with Remove 'X' Button -->
-                    <div class="admin-preview-box" id="admin-image-preview-wrap">
-                      <img id="admin-image-preview" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" alt="Selected product preview" />
-                      <button type="button" class="admin-preview-remove-btn" id="admin-remove-image-btn" title="Remove image">&times;</button>
+                    <!-- Right Side: Price Summary Card -->
+                    <div class="admin-form-right-col">
+                      <div class="admin-price-summary-card">
+                        <h3 class="admin-price-summary-title">Price Summary</h3>
+
+                        <div class="admin-price-row">
+                          <span class="label">Base Price</span>
+                          <span class="val" id="summary-base-price">₹ 120.00</span>
+                        </div>
+
+                        <div class="admin-price-row">
+                          <span class="label" id="summary-gst-label">GST (18%)</span>
+                          <span class="val" id="summary-gst-amount">₹ 21.60</span>
+                        </div>
+
+                        <div class="admin-price-divider"></div>
+
+                        <div class="admin-price-row customer-price">
+                          <span class="label">Customer Price</span>
+                          <span class="val" id="summary-customer-price">₹ 141.60</span>
+                        </div>
+
+                        <div class="admin-price-row" id="summary-mrp-row" style="display:none;color:#78716C;">
+                          <span class="label">Original MRP</span>
+                          <span class="val" id="summary-mrp" style="text-decoration:line-through;">₹ 0.00</span>
+                        </div>
+
+                        <div class="admin-price-row" id="summary-discount-row"
+                          style="display:none;color:#C2410C;font-weight:700;">
+                          <span class="label">Discount</span>
+                          <span class="val" id="summary-discount-amount">0% OFF</span>
+                        </div>
+
+                        <div class="admin-calc-note">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                          </svg>
+                          <span>GST and discount percentage are calculated automatically.</span>
+                        </div>
+
+                        <button type="submit" class="btn-save-product" id="btn-save-product">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                          </svg>
+                          <span id="btn-save-product-text">Save Product</span>
+                        </button>
+
+                        <button type="button" class="btn-clear-form" id="btn-clear-form">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                          </svg>
+                          <span>Clear form</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
+              </form>
+            </div>
 
-                  <!-- Direct Image URL Input for maximum flexibility -->
-                  <div style="margin-top:0.6rem;">
-                    <input type="text" id="prod-image-url" class="admin-input" placeholder="Or enter / paste image URL (e.g. https://... or assets/images/...)" style="font-size:0.78rem;padding:0.45rem 0.75rem;" />
+            <!-- Your Products Table Section -->
+            <div class="admin-table-card" style="margin-top:1.5rem;">
+              <div class="admin-table-header">
+                <h2 class="admin-section-title" style="margin-bottom:0;">Your Products</h2>
+
+                <div class="admin-table-filters">
+                  <!-- Sync & Backup buttons -->
+                  <button type="button" class="btn-admin-outline" id="btn-sync-mobile-modal"
+                    title="Sync products across devices (mobile/desktop)"
+                    style="color:#047857;border-color:#A7F3D0;font-weight:700;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.2">
+                      <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                      <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                    </svg>
+                    <span>📱 Sync to Mobile</span>
+                  </button>
+                  <button type="button" class="btn-admin-outline" id="btn-export-products-json"
+                    title="Download catalog JSON backup">
+                    <span>Export 📥</span>
+                  </button>
+                  <button type="button" class="btn-admin-outline" id="btn-import-products-json"
+                    title="Import catalog JSON backup">
+                    <span>Import 📤</span>
+                  </button>
+                  <input type="file" id="admin-import-file-input" accept=".json" style="display:none;" />
+
+                  <!-- Search by Name or Code -->
+                  <div class="admin-search-wrapper">
+                    <svg class="admin-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="search" class="admin-search-input" id="admin-products-search"
+                      placeholder="Search by product name or code" />
                   </div>
+
+                  <!-- Category Filter -->
+                  <select class="admin-table-cat-select" id="admin-products-cat-filter"
+                    aria-label="Filter products by category">
+                    <option value="all">All Categories</option>
+                    <option value="cat-electrical">Electrical</option>
+                    <option value="cat-hardware">Hardware</option>
+                    <option value="cat-plumbing">Plumbing</option>
+                    <option value="cat-paints">Paints</option>
+                  </select>
                 </div>
               </div>
 
-              <!-- Right Side: Price Summary Card -->
-              <div class="admin-form-right-col">
-                <div class="admin-price-summary-card">
-                  <h3 class="admin-price-summary-title">Price Summary</h3>
-
-                  <div class="admin-price-row">
-                    <span class="label">Base Price</span>
-                    <span class="val" id="summary-base-price">₹ 120.00</span>
+              <!-- Active Low Stock Filter Banner -->
+              <div id="admin-low-stock-filter-bar" class="admin-active-filter-bar" style="display:none;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <span class="filter-alert-icon">⚠️</span>
+                  <div>
+                    <strong style="color:#B45309;font-size:0.875rem;">Showing Low Stock Products Only</strong>
+                    <span id="admin-low-stock-filter-count"
+                      style="font-size:0.8rem;color:#92400E;margin-left:6px;font-weight:600;">(0 items need
+                      attention)</span>
                   </div>
-
-                  <div class="admin-price-row">
-                    <span class="label" id="summary-gst-label">GST (18%)</span>
-                    <span class="val" id="summary-gst-amount">₹ 21.60</span>
-                  </div>
-
-                  <div class="admin-price-divider"></div>
-
-                  <div class="admin-price-row customer-price">
-                    <span class="label">Customer Price</span>
-                    <span class="val" id="summary-customer-price">₹ 141.60</span>
-                  </div>
-
-                  <div class="admin-price-row" id="summary-mrp-row" style="display:none;color:#78716C;">
-                    <span class="label">Original MRP</span>
-                    <span class="val" id="summary-mrp" style="text-decoration:line-through;">₹ 0.00</span>
-                  </div>
-
-                  <div class="admin-price-row" id="summary-discount-row" style="display:none;color:#C2410C;font-weight:700;">
-                    <span class="label">Discount</span>
-                    <span class="val" id="summary-discount-amount">0% OFF</span>
-                  </div>
-
-                  <div class="admin-calc-note">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    <span>GST and discount percentage are calculated automatically.</span>
-                  </div>
-
-                  <button type="submit" class="btn-save-product" id="btn-save-product">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                      <polyline points="7 3 7 8 15 8"></polyline>
-                    </svg>
-                    <span id="btn-save-product-text">Save Product</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button type="button" class="btn-admin-xs-outline" id="btn-filter-set-alert-modal"
+                    title="Configure Alert Thresholds">
+                    ⚙️ Set Alert Rules
                   </button>
-
-                  <button type="button" class="btn-clear-form" id="btn-clear-form">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
-                    </svg>
-                    <span>Clear form</span>
+                  <button type="button" class="btn-clear-low-stock-filter" id="btn-clear-low-stock-filter"
+                    title="Clear Low Stock filter">
+                    Show All Products ✕
                   </button>
                 </div>
+              </div>
+
+              <!-- Responsive Table -->
+              <div class="admin-table-responsive">
+                <table class="admin-products-table">
+                  <thead>
+                    <tr>
+                      <th style="width:70px;">Image</th>
+                      <th>Product Name</th>
+                      <th>Category</th>
+                      <th>Price / MRP</th>
+                      <th>Discount</th>
+                      <th>Bestseller Status</th>
+                      <th>Stock</th>
+                      <th style="text-align:right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-products-tbody">
+                    <tr data-prod-id="prod-1793886256682">
+                      <td>
+                        <img
+                          src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1793886256682.webp"
+                          alt="TANDAM (6 Pcs)" class="admin-row-thumb" loading="lazy" />
+                      </td>
+                      <td>
+                        <div class="admin-row-prod-name">TANDAM (6 Pcs)</div>
+                        <div class="admin-row-prod-code">Code: HW829</div>
+                      </td>
+                      <td>
+                        <span class="admin-row-cat-badge">Hardware</span>
+                      </td>
+                      <td>
+                        <span class="admin-row-price">₹ 8,260.00</span>
+                        <div class="admin-table-mrp">MRP: ₹ 9,718.00</div>
+                      </td>
+                      <td>
+                        <span class="admin-table-discount-badge">15% OFF</span>
+                      </td>
+                      <td>
+                        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+                          <button type="button" class="btn-toggle-bestseller active"
+                            data-bestseller-toggle-id="prod-1793886256682" title="Click to remove from Bestsellers">
+                            <span>🔥 BESTSELLER</span>
+                          </button>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="admin-row-stock-qty">60</span>
+                        <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
+                      </td>
+                      <td style="text-align:right;">
+                        <div class="admin-row-actions">
+                          <button type="button" class="btn-table-edit"
+                            data-edit-id="prod-1793886256682"><span>Edit</span></button>
+                          <button type="button" class="btn-table-remove"
+                            data-remove-id="prod-1793886256682"><span>Remove</span></button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <tr data-prod-id="prod-1793888265596">
+                      <td>
+                        <img
+                          src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1793888265596.webp"
+                          alt="LED LEMP 9w" class="admin-row-thumb" loading="lazy" />
+                      </td>
+                      <td>
+                        <div class="admin-row-prod-name">LED LEMP 9w</div>
+                        <div class="admin-row-prod-code">Code: DB281</div>
+                      </td>
+                      <td>
+                        <span class="admin-row-cat-badge">Electrical</span>
+                      </td>
+                      <td>
+                        <span class="admin-row-price">₹ 70.80</span>
+                        <div class="admin-table-mrp">MRP: ₹ 169.00</div>
+                      </td>
+                      <td>
+                        <span class="admin-table-discount-badge">58% OFF</span>
+                      </td>
+                      <td>
+                        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+                          <button type="button" class="btn-toggle-bestseller active"
+                            data-bestseller-toggle-id="prod-1793888265596" title="Click to remove from Bestsellers">
+                            <span>🔥 BESTSELLER</span>
+                          </button>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="admin-row-stock-qty">100</span>
+                        <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
+                      </td>
+                      <td style="text-align:right;">
+                        <div class="admin-row-actions">
+                          <button type="button" class="btn-table-edit"
+                            data-edit-id="prod-1793888265596"><span>Edit</span></button>
+                          <button type="button" class="btn-table-remove"
+                            data-remove-id="prod-1793888265596"><span>Remove</span></button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <tr data-prod-id="prod-1793894449026">
+                      <td>
+                        <img
+                          src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1793894449026.png"
+                          alt="NAIL 14x1III" class="admin-row-thumb" loading="lazy" />
+                      </td>
+                      <td>
+                        <div class="admin-row-prod-name">NAIL 14x1III</div>
+                        <div class="admin-row-prod-code">Code: HW153</div>
+                      </td>
+                      <td>
+                        <span class="admin-row-cat-badge">Hardware</span>
+                      </td>
+                      <td>
+                        <span class="admin-row-price">₹ 141.60</span>
+                        <div class="admin-table-mrp">MRP: ₹ 179.00</div>
+                      </td>
+                      <td>
+                        <span class="admin-table-discount-badge">21% OFF</span>
+                      </td>
+                      <td>
+                        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+                          <button type="button" class="btn-toggle-bestseller active"
+                            data-bestseller-toggle-id="prod-1793894449026" title="Click to remove from Bestsellers">
+                            <span>🔥 BESTSELLER</span>
+                          </button>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="admin-row-stock-qty">100</span>
+                        <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
+                      </td>
+                      <td style="text-align:right;">
+                        <div class="admin-row-actions">
+                          <button type="button" class="btn-table-edit"
+                            data-edit-id="prod-1793894449026"><span>Edit</span></button>
+                          <button type="button" class="btn-table-remove"
+                            data-remove-id="prod-1793894449026"><span>Remove</span></button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <tr data-prod-id="prod-1793902715089">
+                      <td>
+                        <img
+                          src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1793902715089.jpg"
+                          alt="NAIL 14x1I LH" class="admin-row-thumb" loading="lazy" />
+                      </td>
+                      <td>
+                        <div class="admin-row-prod-name">NAIL 14x1I LH</div>
+                        <div class="admin-row-prod-code">Code: HW528</div>
+                      </td>
+                      <td>
+                        <span class="admin-row-cat-badge">Hardware</span>
+                      </td>
+                      <td>
+                        <span class="admin-row-price">₹ 141.60</span>
+                        <div class="admin-table-mrp">MRP: ₹ 179.00</div>
+                      </td>
+                      <td>
+                        <span class="admin-table-discount-badge">21% OFF</span>
+                      </td>
+                      <td>
+                        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+                          <button type="button" class="btn-toggle-bestseller"
+                            data-bestseller-toggle-id="prod-1793902715089" title="Click to mark as Bestseller">
+                            <span>+ Mark Bestseller</span>
+                          </button>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="admin-row-stock-qty">100</span>
+                        <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
+                      </td>
+                      <td style="text-align:right;">
+                        <div class="admin-row-actions">
+                          <button type="button" class="btn-table-edit"
+                            data-edit-id="prod-1793902715089"><span>Edit</span></button>
+                          <button type="button" class="btn-table-remove"
+                            data-remove-id="prod-1793902715089"><span>Remove</span></button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <tr data-prod-id="prod-1793902949035">
+                      <td>
+                        <img
+                          src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1793902949035.png"
+                          alt="NAIL 17x1I LH" class="admin-row-thumb" loading="lazy" />
+                      </td>
+                      <td>
+                        <div class="admin-row-prod-name">NAIL 17x1I LH</div>
+                        <div class="admin-row-prod-code">Code: HW160</div>
+                      </td>
+                      <td>
+                        <span class="admin-row-cat-badge">Hardware</span>
+                      </td>
+                      <td>
+                        <span class="admin-row-price">₹ 141.60</span>
+                        <div class="admin-table-mrp">MRP: ₹ 161.00</div>
+                      </td>
+                      <td>
+                        <span class="admin-table-discount-badge">12% OFF</span>
+                      </td>
+                      <td>
+                        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+                          <button type="button" class="btn-toggle-bestseller active"
+                            data-bestseller-toggle-id="prod-1793902949035" title="Click to remove from Bestsellers">
+                            <span>🔥 BESTSELLER</span>
+                          </button>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="admin-row-stock-qty">100</span>
+                        <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
+                      </td>
+                      <td style="text-align:right;">
+                        <div class="admin-row-actions">
+                          <button type="button" class="btn-table-edit"
+                            data-edit-id="prod-1793902949035"><span>Edit</span></button>
+                          <button type="button" class="btn-table-remove"
+                            data-remove-id="prod-1793902949035"><span>Remove</span></button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <tr data-prod-id="prod-1794041923563">
+                      <td>
+                        <img
+                          src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1794041923563.webp"
+                          alt="Biding 1x0I—-3’" class="admin-row-thumb" loading="lazy" />
+                      </td>
+                      <td>
+                        <div class="admin-row-prod-name">Biding 1x0I—-3’</div>
+                        <div class="admin-row-prod-code">Code: HW668</div>
+                      </td>
+                      <td>
+                        <span class="admin-row-cat-badge">Hardware</span>
+                      </td>
+                      <td>
+                        <span class="admin-row-price">₹ 5.90</span>
+                        <div class="admin-table-mrp">MRP: ₹ 7.00</div>
+                      </td>
+                      <td>
+                        <span class="admin-table-discount-badge">16% OFF</span>
+                      </td>
+                      <td>
+                        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+                          <button type="button" class="btn-toggle-bestseller active"
+                            data-bestseller-toggle-id="prod-1794041923563" title="Click to remove from Bestsellers">
+                            <span>🔥 BESTSELLER</span>
+                          </button>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="admin-row-stock-qty">100</span>
+                        <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
+                      </td>
+                      <td style="text-align:right;">
+                        <div class="admin-row-actions">
+                          <button type="button" class="btn-table-edit"
+                            data-edit-id="prod-1794041923563"><span>Edit</span></button>
+                          <button type="button" class="btn-table-remove"
+                            data-remove-id="prod-1794041923563"><span>Remove</span></button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-          </form>
-        </div>
-
-        <!-- Your Products Table Section -->
-        <div class="admin-table-card" style="margin-top:1.5rem;">
-          <div class="admin-table-header">
-            <h2 class="admin-section-title" style="margin-bottom:0;">Your Products</h2>
-
-            <div class="admin-table-filters">
-              <!-- Sync & Backup buttons -->
-              <button type="button" class="btn-admin-outline" id="btn-sync-mobile-modal" title="Sync products across devices (mobile/desktop)" style="color:#047857;border-color:#A7F3D0;font-weight:700;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                  <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                </svg>
-                <span>📱 Sync to Mobile</span>
-              </button>
-              <button type="button" class="btn-admin-outline" id="btn-export-products-json" title="Download catalog JSON backup">
-                <span>Export 📥</span>
-              </button>
-              <button type="button" class="btn-admin-outline" id="btn-import-products-json" title="Import catalog JSON backup">
-                <span>Import 📤</span>
-              </button>
-              <input type="file" id="admin-import-file-input" accept=".json" style="display:none;" />
-
-              <!-- Search by Name or Code -->
-              <div class="admin-search-wrapper">
-                <svg class="admin-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="search" class="admin-search-input" id="admin-products-search" placeholder="Search by product name or code" />
-              </div>
-
-              <!-- Category Filter -->
-              <select class="admin-table-cat-select" id="admin-products-cat-filter" aria-label="Filter products by category">
-                <option value="all">All Categories</option>
-                <option value="cat-electrical">Electrical</option>
-                <option value="cat-hardware">Hardware</option>
-                <option value="cat-plumbing">Plumbing</option>
-                <option value="cat-paints">Paints</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Responsive Table -->
-          <div class="admin-table-responsive">
-            <table class="admin-products-table">
-              <thead>
-                <tr>
-                  <th style="width:70px;">Image</th>
-                  <th>Product Name</th>
-                  <th>Category</th>
-                  <th>Price / MRP</th>
-                  <th>Discount</th>
-                  <th>Bestseller Status</th>
-                  <th>Stock</th>
-                  <th style="text-align:right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="admin-products-tbody">
-                <tr data-prod-id="prod-1793886256682">
-                  <td>
-                    <img src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1793886256682.webp" alt="TANDAM (6 Pcs)" class="admin-row-thumb" loading="lazy" />
-                  </td>
-                  <td>
-                    <div class="admin-row-prod-name">TANDAM (6 Pcs)</div>
-                    <div class="admin-row-prod-code">Code: HW829</div>
-                  </td>
-                  <td>
-                    <span class="admin-row-cat-badge">Hardware</span>
-                  </td>
-                  <td>
-                    <span class="admin-row-price">₹ 8,260.00</span>
-                    <div class="admin-table-mrp">MRP: ₹ 9,718.00</div>
-                  </td>
-                  <td>
-                    <span class="admin-table-discount-badge">15% OFF</span>
-                  </td>
-                  <td>
-                    <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
-                      <button type="button" class="btn-toggle-bestseller active" data-bestseller-toggle-id="prod-1793886256682" title="Click to remove from Bestsellers">
-                        <span>🔥 BESTSELLER</span>
-                      </button>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="admin-row-stock-qty">60</span>
-                    <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
-                  </td>
-                  <td style="text-align:right;">
-                    <div class="admin-row-actions">
-                      <button type="button" class="btn-table-edit" data-edit-id="prod-1793886256682"><span>Edit</span></button>
-                      <button type="button" class="btn-table-remove" data-remove-id="prod-1793886256682"><span>Remove</span></button>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr data-prod-id="prod-1793888265596">
-                  <td>
-                    <img src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1793888265596.webp" alt="LED LEMP 9w" class="admin-row-thumb" loading="lazy" />
-                  </td>
-                  <td>
-                    <div class="admin-row-prod-name">LED LEMP 9w</div>
-                    <div class="admin-row-prod-code">Code: DB281</div>
-                  </td>
-                  <td>
-                    <span class="admin-row-cat-badge">Electrical</span>
-                  </td>
-                  <td>
-                    <span class="admin-row-price">₹ 70.80</span>
-                    <div class="admin-table-mrp">MRP: ₹ 169.00</div>
-                  </td>
-                  <td>
-                    <span class="admin-table-discount-badge">58% OFF</span>
-                  </td>
-                  <td>
-                    <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
-                      <button type="button" class="btn-toggle-bestseller active" data-bestseller-toggle-id="prod-1793888265596" title="Click to remove from Bestsellers">
-                        <span>🔥 BESTSELLER</span>
-                      </button>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="admin-row-stock-qty">100</span>
-                    <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
-                  </td>
-                  <td style="text-align:right;">
-                    <div class="admin-row-actions">
-                      <button type="button" class="btn-table-edit" data-edit-id="prod-1793888265596"><span>Edit</span></button>
-                      <button type="button" class="btn-table-remove" data-remove-id="prod-1793888265596"><span>Remove</span></button>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr data-prod-id="prod-1793894449026">
-                  <td>
-                    <img src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1793894449026.png" alt="NAIL 14x1III" class="admin-row-thumb" loading="lazy" />
-                  </td>
-                  <td>
-                    <div class="admin-row-prod-name">NAIL 14x1III</div>
-                    <div class="admin-row-prod-code">Code: HW153</div>
-                  </td>
-                  <td>
-                    <span class="admin-row-cat-badge">Hardware</span>
-                  </td>
-                  <td>
-                    <span class="admin-row-price">₹ 141.60</span>
-                    <div class="admin-table-mrp">MRP: ₹ 179.00</div>
-                  </td>
-                  <td>
-                    <span class="admin-table-discount-badge">21% OFF</span>
-                  </td>
-                  <td>
-                    <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
-                      <button type="button" class="btn-toggle-bestseller active" data-bestseller-toggle-id="prod-1793894449026" title="Click to remove from Bestsellers">
-                        <span>🔥 BESTSELLER</span>
-                      </button>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="admin-row-stock-qty">100</span>
-                    <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
-                  </td>
-                  <td style="text-align:right;">
-                    <div class="admin-row-actions">
-                      <button type="button" class="btn-table-edit" data-edit-id="prod-1793894449026"><span>Edit</span></button>
-                      <button type="button" class="btn-table-remove" data-remove-id="prod-1793894449026"><span>Remove</span></button>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr data-prod-id="prod-1793902715089">
-                  <td>
-                    <img src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1793902715089.jpg" alt="NAIL 14x1I LH" class="admin-row-thumb" loading="lazy" />
-                  </td>
-                  <td>
-                    <div class="admin-row-prod-name">NAIL 14x1I LH</div>
-                    <div class="admin-row-prod-code">Code: HW528</div>
-                  </td>
-                  <td>
-                    <span class="admin-row-cat-badge">Hardware</span>
-                  </td>
-                  <td>
-                    <span class="admin-row-price">₹ 141.60</span>
-                    <div class="admin-table-mrp">MRP: ₹ 179.00</div>
-                  </td>
-                  <td>
-                    <span class="admin-table-discount-badge">21% OFF</span>
-                  </td>
-                  <td>
-                    <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
-                      <button type="button" class="btn-toggle-bestseller" data-bestseller-toggle-id="prod-1793902715089" title="Click to mark as Bestseller">
-                        <span>+ Mark Bestseller</span>
-                      </button>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="admin-row-stock-qty">100</span>
-                    <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
-                  </td>
-                  <td style="text-align:right;">
-                    <div class="admin-row-actions">
-                      <button type="button" class="btn-table-edit" data-edit-id="prod-1793902715089"><span>Edit</span></button>
-                      <button type="button" class="btn-table-remove" data-remove-id="prod-1793902715089"><span>Remove</span></button>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr data-prod-id="prod-1793902949035">
-                  <td>
-                    <img src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1793902949035.png" alt="NAIL 17x1I LH" class="admin-row-thumb" loading="lazy" />
-                  </td>
-                  <td>
-                    <div class="admin-row-prod-name">NAIL 17x1I LH</div>
-                    <div class="admin-row-prod-code">Code: HW160</div>
-                  </td>
-                  <td>
-                    <span class="admin-row-cat-badge">Hardware</span>
-                  </td>
-                  <td>
-                    <span class="admin-row-price">₹ 141.60</span>
-                    <div class="admin-table-mrp">MRP: ₹ 161.00</div>
-                  </td>
-                  <td>
-                    <span class="admin-table-discount-badge">12% OFF</span>
-                  </td>
-                  <td>
-                    <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
-                      <button type="button" class="btn-toggle-bestseller active" data-bestseller-toggle-id="prod-1793902949035" title="Click to remove from Bestsellers">
-                        <span>🔥 BESTSELLER</span>
-                      </button>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="admin-row-stock-qty">100</span>
-                    <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
-                  </td>
-                  <td style="text-align:right;">
-                    <div class="admin-row-actions">
-                      <button type="button" class="btn-table-edit" data-edit-id="prod-1793902949035"><span>Edit</span></button>
-                      <button type="button" class="btn-table-remove" data-remove-id="prod-1793902949035"><span>Remove</span></button>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr data-prod-id="prod-1794041923563">
-                  <td>
-                    <img src="https://kbdjezowhuteumywjoep.supabase.co/storage/v1/object/public/products/prod-1794041923563.webp" alt="Biding 1x0I—-3’" class="admin-row-thumb" loading="lazy" />
-                  </td>
-                  <td>
-                    <div class="admin-row-prod-name">Biding 1x0I—-3’</div>
-                    <div class="admin-row-prod-code">Code: HW668</div>
-                  </td>
-                  <td>
-                    <span class="admin-row-cat-badge">Hardware</span>
-                  </td>
-                  <td>
-                    <span class="admin-row-price">₹ 5.90</span>
-                    <div class="admin-table-mrp">MRP: ₹ 7.00</div>
-                  </td>
-                  <td>
-                    <span class="admin-table-discount-badge">16% OFF</span>
-                  </td>
-                  <td>
-                    <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
-                      <button type="button" class="btn-toggle-bestseller active" data-bestseller-toggle-id="prod-1794041923563" title="Click to remove from Bestsellers">
-                        <span>🔥 BESTSELLER</span>
-                      </button>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="admin-row-stock-qty">100</span>
-                    <span class="admin-stock-status in-stock"><span class="dot"></span><span>In Stock</span></span>
-                  </td>
-                  <td style="text-align:right;">
-                    <div class="admin-row-actions">
-                      <button type="button" class="btn-table-edit" data-edit-id="prod-1794041923563"><span>Edit</span></button>
-                      <button type="button" class="btn-table-remove" data-remove-id="prod-1794041923563"><span>Remove</span></button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </section>
 
       <!-- ===================================================================
@@ -871,24 +1018,28 @@
           <div class="admin-table-header">
             <div>
               <h2 class="admin-section-title" style="margin-bottom:0.25rem;">Recent Customer Orders</h2>
-              <p style="font-size:0.8rem;color:var(--admin-text-secondary);">Manage fulfillment status, track consignments, and print official GST invoices.</p>
+              <p style="font-size:0.8rem;color:var(--admin-text-secondary);">Manage fulfillment status, track
+                consignments, and print official GST invoices.</p>
             </div>
 
             <div class="admin-table-filters">
-              <input type="search" class="admin-search-input" id="admin-orders-search" placeholder="Search Invoice #, Name, Phone..." />
+              <input type="search" class="admin-search-input" id="admin-orders-search"
+                placeholder="Search Invoice #, Name, Phone..." />
               <button type="button" class="btn-admin-outline" id="admin-refresh-orders-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                   <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
                 </svg>
                 <span>Refresh</span>
               </button>
-              <button type="button" class="btn-admin-outline" id="admin-test-order-notif-btn" title="Simulate a live customer order with sound and alerts">
+              <button type="button" class="btn-admin-outline" id="admin-test-order-notif-btn"
+                title="Simulate a live customer order with sound and alerts">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                 </svg>
                 <span>Test Alert 🔔</span>
               </button>
-              <button type="button" class="btn-admin-outline" id="admin-export-orders-csv-btn" title="Export Orders for GST Accounting &amp; Excel">
+              <button type="button" class="btn-admin-outline" id="admin-export-orders-csv-btn"
+                title="Export Orders for GST Accounting &amp; Excel">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                   <polyline points="7 10 12 15 17 10"></polyline>
@@ -901,12 +1052,18 @@
 
           <!-- Status Filter Pills -->
           <div class="admin-quick-filter-pills" id="admin-order-status-pills">
-            <button type="button" class="admin-pill-btn active" data-status="all">All Orders (<span id="pill-orders-all">5</span>)</button>
-            <button type="button" class="admin-pill-btn" data-status="Confirmed">Confirmed (<span id="pill-orders-confirmed">1</span>)</button>
-            <button type="button" class="admin-pill-btn" data-status="Processing">Processing (<span id="pill-orders-processing">1</span>)</button>
-            <button type="button" class="admin-pill-btn" data-status="Dispatched">Dispatched (<span id="pill-orders-dispatched">1</span>)</button>
-            <button type="button" class="admin-pill-btn" data-status="Delivered">Delivered (<span id="pill-orders-delivered">2</span>)</button>
-            <button type="button" class="admin-pill-btn" data-status="Cancelled" style="color:#DC2626;">Cancelled (<span id="pill-orders-cancelled">0</span>)</button>
+            <button type="button" class="admin-pill-btn active" data-status="all">All Orders (<span
+                id="pill-orders-all">5</span>)</button>
+            <button type="button" class="admin-pill-btn" data-status="Confirmed">Confirmed (<span
+                id="pill-orders-confirmed">1</span>)</button>
+            <button type="button" class="admin-pill-btn" data-status="Processing">Processing (<span
+                id="pill-orders-processing">1</span>)</button>
+            <button type="button" class="admin-pill-btn" data-status="Dispatched">Dispatched (<span
+                id="pill-orders-dispatched">1</span>)</button>
+            <button type="button" class="admin-pill-btn" data-status="Delivered">Delivered (<span
+                id="pill-orders-delivered">2</span>)</button>
+            <button type="button" class="admin-pill-btn" data-status="Cancelled" style="color:#DC2626;">Cancelled (<span
+                id="pill-orders-cancelled">0</span>)</button>
           </div>
 
           <div class="admin-table-responsive">
@@ -925,12 +1082,16 @@
               <tbody id="admin-orders-tbody">
                 <tr>
                   <td>
-                    <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">INV-DEV-2026-1048</div>
+                    <div
+                      style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">
+                      INV-DEV-2026-1048</div>
                     <div style="font-size:0.75rem;color:var(--admin-text-secondary);">2 days ago</div>
                   </td>
                   <td>
-                    <div style="font-weight:700;color:var(--admin-text-main);">Ar. Rajesh Patel (Patel &amp; Associates)</div>
-                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 +91 98250 12345 · Morbi, Gujarat</div>
+                    <div style="font-weight:700;color:var(--admin-text-main);">Ar. Rajesh Patel (Patel &amp; Associates)
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 +91 98250 12345 · Morbi,
+                      Gujarat</div>
                   </td>
                   <td>
                     <span style="font-weight:700;">12 unit(s)</span>
@@ -952,20 +1113,25 @@
                   </td>
                   <td style="text-align:right;">
                     <div class="admin-row-actions">
-                      <button type="button" class="btn-table-invoice" data-view-invoice-id="INV-DEV-2026-1048" title="View &amp; Print Official GST Tax Invoice"><span>Invoice</span></button>
-                      <button type="button" class="btn-table-whatsapp" data-wa-dispatch-id="INV-DEV-2026-1048" title="Send WhatsApp Dispatch Notice"><span>WhatsApp</span></button>
+                      <button type="button" class="btn-table-invoice" data-view-invoice-id="INV-DEV-2026-1048"
+                        title="View &amp; Print Official GST Tax Invoice"><span>Invoice</span></button>
+                      <button type="button" class="btn-table-whatsapp" data-wa-dispatch-id="INV-DEV-2026-1048"
+                        title="Send WhatsApp Dispatch Notice"><span>WhatsApp</span></button>
                     </div>
                   </td>
                 </tr>
 
                 <tr>
                   <td>
-                    <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">INV-DEV-2026-1049</div>
+                    <div
+                      style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">
+                      INV-DEV-2026-1049</div>
                     <div style="font-size:0.75rem;color:var(--admin-text-secondary);">Yesterday</div>
                   </td>
                   <td>
                     <div style="font-weight:700;color:var(--admin-text-main);">Bhavin Shah (Shreeji Interior)</div>
-                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 +91 97240 88912 · Ahmedabad, Gujarat</div>
+                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 +91 97240 88912 · Ahmedabad,
+                      Gujarat</div>
                   </td>
                   <td>
                     <span style="font-weight:700;">65 unit(s)</span>
@@ -987,20 +1153,25 @@
                   </td>
                   <td style="text-align:right;">
                     <div class="admin-row-actions">
-                      <button type="button" class="btn-table-invoice" data-view-invoice-id="INV-DEV-2026-1049" title="View &amp; Print Official GST Tax Invoice"><span>Invoice</span></button>
-                      <button type="button" class="btn-table-whatsapp" data-wa-dispatch-id="INV-DEV-2026-1049" title="Send WhatsApp Dispatch Notice"><span>WhatsApp</span></button>
+                      <button type="button" class="btn-table-invoice" data-view-invoice-id="INV-DEV-2026-1049"
+                        title="View &amp; Print Official GST Tax Invoice"><span>Invoice</span></button>
+                      <button type="button" class="btn-table-whatsapp" data-wa-dispatch-id="INV-DEV-2026-1049"
+                        title="Send WhatsApp Dispatch Notice"><span>WhatsApp</span></button>
                     </div>
                   </td>
                 </tr>
 
                 <tr>
                   <td>
-                    <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">INV-DEV-2026-1050</div>
+                    <div
+                      style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">
+                      INV-DEV-2026-1050</div>
                     <div style="font-size:0.75rem;color:var(--admin-text-secondary);">Today</div>
                   </td>
                   <td>
                     <div style="font-weight:700;color:var(--admin-text-main);">Ketan Mehta (Mehta Hardware Mart)</div>
-                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 +91 94282 34567 · Rajkot, Gujarat</div>
+                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 +91 94282 34567 · Rajkot,
+                      Gujarat</div>
                   </td>
                   <td>
                     <span style="font-weight:700;">50 unit(s)</span>
@@ -1022,20 +1193,25 @@
                   </td>
                   <td style="text-align:right;">
                     <div class="admin-row-actions">
-                      <button type="button" class="btn-table-invoice" data-view-invoice-id="INV-DEV-2026-1050" title="View &amp; Print Official GST Tax Invoice"><span>Invoice</span></button>
-                      <button type="button" class="btn-table-whatsapp" data-wa-dispatch-id="INV-DEV-2026-1050" title="Send WhatsApp Dispatch Notice"><span>WhatsApp</span></button>
+                      <button type="button" class="btn-table-invoice" data-view-invoice-id="INV-DEV-2026-1050"
+                        title="View &amp; Print Official GST Tax Invoice"><span>Invoice</span></button>
+                      <button type="button" class="btn-table-whatsapp" data-wa-dispatch-id="INV-DEV-2026-1050"
+                        title="Send WhatsApp Dispatch Notice"><span>WhatsApp</span></button>
                     </div>
                   </td>
                 </tr>
 
                 <tr>
                   <td>
-                    <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">INV-DEV-2026-1045</div>
+                    <div
+                      style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">
+                      INV-DEV-2026-1045</div>
                     <div style="font-size:0.75rem;color:var(--admin-text-secondary);">5 days ago</div>
                   </td>
                   <td>
                     <div style="font-weight:700;color:var(--admin-text-main);">Pooja Deshmukh (Luxury Residence)</div>
-                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 +91 98201 98765 · Mumbai, Maharashtra</div>
+                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 +91 98201 98765 · Mumbai,
+                      Maharashtra</div>
                   </td>
                   <td>
                     <span style="font-weight:700;">9 unit(s)</span>
@@ -1057,20 +1233,25 @@
                   </td>
                   <td style="text-align:right;">
                     <div class="admin-row-actions">
-                      <button type="button" class="btn-table-invoice" data-view-invoice-id="INV-DEV-2026-1045" title="View &amp; Print Official GST Tax Invoice"><span>Invoice</span></button>
-                      <button type="button" class="btn-table-whatsapp" data-wa-dispatch-id="INV-DEV-2026-1045" title="Send WhatsApp Dispatch Notice"><span>WhatsApp</span></button>
+                      <button type="button" class="btn-table-invoice" data-view-invoice-id="INV-DEV-2026-1045"
+                        title="View &amp; Print Official GST Tax Invoice"><span>Invoice</span></button>
+                      <button type="button" class="btn-table-whatsapp" data-wa-dispatch-id="INV-DEV-2026-1045"
+                        title="Send WhatsApp Dispatch Notice"><span>WhatsApp</span></button>
                     </div>
                   </td>
                 </tr>
 
                 <tr>
                   <td>
-                    <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">INV-DEV-2026-1042</div>
+                    <div
+                      style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--admin-text-main);">
+                      INV-DEV-2026-1042</div>
                     <div style="font-size:0.75rem;color:var(--admin-text-secondary);">8 days ago</div>
                   </td>
                   <td>
                     <div style="font-weight:700;color:var(--admin-text-main);">Amitabh Verma (Verma Builders)</div>
-                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 +91 99100 54321 · Noida, UP</div>
+                    <div style="font-size:0.75rem;color:var(--admin-text-secondary);">📞 +91 99100 54321 · Noida, UP
+                    </div>
                   </td>
                   <td>
                     <span style="font-weight:700;">140 unit(s)</span>
@@ -1092,8 +1273,10 @@
                   </td>
                   <td style="text-align:right;">
                     <div class="admin-row-actions">
-                      <button type="button" class="btn-table-invoice" data-view-invoice-id="INV-DEV-2026-1042" title="View &amp; Print Official GST Tax Invoice"><span>Invoice</span></button>
-                      <button type="button" class="btn-table-whatsapp" data-wa-dispatch-id="INV-DEV-2026-1042" title="Send WhatsApp Dispatch Notice"><span>WhatsApp</span></button>
+                      <button type="button" class="btn-table-invoice" data-view-invoice-id="INV-DEV-2026-1042"
+                        title="View &amp; Print Official GST Tax Invoice"><span>Invoice</span></button>
+                      <button type="button" class="btn-table-whatsapp" data-wa-dispatch-id="INV-DEV-2026-1042"
+                        title="Send WhatsApp Dispatch Notice"><span>WhatsApp</span></button>
                     </div>
                   </td>
                 </tr>
@@ -1110,7 +1293,8 @@
         <div class="admin-form-card">
           <h2 class="admin-section-title">Store Operations Overview</h2>
           <p style="color:var(--admin-text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">
-            Real-time synchronization with Cloud Firestore for product inventory, order fulfillments, and GST compliance.
+            Real-time synchronization with Cloud Firestore for product inventory, order fulfillments, and GST
+            compliance.
           </p>
 
           <div class="admin-kpi-row" style="margin-bottom:1.5rem;">
@@ -1140,12 +1324,17 @@
             </div>
           </div>
 
-          <div style="background-color:var(--admin-card-tint);border:1px solid var(--admin-border);border-radius:12px;padding:1.25rem;">
-            <h3 style="font-size:1rem;font-weight:700;color:var(--admin-text-main);margin-bottom:0.4rem;">Quick Navigation</h3>
-            <p style="font-size:0.85rem;color:var(--admin-text-secondary);margin-bottom:1rem;">Manage your store catalog or fulfill customer shipments.</p>
+          <div
+            style="background-color:var(--admin-card-tint);border:1px solid var(--admin-border);border-radius:12px;padding:1.25rem;">
+            <h3 style="font-size:1rem;font-weight:700;color:var(--admin-text-main);margin-bottom:0.4rem;">Quick
+              Navigation</h3>
+            <p style="font-size:0.85rem;color:var(--admin-text-secondary);margin-bottom:1rem;">Manage your store catalog
+              or fulfill customer shipments.</p>
             <div style="display:flex;gap:10px;">
-              <button type="button" class="btn-terracotta" onclick="document.getElementById('nav-products').click()">Manage Products &rarr;</button>
-              <button type="button" class="btn-admin-outline" onclick="document.getElementById('nav-orders').click()">View Orders &rarr;</button>
+              <button type="button" class="btn-terracotta"
+                onclick="document.getElementById('nav-products').click()">Manage Products &rarr;</button>
+              <button type="button" class="btn-admin-outline"
+                onclick="document.getElementById('nav-orders').click()">View Orders &rarr;</button>
             </div>
           </div>
         </div>
@@ -1167,7 +1356,9 @@
               <div>
                 <div class="admin-kpi-label">Department 1</div>
                 <div style="font-size:1.1rem;font-weight:800;color:var(--admin-text-main);">Electrical</div>
-                <div id="cat-count-electrical" style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading items...</div>
+                <div id="cat-count-electrical"
+                  style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading
+                  items...</div>
               </div>
             </div>
 
@@ -1176,7 +1367,9 @@
               <div>
                 <div class="admin-kpi-label">Department 2</div>
                 <div style="font-size:1.1rem;font-weight:800;color:var(--admin-text-main);">Hardware</div>
-                <div id="cat-count-hardware" style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading items...</div>
+                <div id="cat-count-hardware"
+                  style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading
+                  items...</div>
               </div>
             </div>
 
@@ -1185,7 +1378,9 @@
               <div>
                 <div class="admin-kpi-label">Department 3</div>
                 <div style="font-size:1.1rem;font-weight:800;color:var(--admin-text-main);">Plumbing</div>
-                <div id="cat-count-plumbing" style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading items...</div>
+                <div id="cat-count-plumbing"
+                  style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading
+                  items...</div>
               </div>
             </div>
 
@@ -1194,7 +1389,9 @@
               <div>
                 <div class="admin-kpi-label">Department 4</div>
                 <div style="font-size:1.1rem;font-weight:800;color:var(--admin-text-main);">Paints</div>
-                <div id="cat-count-paints" style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading items...</div>
+                <div id="cat-count-paints"
+                  style="font-size:0.8rem; font-weight:700; color:var(--admin-terracotta); margin-top:2px;">Loading
+                  items...</div>
               </div>
             </div>
           </div>
@@ -1248,24 +1445,30 @@
            =================================================================== -->
       <section class="admin-view-panel" id="view-settings">
         <div style="display:flex;flex-direction:column;gap:1.5rem;max-width:760px;">
-          
+
           <!-- Payment Gateway & SMS Integration Card -->
           <div class="admin-form-card" style="border-left:4px solid var(--admin-terracotta);">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
               <h2 class="admin-section-title" style="margin:0;">💳 Payment Gateway &amp; 📲 SMS Gateway Setup</h2>
-              <span class="badge" style="background:#FEF3C7;color:#92400E;padding:4px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;">Live Configuration</span>
+              <span class="badge"
+                style="background:#FEF3C7;color:#92400E;padding:4px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;">Live
+                Configuration</span>
             </div>
             <p style="font-size:0.85rem;color:var(--admin-text-secondary);margin-bottom:1.25rem;">
-              Configure Razorpay credentials and cellular SMS gateways. Customers receive SMS order receipts and can pay via UPI, QR, Cards, or NetBanking.
+              Configure Razorpay credentials and cellular SMS gateways. Customers receive SMS order receipts and can pay
+              via UPI, QR, Cards, or NetBanking.
             </p>
 
             <form id="admin-settings-form" onsubmit="return false;">
               <div style="display:flex;flex-direction:column;gap:1.2rem;">
-                
+
                 <!-- Official UPI Payment QR & VPA Configuration -->
-                <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:1rem;display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap;">
-                  <div style="background:#fff;padding:6px;border-radius:8px;border:1px solid #CBD5E1;box-shadow:0 1px 4px rgba(0,0,0,0.05);flex-shrink:0;">
-                    <img src="assets/images/payment_upi_qr.png" alt="Devshree Store Payment QR" style="width:90px;height:90px;object-fit:contain;display:block;" />
+                <div
+                  style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:1rem;display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap;">
+                  <div
+                    style="background:#fff;padding:6px;border-radius:8px;border:1px solid #CBD5E1;box-shadow:0 1px 4px rgba(0,0,0,0.05);flex-shrink:0;">
+                    <img src="assets/images/payment_upi_qr.png" alt="Devshree Store Payment QR"
+                      style="width:90px;height:90px;object-fit:contain;display:block;" />
                   </div>
                   <div style="flex:1;min-width:240px;">
                     <div style="font-weight:700;color:var(--admin-text-main);font-size:0.95rem;margin-bottom:2px;">
@@ -1283,36 +1486,46 @@
                 <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
                   <div class="form-group">
                     <label class="admin-numbered-label" for="settings-upi-vpa">Store Receiving UPI ID (VPA)</label>
-                    <input type="text" class="admin-input" id="settings-upi-vpa" placeholder="8866130409@axisbank" value="8866130409@axisbank" />
+                    <input type="text" class="admin-input" id="settings-upi-vpa" placeholder="8866130409@axisbank"
+                      value="8866130409@axisbank" />
                   </div>
                   <div class="form-group">
                     <label class="admin-numbered-label" for="settings-upi-name">Payee Account Name</label>
-                    <input type="text" class="admin-input" id="settings-upi-name" placeholder="Devshree Hardware" value="Devshree Hardware" />
+                    <input type="text" class="admin-input" id="settings-upi-name" placeholder="Devshree Hardware"
+                      value="Devshree Hardware" />
                   </div>
                 </div>
 
                 <!-- Razorpay Key ID -->
                 <div class="form-group">
-                  <label class="admin-numbered-label" for="settings-razorpay-key">Razorpay Merchant Key ID (Optional)</label>
-                  <input type="text" class="admin-input" id="settings-razorpay-key" placeholder="rzp_test_... or rzp_live_... (leave empty for built-in gateway)" />
+                  <label class="admin-numbered-label" for="settings-razorpay-key">Razorpay Merchant Key ID
+                    (Optional)</label>
+                  <input type="text" class="admin-input" id="settings-razorpay-key"
+                    placeholder="rzp_test_... or rzp_live_... (leave empty for built-in gateway)" />
                   <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
-                    Found in Razorpay Dashboard &rarr; Settings &rarr; API Keys. If left empty, Devshree's instant direct payment gateway (UPI QR &amp; Cards) is used automatically.
+                    Found in Razorpay Dashboard &rarr; Settings &rarr; API Keys. If left empty, Devshree's instant
+                    direct payment gateway (UPI QR &amp; Cards) is used automatically.
                   </small>
                 </div>
 
                 <!-- WhatsApp Webhook Dispatcher URL -->
                 <div class="form-group">
-                  <label class="admin-numbered-label" for="settings-wa-webhook">WhatsApp / Automation Webhook URL (Optional)</label>
-                  <input type="url" class="admin-input" id="settings-wa-webhook" placeholder="https://api.yourdomain.com/webhook/whatsapp or Zapier / Pabbly hook" />
+                  <label class="admin-numbered-label" for="settings-wa-webhook">WhatsApp / Automation Webhook URL
+                    (Optional)</label>
+                  <input type="url" class="admin-input" id="settings-wa-webhook"
+                    placeholder="https://api.yourdomain.com/webhook/whatsapp or Zapier / Pabbly hook" />
                   <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
-                    If provided, orders will post JSON payloads to your custom WhatsApp bot or webhook dispatcher automatically.
+                    If provided, orders will post JSON payloads to your custom WhatsApp bot or webhook dispatcher
+                    automatically.
                   </small>
                 </div>
 
                 <!-- Store Owner Mobile Number -->
                 <div class="form-group">
-                  <label class="admin-numbered-label" for="settings-owner-phone">Store Owner Mobile Number for WhatsApp Alerts</label>
-                  <input type="tel" class="admin-input" id="settings-owner-phone" placeholder="918866130409" value="918866130409" />
+                  <label class="admin-numbered-label" for="settings-owner-phone">Store Owner Mobile Number for WhatsApp
+                    Alerts</label>
+                  <input type="tel" class="admin-input" id="settings-owner-phone" placeholder="918866130409"
+                    value="918866130409" />
                   <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
                     Receives WhatsApp new order dispatch and customer trade notifications when an order is placed.
                   </small>
@@ -1320,17 +1533,21 @@
 
                 <!-- CallMeBot Free WhatsApp API Key -->
                 <div class="form-group">
-                  <label class="admin-numbered-label" for="settings-callmebot-key">CallMeBot Free WhatsApp API Key (Optional — For 100% Background Delivery)</label>
+                  <label class="admin-numbered-label" for="settings-callmebot-key">CallMeBot Free WhatsApp API Key
+                    (Optional — For 100% Background Delivery)</label>
                   <input type="text" class="admin-input" id="settings-callmebot-key" placeholder="e.g. 1234567" />
                   <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
-                    Enables automated background message delivery to +91 88661 30409 without clicking links. (To activate: send <code>I allow callmebot to send me messages</code> to <strong>+34 941 04 22 25</strong> on WhatsApp).
+                    Enables automated background message delivery to +91 88661 30409 without clicking links. (To
+                    activate: send <code>I allow callmebot to send me messages</code> to <strong>+34 941 04 22
+                      25</strong> on WhatsApp).
                   </small>
                 </div>
 
                 <!-- Action Buttons -->
                 <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.5rem;">
                   <button type="button" class="btn-terracotta" id="settings-save-btn" style="padding:0.75rem 1.5rem;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5">
                       <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                       <polyline points="17 21 17 13 7 13 7 21"></polyline>
                       <polyline points="7 3 7 8 15 8"></polyline>
@@ -1338,7 +1555,8 @@
                     <span>Save Gateway Settings</span>
                   </button>
 
-                  <button type="button" class="btn-admin-outline" id="settings-test-wa-btn" style="padding:0.75rem 1.25rem;">
+                  <button type="button" class="btn-admin-outline" id="settings-test-wa-btn"
+                    style="padding:0.75rem 1.25rem;">
                     <span>💬 Test WhatsApp Alert</span>
                   </button>
                 </div>
@@ -1349,10 +1567,12 @@
 
           <!-- Store Maintenance Mode Control Card -->
           <div class="admin-form-card" style="border-left:4px solid #EA580C;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.75rem;">
+            <div
+              style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.75rem;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <h2 class="admin-section-title" style="margin:0;">🛠️ Store Maintenance Mode</h2>
-                <span class="badge" id="maintenance-status-badge" style="background:#DCFCE7;color:#166534;padding:4px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;">
+                <span class="badge" id="maintenance-status-badge"
+                  style="background:#DCFCE7;color:#166534;padding:4px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;">
                   Store Live
                 </span>
               </div>
@@ -1366,22 +1586,27 @@
             </div>
 
             <p style="font-size:0.85rem;color:var(--admin-text-secondary);margin-bottom:1.25rem;">
-              Turn on maintenance mode whenever you want to make changes to products, prices, or store pages. Regular visitors will see your custom maintenance screen with disconnected cable artwork and support contact info. As an administrator, you will always have access to this portal and can preview your store changes.
+              Turn on maintenance mode whenever you want to make changes to products, prices, or store pages. Regular
+              visitors will see your custom maintenance screen with disconnected cable artwork and support contact info.
+              As an administrator, you will always have access to this portal and can preview your store changes.
             </p>
 
             <form id="admin-maintenance-settings-form" onsubmit="return false;">
               <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
                 <div class="form-group">
                   <label class="admin-numbered-label" for="maintenance-headline-input">Maintenance Headline</label>
-                  <input type="text" class="admin-input" id="maintenance-headline-input" value="The site is currently down for maintenance" />
+                  <input type="text" class="admin-input" id="maintenance-headline-input"
+                    value="The site is currently down for maintenance" />
                   <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
                     Main announcement displayed to visitors.
                   </small>
                 </div>
 
                 <div class="form-group">
-                  <label class="admin-numbered-label" for="maintenance-eta-input">Estimated Return / Uptime (Optional)</label>
-                  <input type="text" class="admin-input" id="maintenance-eta-input" placeholder="e.g. Back in 30 minutes / Today at 6:00 PM" />
+                  <label class="admin-numbered-label" for="maintenance-eta-input">Estimated Return / Uptime
+                    (Optional)</label>
+                  <input type="text" class="admin-input" id="maintenance-eta-input"
+                    placeholder="e.g. Back in 30 minutes / Today at 6:00 PM" />
                   <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
                     Shows an estimated time badge so customers know when to return.
                   </small>
@@ -1389,16 +1614,20 @@
               </div>
 
               <div class="form-group" style="margin-bottom:1rem;">
-                <label class="admin-numbered-label" for="maintenance-message-input">Maintenance Subtitle / Apology Message</label>
-                <textarea class="admin-input" id="maintenance-message-input" rows="2" style="resize:vertical;">We apologize for any inconveniences caused. We've almost done.</textarea>
+                <label class="admin-numbered-label" for="maintenance-message-input">Maintenance Subtitle / Apology
+                  Message</label>
+                <textarea class="admin-input" id="maintenance-message-input" rows="2"
+                  style="resize:vertical;">We apologize for any inconveniences caused. We've almost done.</textarea>
                 <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
                   Polite reassurance message below the main headline.
                 </small>
               </div>
 
-              <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+              <div class="form-row-2"
+                style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
                 <div class="form-group">
-                  <label class="admin-numbered-label" for="maintenance-phone-input">Customer Support Phone for Maintenance</label>
+                  <label class="admin-numbered-label" for="maintenance-phone-input">Customer Support Phone for
+                    Maintenance</label>
                   <input type="tel" class="admin-input" id="maintenance-phone-input" value="+91 8866130409" />
                   <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
                     Direct calling and WhatsApp support number shown on the maintenance footer.
@@ -1414,7 +1643,8 @@
               </div>
 
               <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-                <button type="button" class="btn-terracotta" id="btn-save-maintenance-settings" style="padding:0.75rem 1.5rem;">
+                <button type="button" class="btn-terracotta" id="btn-save-maintenance-settings"
+                  style="padding:0.75rem 1.5rem;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                     <polyline points="17 21 17 13 7 13 7 21"></polyline>
@@ -1423,7 +1653,8 @@
                   <span>Save Maintenance Settings</span>
                 </button>
 
-                <button type="button" class="btn-admin-outline" id="btn-preview-maintenance" style="padding:0.75rem 1.25rem;">
+                <button type="button" class="btn-admin-outline" id="btn-preview-maintenance"
+                  style="padding:0.75rem 1.25rem;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                     <circle cx="12" cy="12" r="3"></circle>
@@ -1431,7 +1662,8 @@
                   <span>Preview Maintenance Screen</span>
                 </button>
 
-                <span id="maintenance-save-status" style="font-size:0.8rem;color:#16A34A;display:none;font-weight:700;">✓ Settings Saved!</span>
+                <span id="maintenance-save-status"
+                  style="font-size:0.8rem;color:#16A34A;display:none;font-weight:700;">✓ Settings Saved!</span>
               </div>
             </form>
           </div>
@@ -1440,10 +1672,13 @@
           <div class="admin-form-card" style="border-left:4px solid #1E293B;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
               <h2 class="admin-section-title" style="margin:0;">🔐 Admin Portal Security &amp; Credentials</h2>
-              <span class="badge" style="background:#EEF2F6;color:#1E293B;padding:4px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;">Owner Authentication</span>
+              <span class="badge"
+                style="background:#EEF2F6;color:#1E293B;padding:4px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;">Owner
+                Authentication</span>
             </div>
             <p style="font-size:0.85rem;color:var(--admin-text-secondary);margin-bottom:1.25rem;">
-              Only this specific email and password can sign in and open the Admin Portal. You can change your administrator password anytime below.
+              Only this specific email and password can sign in and open the Admin Portal. You can change your
+              administrator password anytime below.
             </p>
 
             <form id="admin-security-settings-form" onsubmit="return false;">
@@ -1458,9 +1693,12 @@
                 <div class="form-group">
                   <label class="admin-numbered-label" for="settings-admin-password">Admin Password</label>
                   <div class="admin-password-wrap">
-                    <input type="password" class="admin-input" id="settings-admin-password" placeholder="Enter new password" />
-                    <button type="button" class="admin-password-toggle-btn" id="settings-password-toggle-btn" title="Toggle password visibility">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <input type="password" class="admin-input" id="settings-admin-password"
+                      placeholder="Enter new password" />
+                    <button type="button" class="admin-password-toggle-btn" id="settings-password-toggle-btn"
+                      title="Toggle password visibility">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
                       </svg>
@@ -1473,7 +1711,8 @@
               </div>
 
               <div style="display:flex;gap:0.75rem;align-items:center;">
-                <button type="button" class="btn-terracotta" id="btn-save-admin-credentials" style="padding:0.75rem 1.5rem;">
+                <button type="button" class="btn-terracotta" id="btn-save-admin-credentials"
+                  style="padding:0.75rem 1.5rem;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                     <polyline points="17 21 17 13 7 13 7 21"></polyline>
@@ -1481,7 +1720,8 @@
                   </svg>
                   <span>Update Admin Password</span>
                 </button>
-                <span id="admin-credentials-status" style="font-size:0.8rem;color:#16A34A;display:none;font-weight:700;">✓ Updated!</span>
+                <span id="admin-credentials-status"
+                  style="font-size:0.8rem;color:#16A34A;display:none;font-weight:700;">✓ Updated!</span>
               </div>
             </form>
           </div>
@@ -1564,14 +1804,17 @@
 
         <!-- Add / Edit Catalog Card -->
         <div class="admin-form-card" id="admin-catalog-form-card" style="margin-bottom:1.5rem;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
             <div>
-              <h2 class="admin-section-title" id="catalog-form-title" style="margin:0;">Add New PDF Catalog / Lookbook</h2>
+              <h2 class="admin-section-title" id="catalog-form-title" style="margin:0;">Add New PDF Catalog / Lookbook
+              </h2>
               <p style="margin:2px 0 0;font-size:0.85rem;color:var(--admin-text-secondary);">
                 Upload brand brochures, design guides, or technical specification PDFs for customer download.
               </p>
             </div>
-            <button type="button" class="btn-admin-outline" id="btn-reset-catalogs-default" style="font-size:0.75rem;padding:0.4rem 0.8rem;">
+            <button type="button" class="btn-admin-outline" id="btn-reset-catalogs-default"
+              style="font-size:0.75rem;padding:0.4rem 0.8rem;">
               <span>Restore Factory Catalogs</span>
             </button>
           </div>
@@ -1585,7 +1828,8 @@
                   <span class="step-num">1</span>
                   <span>Catalog Title *</span>
                 </label>
-                <input type="text" id="catalog-title" class="admin-input" placeholder="e.g. Acrysoft Genoa Matt Acrylic Laminates" required />
+                <input type="text" id="catalog-title" class="admin-input"
+                  placeholder="e.g. Acrysoft Genoa Matt Acrylic Laminates" required />
               </div>
 
               <div class="form-group">
@@ -1593,7 +1837,8 @@
                   <span class="step-num">2</span>
                   <span>Brand Name *</span>
                 </label>
-                <input type="text" id="catalog-brand" class="admin-input" placeholder="e.g. Acrysoft, Godrej, Greenlam" required />
+                <input type="text" id="catalog-brand" class="admin-input" placeholder="e.g. Acrysoft, Godrej, Greenlam"
+                  required />
               </div>
             </div>
 
@@ -1621,7 +1866,8 @@
                   <span class="step-num">4</span>
                   <span>Pages Count *</span>
                 </label>
-                <input type="number" id="catalog-pages" class="admin-input" placeholder="4" min="1" max="500" value="4" required />
+                <input type="number" id="catalog-pages" class="admin-input" placeholder="4" min="1" max="500" value="4"
+                  required />
               </div>
 
               <div class="form-group">
@@ -1629,34 +1875,44 @@
                   <span class="step-num">5</span>
                   <span>File Size</span>
                 </label>
-                <input type="text" id="catalog-size" class="admin-input" placeholder="e.g. 5.4 KB or 2.1 MB" value="5.4 KB" />
+                <input type="text" id="catalog-size" class="admin-input" placeholder="e.g. 5.4 KB or 2.1 MB"
+                  value="5.4 KB" />
               </div>
             </div>
 
             <!-- Cover Image & PDF File Selection -->
             <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
               <!-- Cover Image -->
-              <div class="form-group" style="background:#FAF8F5;padding:0.85rem;border-radius:8px;border:1px solid #ECE7DF;">
+              <div class="form-group"
+                style="background:#FAF8F5;padding:0.85rem;border-radius:8px;border:1px solid #ECE7DF;">
                 <label class="admin-numbered-label" for="catalog-cover-file">
                   <span class="step-num">6</span>
                   <span>Cover Image *</span>
                 </label>
                 <div style="display:flex;gap:0.75rem;align-items:center;">
-                  <img id="catalog-cover-preview" src="assets/images/catalogs/catalog_acrysoft_genoa.jpg" alt="Preview" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #D6CFC4;cursor:pointer;" title="Click to choose cover photo" />
+                  <img id="catalog-cover-preview" src="assets/images/catalogs/catalog_acrysoft_genoa.jpg" alt="Preview"
+                    style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #D6CFC4;cursor:pointer;"
+                    title="Click to choose cover photo" />
                   <div style="flex:1;">
                     <div style="position:relative;display:inline-block;overflow:hidden;margin-bottom:4px;">
-                      <span class="btn-admin-outline" id="btn-browse-catalog-cover" style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;pointer-events:none;">
+                      <span class="btn-admin-outline" id="btn-browse-catalog-cover"
+                        style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;pointer-events:none;">
                         📁 Choose Image File
                       </span>
-                      <input type="file" id="catalog-cover-file" accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;font-size:0;" title="Choose Cover Image File" />
+                      <input type="file" id="catalog-cover-file"
+                        accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp"
+                        style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;font-size:0;"
+                        title="Choose Cover Image File" />
                     </div>
-                    <input type="text" id="catalog-cover-url" class="admin-input" placeholder="Or enter image URL" style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
+                    <input type="text" id="catalog-cover-url" class="admin-input" placeholder="Or enter image URL"
+                      style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
                   </div>
                 </div>
               </div>
 
               <!-- PDF File -->
-              <div class="form-group" style="background:#FAF8F5;padding:0.85rem;border-radius:8px;border:1px solid #ECE7DF;">
+              <div class="form-group"
+                style="background:#FAF8F5;padding:0.85rem;border-radius:8px;border:1px solid #ECE7DF;">
                 <label class="admin-numbered-label" for="catalog-pdf-file">
                   <span class="step-num">7</span>
                   <span>PDF Document *</span>
@@ -1664,27 +1920,42 @@
                 <div>
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
                     <div style="position:relative;display:inline-block;overflow:hidden;">
-                      <span class="btn-admin-outline" id="btn-browse-catalog-pdf" style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;pointer-events:none;">
+                      <span class="btn-admin-outline" id="btn-browse-catalog-pdf"
+                        style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;pointer-events:none;">
                         📄 Choose PDF File
                       </span>
-                      <input type="file" id="catalog-pdf-file" accept="application/pdf,.pdf" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;font-size:0;" title="Choose PDF File" />
+                      <input type="file" id="catalog-pdf-file" accept="application/pdf,.pdf"
+                        style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;font-size:0;"
+                        title="Choose PDF File" />
                     </div>
-                    <span id="catalog-pdf-help-text" style="font-size:0.72rem;color:var(--admin-text-secondary);">Direct PDF upload (auto-stored safely in browser engine)</span>
+                    <span id="catalog-pdf-help-text" style="font-size:0.72rem;color:var(--admin-text-secondary);">Direct
+                      PDF upload (auto-stored safely in browser engine)</span>
                   </div>
 
                   <!-- Selected PDF Visual Status Badge -->
-                  <div id="catalog-pdf-selected-badge" style="display:none;margin-bottom:6px;padding:6px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;font-size:0.75rem;color:#166534;align-items:center;justify-content:space-between;gap:8px;">
-                    <div style="display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                  <div id="catalog-pdf-selected-badge"
+                    style="display:none;margin-bottom:6px;padding:6px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;font-size:0.75rem;color:#166534;align-items:center;justify-content:space-between;gap:8px;">
+                    <div
+                      style="display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                       <span>📄</span>
-                      <strong id="catalog-pdf-badge-name" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom;">file.pdf</strong>
+                      <strong id="catalog-pdf-badge-name"
+                        style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom;">file.pdf</strong>
                       <span id="catalog-pdf-badge-size" style="color:#15803D;font-weight:600;">(0 KB)</span>
-                      <span style="background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:4px;font-size:0.7rem;font-weight:700;">✓ PDF Ready</span>
+                      <span
+                        style="background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:4px;font-size:0.7rem;font-weight:700;">✓
+                        PDF Ready</span>
                     </div>
-                    <button type="button" id="btn-clear-catalog-pdf" style="background:none;border:none;color:#DC2626;cursor:pointer;font-weight:700;font-size:0.9rem;padding:0 4px;" title="Clear selected PDF">&times;</button>
+                    <button type="button" id="btn-clear-catalog-pdf"
+                      style="background:none;border:none;color:#DC2626;cursor:pointer;font-weight:700;font-size:0.9rem;padding:0 4px;"
+                      title="Clear selected PDF">&times;</button>
                   </div>
 
-                  <input type="text" id="catalog-pdf-url" class="admin-input" placeholder="Or enter PDF URL (e.g. assets/catalogs/...)" style="font-size:0.75rem;padding:0.4rem 0.6rem;margin-bottom:4px;" />
-                  <input type="text" id="catalog-filename" class="admin-input" placeholder="Download filename (e.g. LookBook-2026.pdf)" style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
+                  <input type="text" id="catalog-pdf-url" class="admin-input"
+                    placeholder="Or enter PDF URL (e.g. assets/catalogs/...)"
+                    style="font-size:0.75rem;padding:0.4rem 0.6rem;margin-bottom:4px;" />
+                  <input type="text" id="catalog-filename" class="admin-input"
+                    placeholder="Download filename (e.g. LookBook-2026.pdf)"
+                    style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
                 </div>
               </div>
             </div>
@@ -1695,13 +1966,18 @@
                 <span class="step-num">8</span>
                 <span>Short Description</span>
               </label>
-              <textarea id="catalog-desc" class="admin-textarea" rows="2" placeholder="Brief summary of collections, finishes, warranty and technical features."></textarea>
+              <textarea id="catalog-desc" class="admin-textarea" rows="2"
+                placeholder="Brief summary of collections, finishes, warranty and technical features."></textarea>
             </div>
 
             <!-- Action buttons -->
             <div style="display:flex;gap:0.75rem;align-items:center;">
               <button type="submit" class="btn-terracotta" id="btn-save-catalog">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
                 <span id="btn-save-catalog-text">Save PDF Catalog</span>
               </button>
               <button type="button" class="btn-admin-outline" id="btn-cancel-catalog" style="display:none;">
@@ -1713,7 +1989,8 @@
 
         <!-- Catalogs List Table Card -->
         <div class="admin-table-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
             <div>
               <h2 class="admin-section-title" style="margin:0;">PDF Catalogs Directory</h2>
               <p style="margin:2px 0 0;font-size:0.8rem;color:var(--admin-text-secondary);">
@@ -1721,8 +1998,10 @@
               </p>
             </div>
             <div style="display:flex;gap:0.5rem;align-items:center;">
-              <input type="text" id="admin-catalog-search" class="admin-input" placeholder="Search catalogs..." style="max-width:220px;font-size:0.8rem;padding:0.4rem 0.75rem;" />
-              <select id="admin-catalog-cat-filter" class="admin-select" style="max-width:180px;font-size:0.8rem;padding:0.4rem 0.75rem;">
+              <input type="text" id="admin-catalog-search" class="admin-input" placeholder="Search catalogs..."
+                style="max-width:220px;font-size:0.8rem;padding:0.4rem 0.75rem;" />
+              <select id="admin-catalog-cat-filter" class="admin-select"
+                style="max-width:180px;font-size:0.8rem;padding:0.4rem 0.75rem;">
                 <option value="all">All Categories</option>
                 <option value="Laminates &amp; Liners">Laminates &amp; Liners</option>
                 <option value="MDF, HDHMR &amp; PVC Boards">MDF &amp; Boards</option>
@@ -1761,7 +2040,9 @@
           <div class="admin-kpi-card">
             <div class="admin-kpi-icon-circle terracotta">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                </polygon>
               </svg>
             </div>
             <div>
@@ -1802,14 +2083,17 @@
 
         <!-- Add / Edit Offer Slide Card -->
         <div class="admin-form-card" id="admin-offer-form-card" style="margin-bottom:1.5rem;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
             <div>
-              <h2 class="admin-section-title" id="offer-form-title" style="margin:0;">Add Promotional Carousel Offer</h2>
+              <h2 class="admin-section-title" id="offer-form-title" style="margin:0;">Add Promotional Carousel Offer
+              </h2>
               <p style="margin:2px 0 0;font-size:0.85rem;color:var(--admin-text-secondary);">
                 Create or customize slides displayed on the prominent top autoscrolling bar of the homepage.
               </p>
             </div>
-            <button type="button" class="btn-admin-outline" id="btn-restore-default-offers" style="font-size:0.75rem;padding:0.4rem 0.8rem;">
+            <button type="button" class="btn-admin-outline" id="btn-restore-default-offers"
+              style="font-size:0.75rem;padding:0.4rem 0.8rem;">
               <span>Restore Default Slides</span>
             </button>
           </div>
@@ -1823,7 +2107,8 @@
                   <span class="step-num">1</span>
                   <span>Headline / Title *</span>
                 </label>
-                <input type="text" id="offer-title" class="admin-input" placeholder="e.g. Heavy-Duty Power Tools &amp; Industrial Machines" required />
+                <input type="text" id="offer-title" class="admin-input"
+                  placeholder="e.g. Heavy-Duty Power Tools &amp; Industrial Machines" required />
               </div>
 
               <div class="form-group">
@@ -1841,7 +2126,8 @@
                   <span class="step-num">3</span>
                   <span>Tag Badge *</span>
                 </label>
-                <input type="text" id="offer-badge" class="admin-input" placeholder="e.g. Festive pricing, Contractor special" required />
+                <input type="text" id="offer-badge" class="admin-input"
+                  placeholder="e.g. Festive pricing, Contractor special" required />
               </div>
 
               <div class="form-group">
@@ -1849,7 +2135,8 @@
                   <span class="step-num">4</span>
                   <span>Discount / Spec Badge *</span>
                 </label>
-                <input type="text" id="offer-spec" class="admin-input" placeholder="e.g. Up to 40% off, Flat 25% OFF" required />
+                <input type="text" id="offer-spec" class="admin-input" placeholder="e.g. Up to 40% off, Flat 25% OFF"
+                  required />
               </div>
 
               <div class="form-group">
@@ -1868,21 +2155,30 @@
             </div>
 
             <!-- Slide Image -->
-            <div class="form-group" style="background:#FAF8F5;padding:0.85rem;border-radius:8px;border:1px solid #ECE7DF;margin-bottom:1rem;">
+            <div class="form-group"
+              style="background:#FAF8F5;padding:0.85rem;border-radius:8px;border:1px solid #ECE7DF;margin-bottom:1rem;">
               <label class="admin-numbered-label">
                 <span class="step-num">6</span>
                 <span>Slide Background Image *</span>
               </label>
               <div style="display:flex;gap:0.75rem;align-items:center;">
-                <img id="offer-image-preview" src="assets/images/cat_hardware.jpg" alt="Preview" style="width:80px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #D6CFC4;cursor:pointer;" title="Click to choose slide image" />
+                <img id="offer-image-preview" src="assets/images/cat_hardware.jpg" alt="Preview"
+                  style="width:80px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #D6CFC4;cursor:pointer;"
+                  title="Click to choose slide image" />
                 <div style="flex:1;">
                   <div style="position:relative;display:inline-block;overflow:hidden;margin-bottom:4px;">
-                    <span class="btn-admin-outline" id="btn-browse-offer-image" style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;pointer-events:none;">
+                    <span class="btn-admin-outline" id="btn-browse-offer-image"
+                      style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:0.35rem 0.75rem;pointer-events:none;">
                       📁 Upload Slide Image
                     </span>
-                    <input type="file" id="offer-image-file" accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;font-size:0;" title="Choose Slide Image" />
+                    <input type="file" id="offer-image-file"
+                      accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp"
+                      style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;font-size:0;"
+                      title="Choose Slide Image" />
                   </div>
-                  <input type="text" id="offer-image-url" class="admin-input" placeholder="Or enter image URL (e.g. assets/images/cat_hardware.jpg)" style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
+                  <input type="text" id="offer-image-url" class="admin-input"
+                    placeholder="Or enter image URL (e.g. assets/images/cat_hardware.jpg)"
+                    style="font-size:0.75rem;padding:0.4rem 0.6rem;" />
                 </div>
               </div>
             </div>
@@ -1894,21 +2190,24 @@
                   <span class="step-num">7</span>
                   <span>Perk 1</span>
                 </label>
-                <input type="text" id="offer-perk-1" class="admin-input" placeholder="e.g. Instant dispatch" value="Instant dispatch" />
+                <input type="text" id="offer-perk-1" class="admin-input" placeholder="e.g. Instant dispatch"
+                  value="Instant dispatch" />
               </div>
               <div class="form-group">
                 <label class="admin-numbered-label" for="offer-perk-2">
                   <span class="step-num">8</span>
                   <span>Perk 2</span>
                 </label>
-                <input type="text" id="offer-perk-2" class="admin-input" placeholder="e.g. ISI marked" value="ISI marked" />
+                <input type="text" id="offer-perk-2" class="admin-input" placeholder="e.g. ISI marked"
+                  value="ISI marked" />
               </div>
               <div class="form-group">
                 <label class="admin-numbered-label" for="offer-perk-3">
                   <span class="step-num">9</span>
                   <span>Perk 3</span>
                 </label>
-                <input type="text" id="offer-perk-3" class="admin-input" placeholder="e.g. UPI &amp; COD available" value="UPI &amp; COD available" />
+                <input type="text" id="offer-perk-3" class="admin-input" placeholder="e.g. UPI &amp; COD available"
+                  value="UPI &amp; COD available" />
               </div>
             </div>
 
@@ -1919,14 +2218,16 @@
                   <span class="step-num">10</span>
                   <span>Call to Action Button Text</span>
                 </label>
-                <input type="text" id="offer-cta-text" class="admin-input" placeholder="e.g. Shop Power Tools" value="Shop Deals" />
+                <input type="text" id="offer-cta-text" class="admin-input" placeholder="e.g. Shop Power Tools"
+                  value="Shop Deals" />
               </div>
               <div class="form-group">
                 <label class="admin-numbered-label" for="offer-cta-link">
                   <span class="step-num">11</span>
                   <span>Button Destination Link</span>
                 </label>
-                <input type="text" id="offer-cta-link" class="admin-input" placeholder="e.g. #bestsellers-section" value="#bestsellers-section" />
+                <input type="text" id="offer-cta-link" class="admin-input" placeholder="e.g. #bestsellers-section"
+                  value="#bestsellers-section" />
               </div>
             </div>
 
@@ -1936,13 +2237,18 @@
                 <span class="step-num">12</span>
                 <span>Offer Description / Subhead</span>
               </label>
-              <textarea id="offer-desc" class="admin-textarea" rows="2" placeholder="Brief promotion detail (brands, terms, warranty)."></textarea>
+              <textarea id="offer-desc" class="admin-textarea" rows="2"
+                placeholder="Brief promotion detail (brands, terms, warranty)."></textarea>
             </div>
 
             <!-- Action buttons -->
             <div style="display:flex;gap:0.75rem;align-items:center;">
               <button type="submit" class="btn-terracotta" id="btn-save-offer">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
                 <span id="btn-save-offer-text">Save Offer Slide</span>
               </button>
               <button type="button" class="btn-admin-outline" id="btn-cancel-offer" style="display:none;">
@@ -1954,7 +2260,8 @@
 
         <!-- Offers List Table Card -->
         <div class="admin-table-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
             <div>
               <h2 class="admin-section-title" style="margin:0;">Active Carousel Slides</h2>
               <p style="margin:2px 0 0;font-size:0.8rem;color:var(--admin-text-secondary);">
@@ -2012,9 +2319,11 @@
         </div>
         <div>
           <h3 style="margin:0;font-size:1.15rem;font-weight:700;color:#991B1B;">Cancel Customer Order</h3>
-          <p style="margin:2px 0 0;font-size:0.775rem;color:var(--admin-text-secondary);">Confirm cancellation and notify customer via WhatsApp.</p>
+          <p style="margin:2px 0 0;font-size:0.775rem;color:var(--admin-text-secondary);">Confirm cancellation and
+            notify customer via WhatsApp.</p>
         </div>
-        <button type="button" class="modal-close-btn" id="admin-cancel-modal-close" aria-label="Close dialog" style="margin-left:auto;">
+        <button type="button" class="modal-close-btn" id="admin-cancel-modal-close" aria-label="Close dialog"
+          style="margin-left:auto;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -2024,13 +2333,16 @@
 
       <div class="admin-cancel-modal-body">
         <!-- Order Summary Box -->
-        <div style="background:#FFF1F2;border:1px solid #FECDD3;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.15rem;">
+        <div
+          style="background:#FFF1F2;border:1px solid #FECDD3;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.15rem;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
-            <span style="font-family:'JetBrains Mono',monospace;font-weight:800;color:#9F1239;font-size:0.95rem;" id="cancel-modal-inv">INV-DEV</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:800;color:#9F1239;font-size:0.95rem;"
+              id="cancel-modal-inv">INV-DEV</span>
             <strong style="color:#881337;font-size:1.05rem;" id="cancel-modal-total">₹0</strong>
           </div>
           <div style="font-size:0.825rem;color:#4C0519;">
-            Customer: <strong id="cancel-modal-customer">Customer</strong> &bull; <span id="cancel-modal-phone">919876543210</span>
+            Customer: <strong id="cancel-modal-customer">Customer</strong> &bull; <span
+              id="cancel-modal-phone">919876543210</span>
           </div>
         </div>
 
@@ -2054,14 +2366,18 @@
           <label style="font-size:0.8rem;font-weight:700;color:var(--admin-text-main);display:block;margin-bottom:5px;">
             Custom Cancellation Reason *
           </label>
-          <input type="text" class="admin-input" id="cancel-modal-custom-reason" placeholder="e.g. Model discontinued or customer modified order" />
+          <input type="text" class="admin-input" id="cancel-modal-custom-reason"
+            placeholder="e.g. Model discontinued or customer modified order" />
         </div>
 
         <!-- WhatsApp Notification Checkbox -->
-        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:0.75rem 1rem;display:flex;align-items:flex-start;gap:0.65rem;">
-          <input type="checkbox" id="cancel-modal-notify-wa" checked style="margin-top:3px;cursor:pointer;accent-color:#16A34A;" />
-          <label for="cancel-modal-notify-wa" style="font-size:0.825rem;color:#14532D;cursor:pointer;user-select:none;line-height:1.4;">
-            <strong>Notify customer via WhatsApp</strong><br/>
+        <div
+          style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:0.75rem 1rem;display:flex;align-items:flex-start;gap:0.65rem;">
+          <input type="checkbox" id="cancel-modal-notify-wa" checked
+            style="margin-top:3px;cursor:pointer;accent-color:#16A34A;" />
+          <label for="cancel-modal-notify-wa"
+            style="font-size:0.825rem;color:#14532D;cursor:pointer;user-select:none;line-height:1.4;">
+            <strong>Notify customer via WhatsApp</strong><br />
             Opens WhatsApp with an official cancellation alert &amp; refund instructions.
           </label>
         </div>
@@ -2094,9 +2410,11 @@
         </div>
         <div>
           <h3 style="font-size:1.15rem;font-weight:800;color:#14532D;margin:0;">Sync Catalog to Mobile Phone</h3>
-          <p style="font-size:0.8rem;color:#166534;margin:2px 0 0 0;">Transfer newly added products from your laptop to your mobile phone store</p>
+          <p style="font-size:0.8rem;color:#166534;margin:2px 0 0 0;">Transfer newly added products from your laptop to
+            your mobile phone store</p>
         </div>
-        <button type="button" class="modal-close-btn" id="admin-sync-modal-close" aria-label="Close dialog" style="margin-left:auto;">
+        <button type="button" class="modal-close-btn" id="admin-sync-modal-close" aria-label="Close dialog"
+          style="margin-left:auto;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -2106,22 +2424,28 @@
 
       <div class="admin-cancel-modal-body" style="padding:1.25rem;">
         <!-- Why this happens box -->
-        <div style="background:#FEF9C3;border:1px solid #FEF08A;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:#713F12;line-height:1.5;">
-          <strong>Why didn't my mobile phone show the new product?</strong><br/>
-          Your laptop browser stores added products in its local storage (offline mode). Because your mobile phone is a separate device, it needs a 1-click sync link, or live Cloud Firestore credentials to synchronize automatically.
+        <div
+          style="background:#FEF9C3;border:1px solid #FEF08A;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:#713F12;line-height:1.5;">
+          <strong>Why didn't my mobile phone show the new product?</strong><br />
+          Your laptop browser stores added products in its local storage (offline mode). Because your mobile phone is a
+          separate device, it needs a 1-click sync link, or live Cloud Firestore credentials to synchronize
+          automatically.
         </div>
 
         <!-- Option 1: WhatsApp 1-Click Sync Link -->
         <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
             <strong style="font-size:0.875rem;color:#0F172A;">Option 1: Send 1-Click Sync to WhatsApp</strong>
-            <span style="font-size:0.75rem;background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:12px;font-weight:700;">Fastest</span>
+            <span
+              style="font-size:0.75rem;background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:12px;font-weight:700;">Fastest</span>
           </div>
           <p style="font-size:0.8rem;color:#64748B;margin-bottom:0.75rem;">
-            Send a sync link to your WhatsApp. When you tap the link on your phone, all added products are instantly loaded into your mobile store!
+            Send a sync link to your WhatsApp. When you tap the link on your phone, all added products are instantly
+            loaded into your mobile store!
           </p>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-            <button type="button" class="btn-terracotta" id="btn-sync-send-whatsapp" style="background:#16A34A;display:inline-flex;align-items:center;gap:6px;padding:0.6rem 1rem;font-size:0.825rem;">
+            <button type="button" class="btn-terracotta" id="btn-sync-send-whatsapp"
+              style="background:#16A34A;display:inline-flex;align-items:center;gap:6px;padding:0.6rem 1rem;font-size:0.825rem;">
               <span>💬 Send to WhatsApp (+91 88661 30409)</span>
             </button>
             <button type="button" class="btn-admin-outline" id="btn-sync-copy-link" style="font-size:0.825rem;">
@@ -2136,7 +2460,9 @@
             Option 2: 100% Automatic Real-Time Cloud Sync
           </strong>
           <p style="font-size:0.8rem;color:#166534;line-height:1.5;margin-bottom:0;">
-            To have products show up on all mobile phones and customer devices automatically without any link, link your free Firebase project credentials in <code style="background:#DCFCE7;padding:1px 4px;border-radius:3px;">assets/js/firebase-config.js</code>.
+            To have products show up on all mobile phones and customer devices automatically without any link, link your
+            free Firebase project credentials in <code
+              style="background:#DCFCE7;padding:1px 4px;border-radius:3px;">assets/js/firebase-config.js</code>.
           </p>
         </div>
       </div>
@@ -2145,6 +2471,114 @@
         <button type="button" class="btn-admin-outline" id="admin-sync-modal-done-btn">
           Close
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low Stock Alert Settings Modal -->
+  <div class="modal-backdrop" id="admin-low-stock-modal" role="dialog" aria-modal="true" style="display:none;">
+    <div class="admin-cancel-modal-box"
+      style="max-width:680px;width:95%;max-height:90vh;display:flex;flex-direction:column;">
+      <div class="admin-cancel-modal-header" style="background:#FFFBEB;border-bottom:1px solid #FDE68A;">
+        <div class="admin-cancel-icon-circle" style="background:#FEF3C7;color:#D97706;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <div>
+          <h3 style="font-size:1.15rem;font-weight:800;color:#92400E;margin:0;">Low Stock Alert Configuration</h3>
+          <p style="font-size:0.8rem;color:#B45309;margin:2px 0 0 0;">Set minimum stock warning levels across all
+            products or customize individually</p>
+        </div>
+        <button type="button" class="modal-close-btn" id="admin-low-stock-modal-close" aria-label="Close dialog"
+          style="margin-left:auto;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="admin-cancel-modal-body" style="padding:1.25rem;overflow-y:auto;flex:1;">
+        <!-- Card 1: Global Default Threshold -->
+        <div
+          style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:1rem 1.15rem;margin-bottom:1.15rem;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
+            <div>
+              <strong style="font-size:0.9rem;color:#0F172A;display:block;">⚡ Store-Wide Default Alert Level</strong>
+              <p style="font-size:0.8rem;color:#64748B;margin:2px 0 0 0;">
+                Applies to all products that do not have an individual custom threshold.
+              </p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:0.82rem;font-weight:700;color:#334155;">Alert when stock &le;</span>
+              <input type="number" id="modal-global-low-stock-input" class="admin-input" min="1" max="999" value="10"
+                style="width:75px;padding:6px 10px;text-align:center;font-weight:800;font-size:0.95rem;" />
+              <span style="font-size:0.82rem;font-weight:600;color:#64748B;">units</span>
+            </div>
+          </div>
+          <div
+            style="display:flex;align-items:center;justify-content:flex-end;margin-top:0.75rem;padding-top:0.75rem;border-top:1px dashed #E2E8F0;">
+            <button type="button" class="btn-admin-xs-outline" id="btn-apply-global-to-all"
+              style="background:#FEF3C7;color:#92400E;border-color:#FDE68A;font-weight:700;">
+              Apply this threshold to ALL existing products
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 2: Per-Product Manual Thresholds -->
+        <div
+          style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:1rem 1.15rem;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:0.75rem;">
+            <div>
+              <strong style="font-size:0.9rem;color:#0F172A;display:block;">📦 Per-Product Alert Thresholds</strong>
+              <p style="font-size:0.8rem;color:#64748B;margin:2px 0 0 0;">
+                Manually fine-tune the alert trigger for specific hardware items.
+              </p>
+            </div>
+            <div style="position:relative;min-width:200px;">
+              <input type="search" id="modal-threshold-search" class="admin-input" placeholder="Search product..."
+                style="padding:5px 10px 5px 28px;font-size:0.8rem;border-radius:6px;" />
+              <svg
+                style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94A3B8;pointer-events:none;"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Scrollable Table -->
+          <div style="max-height:280px;overflow-y:auto;border:1px solid #E2E8F0;border-radius:8px;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;text-align:left;">
+              <thead style="background:#F8FAFC;border-bottom:1px solid #E2E8F0;position:sticky;top:0;z-index:2;">
+                <tr>
+                  <th style="padding:8px 12px;font-weight:700;color:#475569;">Product</th>
+                  <th style="padding:8px 12px;font-weight:700;color:#475569;text-align:center;">Current Stock</th>
+                  <th style="padding:8px 12px;font-weight:700;color:#475569;text-align:center;">Alert When &le;</th>
+                  <th style="padding:8px 12px;font-weight:700;color:#475569;text-align:center;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="modal-threshold-tbody">
+                <!-- Dynamically populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-cancel-modal-footer"
+        style="padding:0.85rem 1.25rem;background:#F8FAFC;border-top:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:0.78rem;color:#64748B;">Changes will take effect instantly in dashboard KPIs and
+          tables.</span>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn-admin-outline" id="admin-low-stock-modal-cancel">Close</button>
+          <button type="button" class="btn-terracotta" id="admin-low-stock-modal-save"
+            style="padding:0.5rem 1.25rem;font-size:0.85rem;">Save Alert Settings</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2164,7 +2598,8 @@
         </svg>
       </div>
 
-      <div style="font-size:0.75rem;font-weight:800;letter-spacing:1px;color:var(--admin-terracotta);margin-bottom:0.25rem;">
+      <div
+        style="font-size:0.75rem;font-weight:800;letter-spacing:1px;color:var(--admin-terracotta);margin-bottom:0.25rem;">
         દેવશ્રી ધ હાર્ડવેર ગેલેરી
       </div>
       <h1 class="admin-gate-title">Admin Console Security</h1>
@@ -2173,7 +2608,8 @@
       </p>
 
       <!-- Access Denied / Error Alert -->
-      <div id="admin-gate-denied" style="display:none;margin-bottom:1.25rem;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:0.85rem 1rem;text-align:left;">
+      <div id="admin-gate-denied"
+        style="display:none;margin-bottom:1.25rem;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:0.85rem 1rem;text-align:left;">
         <div style="display:flex;align-items:center;gap:0.5rem;color:#DC2626;font-weight:700;font-size:0.875rem;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <circle cx="12" cy="12" r="10"></circle>
@@ -2190,20 +2626,26 @@
       <!-- Admin Login Form -->
       <form id="admin-gate-login-form" style="text-align:left;" novalidate>
         <div class="form-group" style="margin-bottom:1rem;">
-          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;" for="admin-login-email">
+          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;"
+            for="admin-login-email">
             Admin Email *
           </label>
-          <input type="email" id="admin-login-email" class="admin-input" value="admin@devshree.in" placeholder="admin@devshree.in" autocomplete="username" required />
+          <input type="email" id="admin-login-email" class="admin-input" value="admin@devshree.in"
+            placeholder="admin@devshree.in" autocomplete="username" required />
         </div>
 
         <div class="form-group" style="margin-bottom:1.25rem;">
-          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;" for="admin-login-password">
+          <label style="font-size:0.78rem;font-weight:700;color:#383A32;display:block;margin-bottom:4px;"
+            for="admin-login-password">
             Admin Password *
           </label>
           <div class="admin-password-wrap">
-            <input type="password" id="admin-login-password" class="admin-input" value="admin" placeholder="••••••••" autocomplete="current-password" required />
-            <button type="button" class="admin-password-toggle-btn" id="admin-password-toggle-btn" title="Show / Hide Password" aria-label="Toggle password visibility">
-              <svg id="admin-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <input type="password" id="admin-login-password" class="admin-input" value="admin" placeholder="••••••••"
+              autocomplete="current-password" required />
+            <button type="button" class="admin-password-toggle-btn" id="admin-password-toggle-btn"
+              title="Show / Hide Password" aria-label="Toggle password visibility">
+              <svg id="admin-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
@@ -2211,24 +2653,30 @@
           </div>
         </div>
 
-        <button type="submit" class="btn-terracotta" id="admin-login-submit-btn" style="width:100%;justify-content:center;padding:11px;font-size:0.9rem;font-weight:700;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="margin-right:6px;">
+        <button type="submit" class="btn-terracotta" id="admin-login-submit-btn"
+          style="width:100%;justify-content:center;padding:11px;font-size:0.9rem;font-weight:700;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            style="margin-right:6px;">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
           <span>Unlock Admin Portal</span>
         </button>
 
-        <button type="button" class="btn-admin-outline" id="admin-gate-quick-unlock-btn" style="width:100%;margin-top:0.75rem;justify-content:center;padding:10px;font-size:0.85rem;font-weight:700;background:#FAF8F5;border-color:var(--admin-terracotta);color:var(--admin-terracotta);cursor:pointer;">
+        <button type="button" class="btn-admin-outline" id="admin-gate-quick-unlock-btn"
+          style="width:100%;margin-top:0.75rem;justify-content:center;padding:10px;font-size:0.85rem;font-weight:700;background:#FAF8F5;border-color:var(--admin-terracotta);color:var(--admin-terracotta);cursor:pointer;">
           ⚡ One-Click Store Manager Access
         </button>
       </form>
 
-      <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--admin-border);display:flex;align-items:center;justify-content:space-between;">
-        <a href="index.html" style="font-size:0.8rem;color:var(--admin-text-secondary);text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:600;">
+      <div
+        style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--admin-border);display:flex;align-items:center;justify-content:space-between;">
+        <a href="index.html"
+          style="font-size:0.8rem;color:var(--admin-text-secondary);text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:600;">
           &larr; Back to Store
         </a>
-        <span style="font-size:0.725rem;color:var(--admin-text-muted);font-family:var(--admin-font-mono);">🔒 Protected Admin Portal</span>
+        <span style="font-size:0.725rem;color:var(--admin-text-muted);font-family:var(--admin-font-mono);">🔒 Protected
+          Admin Portal</span>
       </div>
     </div>
   </div>
@@ -2236,7 +2684,8 @@
   <!-- =========================================================================
        Tax Invoice Printable Modal
        ========================================================================= -->
-  <div class="modal-backdrop" id="tax-invoice-modal" role="dialog" aria-modal="true" aria-labelledby="tax-invoice-title">
+  <div class="modal-backdrop" id="tax-invoice-modal" role="dialog" aria-modal="true"
+    aria-labelledby="tax-invoice-title">
     <div class="modal-content tax-invoice-modal-box">
       <button type="button" class="modal-close-btn" id="tax-invoice-close-btn" aria-label="Close dialog">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2257,4 +2706,5 @@
   <!-- JavaScript Modules Entrypoint -->
   <script type="module" src="assets/js/admin.js?v=2.7.0"></script>
 </body>
+
 </html>
