@@ -15,7 +15,9 @@ import {
   getCartCount, 
   getCartTotals, 
   clearCart, 
-  initCartBadge 
+  initCartBadge,
+  initStoreShippingSync,
+  updateStorefrontShippingElements
 } from './cart.js';
 import { toggleWishlist, isInWishlist, getWishlistCount, initWishlistBadge } from './wishlist.js';
 import { 
@@ -141,6 +143,7 @@ async function initDevshreeHome() {
   try { initFeedbackSystem(); } catch (e) {}
   try { initCartBadge(); } catch (e) {}
   try { initWishlistBadge(); } catch (e) {}
+  try { initStoreShippingSync(); } catch (e) {}
   try { setupOrderNotificationsListener(); } catch (e) {}
 }
 
@@ -2319,14 +2322,22 @@ function renderCartDrawerContent() {
 
   // Free shipping progress bar
   if (meterText && meterFill) {
-    if (totals.subtotal >= totals.freeShippingThreshold) {
-      meterText.innerHTML = `🎉 <strong>Congratulations!</strong> You have unlocked FREE Express Delivery!`;
+    if (totals.shippingMode === 'free' || totals.shippingFee === 0) {
+      meterText.innerHTML = `🎉 <strong>100% FREE Express Delivery</strong> on all orders!`;
+      meterFill.style.width = '100%';
+    } else if (totals.shippingMode === 'flat') {
+      meterText.innerHTML = `🚚 Express Delivery: <strong>${formatINR(totals.shippingFee)}</strong> flat rate across India`;
       meterFill.style.width = '100%';
     } else {
-      const remaining = totals.freeShippingThreshold - totals.subtotal;
-      const pct = Math.min(100, Math.round((totals.subtotal / totals.freeShippingThreshold) * 100));
-      meterText.innerHTML = `Add <strong>${formatINR(remaining)}</strong> more to qualify for <strong>FREE Delivery</strong>!`;
-      meterFill.style.width = `${pct}%`;
+      if (totals.subtotal >= totals.freeShippingThreshold) {
+        meterText.innerHTML = `🎉 <strong>Congratulations!</strong> You have unlocked FREE Express Delivery!`;
+        meterFill.style.width = '100%';
+      } else {
+        const remaining = totals.freeShippingThreshold - totals.subtotal;
+        const pct = Math.min(100, Math.round((totals.subtotal / totals.freeShippingThreshold) * 100));
+        meterText.innerHTML = `Add <strong>${formatINR(remaining)}</strong> more to qualify for <strong>FREE Delivery</strong>!`;
+        meterFill.style.width = `${pct}%`;
+      }
     }
   }
 

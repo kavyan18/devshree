@@ -5,7 +5,7 @@
  */
 
 import { getCurrentUser, requireAuth } from './auth.js';
-import { getCart, getCartTotals, clearCart } from './cart.js';
+import { getCart, getCartTotals, clearCart, getStoreShippingConfig, calculateShippingFee } from './cart.js';
 import { createOrderAndInvoice, openInvoiceViewer, openOrderTrackingModal } from './orders.js';
 import { formatINR, showToast, escapeHTML, getStorage } from './utils.js';
 import { 
@@ -88,10 +88,17 @@ function calculateCustomTotals(items) {
     const qty = item.quantity || 1;
     return sum + (price * qty);
   }, 0);
-  const freeShippingThreshold = 999;
-  const shipping = subtotal >= freeShippingThreshold ? 0 : 99;
+  const shippingConfig = getStoreShippingConfig();
+  const shipping = calculateShippingFee(subtotal);
   const total = subtotal + shipping;
-  return { subtotal, shipping, total, freeShippingThreshold };
+  return {
+    subtotal,
+    shipping,
+    total,
+    freeShippingThreshold: shippingConfig.threshold,
+    shippingFee: shippingConfig.fee,
+    shippingMode: shippingConfig.mode
+  };
 }
 
 /**

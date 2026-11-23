@@ -1618,6 +1618,85 @@
             </form>
           </div>
 
+          <!-- Transportation & Delivery Charges Configuration Card -->
+          <div class="admin-form-card" style="border-left:4px solid #16A34A;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.75rem;">
+              <div>
+                <h2 class="admin-section-title" style="margin:0;">🚚 Transportation &amp; Delivery Charges</h2>
+                <p style="font-size:0.85rem;color:var(--admin-text-secondary);margin:4px 0 0;">
+                  Manage customer transportation fee (shipping amount), free delivery threshold, and shipping rules.
+                </p>
+              </div>
+              <span class="badge" id="settings-shipping-status-badge"
+                style="background:#DCFCE7;color:#166534;padding:4px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;">
+                Live Rate Active
+              </span>
+            </div>
+
+            <form id="admin-shipping-form" onsubmit="return false;">
+              <div style="display:flex;flex-direction:column;gap:1.2rem;">
+
+                <div class="form-row-3" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:1rem;">
+                  <!-- Standard Transportation Amount -->
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="settings-shipping-fee">Standard Transportation Charge (₹)</label>
+                    <input type="number" class="admin-input" id="settings-shipping-fee" min="0" step="1" placeholder="e.g. 99 or 149" value="99" />
+                    <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                      Standard shipping fee added to order at checkout. (Set 0 for free shipping).
+                    </small>
+                  </div>
+
+                  <!-- Free Delivery Cart Threshold -->
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="settings-free-shipping-threshold">Free Delivery Cart Threshold (₹)</label>
+                    <input type="number" class="admin-input" id="settings-free-shipping-threshold" min="0" step="1" placeholder="e.g. 999 or 1999" value="999" />
+                    <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                      Orders with subtotal equal or above this amount get 100% FREE transportation.
+                    </small>
+                  </div>
+
+                  <!-- Shipping Calculation Policy -->
+                  <div class="form-group">
+                    <label class="admin-numbered-label" for="settings-shipping-mode">Transportation Policy Mode</label>
+                    <select class="admin-input" id="settings-shipping-mode" style="background:#FFFFFF;cursor:pointer;">
+                      <option value="threshold">Standard (Free Above Threshold)</option>
+                      <option value="flat">Fixed Flat Rate (Always Charge Fee)</option>
+                      <option value="free">100% Free Shipping (All Orders)</option>
+                    </select>
+                    <small style="color:var(--admin-text-secondary);font-size:0.75rem;margin-top:4px;display:block;">
+                      Controls whether the free shipping threshold is enforced or waived.
+                    </small>
+                  </div>
+                </div>
+
+                <!-- Real-Time Rule Preview Callout -->
+                <div id="settings-shipping-preview-box"
+                  style="background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:8px;padding:0.85rem 1.15rem;font-size:0.85rem;color:#334155;display:flex;align-items:center;gap:10px;">
+                  <span style="font-size:1.1rem;">⚡</span>
+                  <div>
+                    <strong style="color:var(--admin-text-main);">Active Customer Checkout Rule:</strong>
+                    <span id="settings-shipping-preview-text" style="color:var(--admin-terracotta);font-weight:700;margin-left:4px;">
+                      ₹99 transportation charge, FREE on orders above ₹999
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Action Button -->
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                  <button type="button" class="btn-terracotta" id="settings-save-shipping-btn" style="padding:0.75rem 1.5rem;display:inline-flex;align-items:center;gap:8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                      <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    <span>Save Transportation Amount</span>
+                  </button>
+                </div>
+
+              </div>
+            </form>
+          </div>
+
           <!-- Store Maintenance Mode Control Card -->
           <div class="admin-form-card" style="border-left:4px solid #EA580C;">
             <div

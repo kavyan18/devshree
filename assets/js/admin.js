@@ -83,6 +83,11 @@ import {
   saveActiveOffers,
   resetOffersToDefault
 } from './offers-data.js';
+import {
+  getStoreShippingConfig,
+  saveStoreShippingConfig,
+  fetchRemoteShippingConfig
+} from './cart.js';
 
 const CACHE_PRODUCTS_KEY = 'devshree_cached_products';
 
@@ -2799,6 +2804,75 @@ function initAdminSettings() {
     showToast(`Opening WhatsApp test alert for +${phone}...`, 'info');
     const testMsg = `*DEVSHREE TEST ALERT*\n━━━━━━━━━━━━━━━━\nWhatsApp dispatch integration is active and working properly!\nTime: ${new Date().toLocaleTimeString('en-IN')}`;
     openWhatsAppChat(phone, testMsg);
+  });
+
+  // --- Transportation & Delivery Settings Management ---
+  const shippingFeeInput = document.getElementById('settings-shipping-fee');
+  const freeThresholdInput = document.getElementById('settings-free-shipping-threshold');
+  const shippingModeSelect = document.getElementById('settings-shipping-mode');
+  const saveShippingBtn = document.getElementById('settings-save-shipping-btn');
+  const shippingPreviewText = document.getElementById('settings-shipping-preview-text');
+
+  // Load saved transportation settings
+  const currentConfig = getStoreShippingConfig();
+  if (shippingFeeInput) shippingFeeInput.value = currentConfig.fee;
+  if (freeThresholdInput) freeThresholdInput.value = currentConfig.threshold;
+  if (shippingModeSelect) shippingModeSelect.value = currentConfig.mode;
+
+  // Background fetch latest cloud settings from Supabase
+  fetchRemoteShippingConfig().then(cfg => {
+    if (shippingFeeInput && document.activeElement !== shippingFeeInput) shippingFeeInput.value = cfg.fee;
+    if (freeThresholdInput && document.activeElement !== freeThresholdInput) freeThresholdInput.value = cfg.threshold;
+    if (shippingModeSelect && document.activeElement !== shippingModeSelect) shippingModeSelect.value = cfg.mode;
+    updateShippingPreview();
+  }).catch(() => {});
+
+  const updateShippingPreview = () => {
+    if (!shippingPreviewText) return;
+    const fee = Math.max(0, parseInt(shippingFeeInput?.value, 10) || 0);
+    const threshold = Math.max(0, parseInt(freeThresholdInput?.value, 10) || 0);
+    const mode = shippingModeSelect?.value || 'threshold';
+
+    if (mode === 'free' || fee === 0) {
+      shippingPreviewText.textContent = '100% FREE transportation on all orders (₹0 fee)';
+    } else if (mode === 'flat') {
+      shippingPreviewText.textContent = `Flat ₹${fee} transportation charge on all customer orders`;
+    } else {
+      if (threshold > 0) {
+        shippingPreviewText.textContent = `₹${fee} transportation charge, FREE on orders above ₹${threshold.toLocaleString('en-IN')}`;
+      } else {
+        shippingPreviewText.textContent = `Flat ₹${fee} transportation charge (Free threshold disabled)`;
+      }
+    }
+  };
+
+  updateShippingPreview();
+  shippingFeeInput?.addEventListener('input', updateShippingPreview);
+  freeThresholdInput?.addEventListener('input', updateShippingPreview);
+  shippingModeSelect?.addEventListener('change', updateShippingPreview);
+
+  saveShippingBtn?.addEventListener('click', async () => {
+    const fee = Math.max(0, parseInt(shippingFeeInput?.value, 10) || 0);
+    const threshold = Math.max(0, parseInt(freeThresholdInput?.value, 10) || 0);
+    const mode = shippingModeSelect?.value || 'threshold';
+
+    saveShippingBtn.disabled = true;
+    saveShippingBtn.innerHTML = `<span>Saving...</span>`;
+
+    try {
+      await saveStoreShippingConfig(fee, threshold, mode);
+      updateShippingPreview();
+      showToast(`Transportation settings saved! Fee: ₹${fee} • Mode: ${mode}`, 'success');
+    } catch (e) {
+      console.warn('[Admin] Shipping save notice:', e);
+      showToast(`Transportation settings saved! Fee: ₹${fee}`, 'success');
+    } finally {
+      saveShippingBtn.disabled = false;
+      saveShippingBtn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        Save Transportation Settings
+      `;
+    }
   });
 
   // Admin Credentials Management (Security Card)

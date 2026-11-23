@@ -183,7 +183,7 @@
   <aside class="announcement-bar" aria-label="Store Announcement">
     <div class="container">
       <div class="announcement-left">
-        <span>Free express dispatch across India on orders above ₹1,999</span>
+        <span id="announcement-shipping-text">Free express dispatch across India on orders above ₹1,999</span>
         <span style="opacity:0.4;">|</span>
         <span>100% Genuine Factory Direct Supplies</span>
       </div>
@@ -523,7 +523,7 @@
   <script type="module">
     import { MOCK_PRODUCTS } from './assets/js/mock-data.js';
     import { formatINR, showToast, escapeHTML } from './assets/js/utils.js';
-    import { addToCart, getCartCount, getCartTotals } from './assets/js/cart.js';
+    import { addToCart, getCartCount, getCartTotals, getStoreShippingConfig, initStoreShippingSync } from './assets/js/cart.js';
     import { fetchProducts } from './assets/js/products.js';
     import { renderCustomerFeedback, openFeedbackModal, initFeedbackSystem } from './assets/js/feedback.js';
     import { initMaintenanceGuard } from './assets/js/maintenance.js?v=2.7.0';
@@ -799,10 +799,17 @@
         if (resultBox) {
           resultBox.style.display = 'block';
           resultBox.style.color = '#15803D';
+          const cfg = getStoreShippingConfig();
+          let shipMsg = `Free shipping on orders above ₹${cfg.threshold.toLocaleString('en-IN')}.`;
+          if (cfg.mode === 'free' || cfg.fee === 0) {
+            shipMsg = '100% Free shipping on all orders.';
+          } else if (cfg.mode === 'flat') {
+            shipMsg = `Flat ₹${cfg.fee} express delivery.`;
+          }
           if (isGujarat) {
-            resultBox.innerHTML = `<strong>✓ Next-Day Dispatch:</strong> Available for PIN <strong>${pin}</strong> (Express Ahmedabad / Gujarat transit). Free shipping on orders above ₹1,999.`;
+            resultBox.innerHTML = `<strong>✓ Next-Day Dispatch:</strong> Available for PIN <strong>${pin}</strong> (Express Ahmedabad / Gujarat transit). ${shipMsg}`;
           } else {
-            resultBox.innerHTML = `<strong>✓ Standard Dispatch:</strong> Available for PIN <strong>${pin}</strong> (Delivered in 3–5 business days via surface courier).`;
+            resultBox.innerHTML = `<strong>✓ Standard Dispatch:</strong> Available for PIN <strong>${pin}</strong> (Delivered in 3–5 business days via surface courier). ${shipMsg}`;
           }
         }
       }
@@ -817,6 +824,7 @@
       loadPDP();
       initFeedbackSystem();
       initPdpPincodeChecker();
+      initStoreShippingSync();
     }
 
     if (document.readyState === 'loading') {

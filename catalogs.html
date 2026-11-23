@@ -34,7 +34,7 @@
   <aside class="announcement-bar" aria-label="Store Announcement">
     <div class="container">
       <div class="announcement-left">
-        <span>Free express dispatch across India on orders above ₹1,999</span>
+        <span id="announcement-shipping-text">Free express dispatch across India on orders above ₹1,999</span>
         <span style="opacity:0.4;">|</span>
         <span>100% Genuine Factory Direct Supplies</span>
       </div>
@@ -262,6 +262,7 @@
 
   <!-- Catalog Data & Viewer Script (ES Module) -->
   <script type="module">
+    import './assets/js/cart.js';
     import { 
       DEVSHREE_CATALOGS, 
       getActiveCatalogs, 

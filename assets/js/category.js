@@ -10,7 +10,7 @@
 
 import { getAllAvailableProducts, getProductById } from './products.js';
 import { getActiveCategories, getSubcategoriesForCategory, DEFAULT_CATEGORIES } from './categories-data.js';
-import { addToCart, initCartBadge, getCart, getCartCount, getCartTotals, updateQuantity, removeFromCart } from './cart.js';
+import { addToCart, initCartBadge, getCart, getCartCount, getCartTotals, updateQuantity, removeFromCart, initStoreShippingSync } from './cart.js';
 import { initWishlistBadge, isInWishlist, toggleWishlist } from './wishlist.js';
 import { 
   formatINR, 
@@ -55,6 +55,7 @@ export async function initCategoryPage() {
   initHeaderCatStrip();
   initSearchAndSort();
   initViewAllButton();
+  try { initStoreShippingSync(); } catch (_) {}
 
   // Render Category Subsystem
   renderCategoryView(activeCatId, activeSubcatId);
