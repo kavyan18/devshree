@@ -86,6 +86,7 @@ export function setStorage(key, value) {
  * @param {number} duration in ms (strictly 1 to 2 seconds)
  */
 export function showToast(message, type = 'success', duration = 1800) {
+  if (typeof document === 'undefined') return;
   let container = document.getElementById('toast-container');
   if (!container) {
     container = document.createElement('div');

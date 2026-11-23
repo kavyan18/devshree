@@ -63,6 +63,21 @@ import {
   closePdfViewerModal
 } from './catalogs-data.js';
 import {
+  DEFAULT_CATEGORIES,
+  DEFAULT_SUBCATEGORIES,
+  getActiveCategories,
+  getActiveSubcategories,
+  getSubcategoriesForCategory,
+  saveCategory,
+  deleteCategory,
+  saveSubcategory,
+  deleteSubcategory,
+  formatCategoryName,
+  formatSubcategoryName,
+  fetchAllCategoriesLive,
+  fetchAllSubcategoriesLive
+} from './categories-data.js';
+import {
   DEFAULT_OFFERS,
   getActiveOffers,
   saveActiveOffers,
@@ -161,6 +176,8 @@ const REFERENCE_DEFAULT_PRODUCTS = [
     id: 'prod-1793886256682',
     name: 'TANDAM (6 Pcs)',
     categoryId: 'cat-hardware',
+    subcategoryId: 'subcat-hw-drawer',
+    subcategoryName: 'Drawer Channels & Tandem Boxes',
     brand: 'ROMANI',
     sku: 'HW829',
     price: 8260,
@@ -181,6 +198,8 @@ const REFERENCE_DEFAULT_PRODUCTS = [
     id: 'prod-1793888265596',
     name: 'LED LEMP 9w',
     categoryId: 'cat-electrical',
+    subcategoryId: 'subcat-el-lighting',
+    subcategoryName: 'LED Bulbs, Battens & Panel Lights',
     brand: 'wit',
     sku: 'DB281',
     price: 70.80,
@@ -201,6 +220,8 @@ const REFERENCE_DEFAULT_PRODUCTS = [
     id: 'prod-1793894449026',
     name: 'NAIL 14x1III',
     categoryId: 'cat-hardware',
+    subcategoryId: 'subcat-hw-fasteners',
+    subcategoryName: 'Fasteners, Nails & Screws',
     brand: 'GN',
     sku: 'HW153',
     price: 141.60,
@@ -221,6 +242,8 @@ const REFERENCE_DEFAULT_PRODUCTS = [
     id: 'prod-1793902715089',
     name: 'NAIL 14x1I LH',
     categoryId: 'cat-hardware',
+    subcategoryId: 'subcat-hw-fasteners',
+    subcategoryName: 'Fasteners, Nails & Screws',
     brand: 'GN',
     sku: 'HW528',
     price: 141.60,
@@ -241,6 +264,8 @@ const REFERENCE_DEFAULT_PRODUCTS = [
     id: 'prod-1793902949035',
     name: 'NAIL 17x1I LH',
     categoryId: 'cat-hardware',
+    subcategoryId: 'subcat-hw-fasteners',
+    subcategoryName: 'Fasteners, Nails & Screws',
     brand: 'GN',
     sku: 'HW160',
     price: 141.60,
@@ -261,6 +286,8 @@ const REFERENCE_DEFAULT_PRODUCTS = [
     id: 'prod-1794041923563',
     name: 'Biding 1x0I—-3’',
     categoryId: 'cat-hardware',
+    subcategoryId: 'subcat-hw-aldrops',
+    subcategoryName: 'Aldrops, Latches & Tower Bolts',
     brand: 'Sag',
     sku: 'HW668',
     price: 5.90,
@@ -427,6 +454,7 @@ function initDevshreeAdmin() {
   try { initAdminCancelModal(); } catch (e) { console.warn('[Admin] CancelModal init:', e); }
   try { initCatalogsTab(); } catch (e) { console.error('[Admin] CatalogsTab init:', e); }
   try { initOffersTab(); } catch (e) { console.error('[Admin] OffersTab init:', e); }
+  try { initCategoriesView(); } catch (e) { console.error('[Admin] CategoriesView init:', e); }
 
   // 0ms Eager Dashboard Hydration: Ensures products and orders are populated in memory and DOM instantly
   try {
@@ -682,6 +710,118 @@ function initPriceCalculation() {
 }
 
 /**
+ * Update all Category & Subcategory dropdown selectors throughout Admin Console
+ */
+function updateCategorySelectElements(selectedCatId = null, selectedSubcatVal = null) {
+  const cats = getActiveCategories();
+
+  // 1. Product Form Category Select
+  const prodCatSelect = document.getElementById('prod-category');
+  if (prodCatSelect) {
+    const currentVal = selectedCatId || prodCatSelect.value || (cats[0] ? cats[0].id : 'cat-hardware');
+    prodCatSelect.innerHTML = cats.map(c => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');
+    if (cats.some(c => c.id === currentVal)) {
+      prodCatSelect.value = currentVal;
+    } else if (cats.length > 0) {
+      prodCatSelect.value = cats[0].id;
+    }
+  }
+
+  // 2. Product Form Subcategory Datalist Suggestions (Manual typing enabled)
+  updateProductFormSubcategories(selectedSubcatVal);
+
+  // 3. Products Table Category Filter
+  const tableCatFilter = document.getElementById('admin-products-cat-filter');
+  if (tableCatFilter) {
+    const currentFilter = tableCatFilter.value || 'all';
+    tableCatFilter.innerHTML = `<option value="all">All Categories</option>` +
+      cats.map(c => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');
+    tableCatFilter.value = currentFilter;
+  }
+
+  // 4. Products Table Subcategory Filter
+  updateTableSubcategoryFilter();
+
+  // 5. Subcategory Modal Parent Category Select
+  const modalCatSelect = document.getElementById('subcat-modal-cat-select');
+  if (modalCatSelect) {
+    modalCatSelect.innerHTML = cats.map(c => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');
+  }
+}
+
+function updateProductFormSubcategories(selectedSubcatName = null) {
+  const prodCatSelect = document.getElementById('prod-category');
+  const prodSubcatInput = document.getElementById('prod-subcategory');
+  const datalist = document.getElementById('subcategories-suggestions');
+  if (!prodCatSelect) return;
+
+  const currentCatId = prodCatSelect.value;
+  const subcats = getSubcategoriesForCategory(currentCatId);
+
+  // Update datalist suggestions so admin has autocomplete while typing manually
+  if (datalist) {
+    const seen = new Set();
+    let datalistHtml = subcats.map(s => {
+      seen.add(s.name.toLowerCase());
+      return `<option value="${escapeHTML(s.name)}">`;
+    }).join('');
+
+    // Also include existing custom manual subcategories from allProducts
+    allProducts.forEach(p => {
+      if (p.subcategoryName && (p.categoryId === currentCatId || (currentCatId === 'cat-electric' && p.categoryId === 'cat-electrical')) && !seen.has(p.subcategoryName.toLowerCase())) {
+        seen.add(p.subcategoryName.toLowerCase());
+        datalistHtml += `<option value="${escapeHTML(p.subcategoryName)}">`;
+      }
+    });
+
+    datalist.innerHTML = datalistHtml;
+  }
+
+  if (prodSubcatInput && selectedSubcatName !== null && selectedSubcatName !== undefined) {
+    prodSubcatInput.value = selectedSubcatName;
+  }
+}
+
+function updateTableSubcategoryFilter() {
+  const tableCatFilter = document.getElementById('admin-products-cat-filter');
+  const tableSubcatFilter = document.getElementById('admin-products-subcat-filter');
+  if (!tableSubcatFilter) return;
+
+  const currentCatId = tableCatFilter ? tableCatFilter.value : 'all';
+  const subcats = (currentCatId && currentCatId !== 'all')
+    ? getSubcategoriesForCategory(currentCatId)
+    : getActiveSubcategories();
+
+  const prevVal = tableSubcatFilter.value;
+  let html = `<option value="all">All Subcategories</option>`;
+  const seen = new Set();
+
+  subcats.forEach(s => {
+    seen.add(s.name.toLowerCase());
+    html += `<option value="${s.id}">${escapeHTML(s.name)}</option>`;
+  });
+
+  // Also include any custom manual subcategories present in allProducts
+  allProducts.forEach(p => {
+    if (p.subcategoryName && !seen.has(p.subcategoryName.toLowerCase())) {
+      const matchCat = (currentCatId === 'all') || (p.categoryId === currentCatId) || (currentCatId === 'cat-electric' && p.categoryId === 'cat-electrical');
+      if (matchCat) {
+        seen.add(p.subcategoryName.toLowerCase());
+        html += `<option value="${p.subcategoryId || p.subcategoryName}">${escapeHTML(p.subcategoryName)}</option>`;
+      }
+    }
+  });
+
+  tableSubcatFilter.innerHTML = html;
+
+  if (prevVal && (subcats.some(s => s.id === prevVal) || seen.has(prevVal.toLowerCase()))) {
+    tableSubcatFilter.value = prevVal;
+  } else {
+    tableSubcatFilter.value = 'all';
+  }
+}
+
+/**
  * 3. Product Form (Add, Edit, Clear, Image Upload)
  */
 function initProductForm() {
@@ -697,6 +837,14 @@ function initProductForm() {
   const hiddenImgInput = document.getElementById('prod-image');
   const urlInput = document.getElementById('prod-image-url');
   const removeImgBtn = document.getElementById('admin-remove-image-btn');
+
+  // Hydrate Category & Subcategory options
+  updateCategorySelectElements();
+
+  const prodCatSelect = document.getElementById('prod-category');
+  prodCatSelect?.addEventListener('change', () => {
+    updateProductFormSubcategories();
+  });
 
   // Trigger Image File Picker (clears input value so selecting the same file triggers change every time)
   chooseBtn?.addEventListener('click', (e) => {
@@ -836,7 +984,11 @@ function initProductForm() {
 
     const editId = editIdInput?.value;
     const name = document.getElementById('prod-name')?.value.trim();
-    const categoryId = document.getElementById('prod-category')?.value;
+    const categoryId = document.getElementById('prod-category')?.value || 'cat-hardware';
+    const subcatRaw = document.getElementById('prod-subcategory')?.value?.trim() || '';
+    const subcategoryName = subcatRaw || null;
+    const subcategoryId = subcatRaw ? ('subcat-' + categoryId.replace('cat-', '') + '-' + subcatRaw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')) : null;
+    const categoryName = formatCategoryName(categoryId);
     const brand = document.getElementById('prod-brand')?.value.trim() || 'Devshree';
     const basePrice = parseFloat(document.getElementById('prod-price')?.value) || 0;
     const gstRate = parseFloat(document.getElementById('prod-gst-rate')?.value) || 0;
@@ -876,6 +1028,9 @@ function initProductForm() {
         const updatedFields = {
           name,
           categoryId,
+          categoryName,
+          subcategoryId,
+          subcategoryName,
           brand,
           price: customerPrice,
           basePrice,
@@ -926,6 +1081,9 @@ function initProductForm() {
           id: targetId,
           name,
           categoryId,
+          categoryName,
+          subcategoryId,
+          subcategoryName,
           brand,
           price: customerPrice,
           basePrice,
@@ -1018,6 +1176,11 @@ function resetProductForm() {
   const lowStockThresholdInput = document.getElementById('prod-low-stock-threshold');
   if (lowStockThresholdInput) lowStockThresholdInput.value = getGlobalLowStockThreshold();
 
+  // Reset category & subcategory inputs
+  const subcatInput = document.getElementById('prod-subcategory');
+  if (subcatInput) subcatInput.value = '';
+  updateCategorySelectElements();
+
   // Trigger price recalculation to defaults
   document.getElementById('prod-price')?.dispatchEvent(new Event('input'));
 }
@@ -1052,7 +1215,10 @@ function editProduct(prod) {
   if (editIdInput) editIdInput.value = prod.id;
   if (skuInput) skuInput.value = prod.sku || '';
   if (nameInput) nameInput.value = prod.name || '';
-  if (catInput) catInput.value = prod.categoryId || 'cat-electrical';
+  const subcatVal = prod.subcategoryName || prod.subcategory_name || formatSubcategoryName(prod.subcategoryId) || '';
+  updateCategorySelectElements(prod.categoryId || 'cat-hardware', subcatVal);
+  const subcatInput = document.getElementById('prod-subcategory');
+  if (subcatInput) subcatInput.value = subcatVal;
   if (brandInput) brandInput.value = prod.brand || '';
 
   // If basePrice is recorded use it, else calculate from customer price
@@ -1312,6 +1478,10 @@ function renderProductsTable(products = null) {
     }
 
     const catName = formatCategoryName(prod.categoryId);
+    const subcatName = prod.subcategoryName || (prod.subcategoryId ? formatSubcategoryName(prod.subcategoryId) : '');
+    const subcatBadgeHtml = subcatName
+      ? `<div class="admin-row-subcat-badge" title="Subcategory: ${escapeHTML(subcatName)}">↳ ${escapeHTML(subcatName)}</div>`
+      : '';
     const skuCode = prod.sku ? `Code: ${prod.sku}` : (prod.id ? `Code: ${prod.id.slice(0, 6).toUpperCase()}` : '');
 
     // Price & MRP
@@ -1361,6 +1531,7 @@ function renderProductsTable(products = null) {
         </td>
         <td>
           <span class="admin-row-cat-badge">${escapeHTML(catName)}</span>
+          ${subcatBadgeHtml}
         </td>
         <td>
           <span class="admin-row-price">₹ ${currentPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -1484,6 +1655,7 @@ function renderProductsTable(products = null) {
 export function applyTableFilters() {
   const searchInput = document.getElementById('admin-products-search');
   const catFilter = document.getElementById('admin-products-cat-filter');
+  const subcatFilter = document.getElementById('admin-products-subcat-filter');
   const lowStockFilterBar = document.getElementById('admin-low-stock-filter-bar');
   const lowStockCard = document.getElementById('kpi-card-low-stock');
   const filterCountEl = document.getElementById('admin-low-stock-filter-count');
@@ -1491,6 +1663,7 @@ export function applyTableFilters() {
 
   const q = (searchInput?.value || '').toLowerCase().trim();
   const cat = catFilter?.value || 'all';
+  const subcat = subcatFilter?.value || 'all';
 
   if (lowStockCard) {
     lowStockCard.classList.toggle('active-filter', isLowStockFilterActive);
@@ -1503,11 +1676,19 @@ export function applyTableFilters() {
   }
 
   const filtered = allProducts.filter(p => {
-    const matchCat = cat === 'all' || p.categoryId === cat;
+    const matchCat = cat === 'all' ||
+      p.categoryId === cat ||
+      (cat === 'cat-electric' && (p.categoryId === 'cat-electrical' || p.categoryId === 'electrical')) ||
+      (cat === 'cat-electrical' && (p.categoryId === 'cat-electric' || p.categoryId === 'electric'));
+    const matchSubcat = subcat === 'all' ||
+      p.subcategoryId === subcat ||
+      (p.subcategoryName && (p.subcategoryName.toLowerCase() === subcat.toLowerCase() || ('subcat-' + p.subcategoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-')) === subcat)) ||
+      (p.subcategory_name && (p.subcategory_name.toLowerCase() === subcat.toLowerCase() || ('subcat-' + p.subcategory_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')) === subcat));
     const matchText = !q ||
       (p.name && p.name.toLowerCase().includes(q)) ||
       (p.brand && p.brand.toLowerCase().includes(q)) ||
-      (p.sku && p.sku.toLowerCase().includes(q));
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.subcategoryName && p.subcategoryName.toLowerCase().includes(q));
 
     let matchLowStock = true;
     if (isLowStockFilterActive) {
@@ -1516,7 +1697,7 @@ export function applyTableFilters() {
       matchLowStock = stock <= threshold;
     }
 
-    return matchCat && matchText && matchLowStock;
+    return matchCat && matchSubcat && matchText && matchLowStock;
   });
 
   if (filterCountEl && isLowStockFilterActive) {
@@ -1529,13 +1710,18 @@ export function applyTableFilters() {
 function initTableFilters() {
   const searchInput = document.getElementById('admin-products-search');
   const catFilter = document.getElementById('admin-products-cat-filter');
+  const subcatFilter = document.getElementById('admin-products-subcat-filter');
   const lowStockCard = document.getElementById('kpi-card-low-stock');
   const clearFilterBtn = document.getElementById('btn-clear-low-stock-filter');
   const openModalBtn = document.getElementById('btn-open-low-stock-modal');
   const openModalFromFilterBtn = document.getElementById('btn-filter-set-alert-modal');
 
-    searchInput?.addEventListener('input', applyTableFilters);
-    catFilter?.addEventListener('change', applyTableFilters);
+  searchInput?.addEventListener('input', applyTableFilters);
+  catFilter?.addEventListener('change', () => {
+    updateTableSubcategoryFilter();
+    applyTableFilters();
+  });
+  subcatFilter?.addEventListener('change', applyTableFilters);
 
     // Click on Low Stock KPI card to toggle filter
     lowStockCard?.addEventListener('click', (e) => {
@@ -1770,20 +1956,27 @@ function updateKpis() {
   if (ordersEl) ordersEl.textContent = allOrders.length;
 
   // Category Department Counts (View 4: Categories)
-  const elecCount = allProducts.filter(p => p.categoryId === 'cat-electrical').length;
+  const elecCount = allProducts.filter(p => p.categoryId === 'cat-electric' || p.categoryId === 'cat-electrical').length;
   const hardCount = allProducts.filter(p => p.categoryId === 'cat-hardware').length;
   const plumbCount = allProducts.filter(p => p.categoryId === 'cat-plumbing').length;
   const paintCount = allProducts.filter(p => p.categoryId === 'cat-paints').length;
+  const laminationCount = allProducts.filter(p => p.categoryId === 'cat-lamination').length;
 
   const catElecEl = document.getElementById('cat-count-electrical');
   const catHardEl = document.getElementById('cat-count-hardware');
   const catPlumbEl = document.getElementById('cat-count-plumbing');
   const catPaintEl = document.getElementById('cat-count-paints');
+  const catLamEl = document.getElementById('cat-count-lamination');
 
   if (catElecEl) catElecEl.textContent = `${elecCount} Active Items`;
   if (catHardEl) catHardEl.textContent = `${hardCount} Active Items`;
   if (catPlumbEl) catPlumbEl.textContent = `${plumbCount} Active Items`;
   if (catPaintEl) catPaintEl.textContent = `${paintCount} Active Items`;
+  if (catLamEl) catLamEl.textContent = `${laminationCount} Active Items`;
+
+  // Update Top KPI Categories Card
+  const kpiCatEl = document.getElementById('kpi-categories');
+  if (kpiCatEl) kpiCatEl.textContent = getActiveCategories().length;
 
   // Update Catalogs & Offers Sidebar Badges
   const catalogsCount = (typeof getActiveCatalogs === 'function') ? getActiveCatalogs().length : 12;
@@ -2390,6 +2583,8 @@ async function loadDashboardData() {
     p.lowStockThreshold = thresholdMap[p.id] != null ? thresholdMap[p.id] : (p.lowStockThreshold != null ? p.lowStockThreshold : globalThreshold);
   });
 
+  updateCategorySelectElements();
+  renderCategoriesView();
   updateKpis();
   applyTableFilters();
   renderOrdersTable();
@@ -2398,7 +2593,9 @@ async function loadDashboardData() {
   try {
     const [orders, products] = await Promise.all([
       fetchAllOrders().catch(() => []),
-      fetchProducts().catch(() => [])
+      fetchProducts().catch(() => []),
+      fetchAllCategoriesLive().catch(() => []),
+      fetchAllSubcategoriesLive().catch(() => [])
     ]);
 
     if (products && products.length > 0) {
@@ -2421,6 +2618,8 @@ async function loadDashboardData() {
       if (o.invoiceNumber) knownOrderInvoices.add(o.invoiceNumber);
     });
 
+    updateCategorySelectElements();
+    renderCategoriesView();
     updateKpis();
     applyTableFilters();
     renderOrdersTable();
@@ -2437,23 +2636,13 @@ async function optimizeImageFile(file) {
   return result.dataUrl;
 }
 
-function formatCategoryName(catId) {
-  switch (catId) {
-    case 'cat-electrical': return 'Electrical';
-    case 'cat-hardware': return 'Hardware';
-    case 'cat-plumbing': return 'Plumbing';
-    case 'cat-paints': return 'Paints';
-    default: return 'General';
-  }
-}
-
 function generateCode(catId, name) {
   const prefix = {
     'cat-electrical': 'DB',
     'cat-hardware': 'HW',
     'cat-plumbing': 'PP',
     'cat-paints': 'WP'
-  }[catId] || 'PR';
+  }[catId] || (catId ? catId.replace(/^cat-/, '').slice(0, 2).toUpperCase() : 'PR');
   const rand = Math.floor(100 + Math.random() * 900);
   return `${prefix}${rand}`;
 }
@@ -3657,5 +3846,374 @@ function initOffersTab() {
 
   // Initial table render
   renderOffersTable();
+}
+
+/**
+ * =========================================================================
+ * 14. View 4: Trade Categories & Subcategories Controller
+ * =========================================================================
+ */
+function initCategoriesView() {
+  const container = document.getElementById('admin-categories-list-container');
+  const addCatBtn = document.getElementById('btn-open-add-category-modal');
+  const addSubcatBtn = document.getElementById('btn-open-add-subcategory-modal');
+
+  // Category Modal Elements
+  const catModal = document.getElementById('admin-category-modal');
+  const catModalClose = document.getElementById('admin-category-modal-close');
+  const catModalCancel = document.getElementById('admin-category-modal-cancel');
+  const catForm = document.getElementById('admin-category-form');
+  const catEditId = document.getElementById('cat-modal-edit-id');
+  const catNameInput = document.getElementById('cat-modal-name');
+  const catSlugInput = document.getElementById('cat-modal-slug');
+  const catIconInput = document.getElementById('cat-modal-icon');
+  const catDescInput = document.getElementById('cat-modal-desc');
+  const catImgUrlInput = document.getElementById('cat-modal-image-url');
+  const catImgFileInput = document.getElementById('cat-modal-image-file');
+  const catImgPreview = document.getElementById('cat-modal-image-preview');
+  const catModalTitle = document.getElementById('cat-modal-title');
+
+  // Subcategory Modal Elements
+  const subcatModal = document.getElementById('admin-subcategory-modal');
+  const subcatModalClose = document.getElementById('admin-subcategory-modal-close');
+  const subcatModalCancel = document.getElementById('admin-subcategory-modal-cancel');
+  const subcatForm = document.getElementById('admin-subcategory-form');
+  const subcatEditId = document.getElementById('subcat-modal-edit-id');
+  const subcatCatSelect = document.getElementById('subcat-modal-cat-select');
+  const subcatNameInput = document.getElementById('subcat-modal-name');
+  const subcatSlugInput = document.getElementById('subcat-modal-slug');
+  const subcatModalTitle = document.getElementById('subcat-modal-title');
+
+  // Modal open/close helpers
+  const openCatModal = (cat = null) => {
+    if (!catModal) return;
+    if (cat) {
+      if (catModalTitle) catModalTitle.textContent = `Edit Department: ${cat.name}`;
+      if (catEditId) catEditId.value = cat.id;
+      if (catNameInput) catNameInput.value = cat.name || '';
+      if (catSlugInput) catSlugInput.value = cat.slug || cat.id.replace(/^cat-/, '');
+      if (catIconInput) catIconInput.value = cat.icon || '📦';
+      if (catDescInput) catDescInput.value = cat.description || '';
+      if (catImgUrlInput) catImgUrlInput.value = cat.image || cat.imageUrl || '';
+      if (catImgPreview) catImgPreview.src = cat.image || cat.imageUrl || 'assets/images/placeholder.webp';
+    } else {
+      if (catModalTitle) catModalTitle.textContent = 'Add New Category';
+      if (catEditId) catEditId.value = '';
+      if (catNameInput) catNameInput.value = '';
+      if (catSlugInput) catSlugInput.value = '';
+      if (catIconInput) catIconInput.value = '📦';
+      if (catDescInput) catDescInput.value = '';
+      if (catImgUrlInput) catImgUrlInput.value = '';
+      if (catImgPreview) catImgPreview.src = 'assets/images/placeholder.webp';
+    }
+    catModal.style.display = 'flex';
+    catNameInput?.focus();
+  };
+
+  const closeCatModal = () => {
+    if (catModal) catModal.style.display = 'none';
+  };
+
+  const openSubcatModal = (parentCatId = null, subcat = null) => {
+    if (!subcatModal) return;
+    updateCategorySelectElements();
+    if (subcat) {
+      if (subcatModalTitle) subcatModalTitle.textContent = 'Edit Subcategory';
+      if (subcatEditId) subcatEditId.value = subcat.id;
+      if (subcatCatSelect) subcatCatSelect.value = subcat.categoryId || subcat.category_id || parentCatId || 'cat-hardware';
+      if (subcatNameInput) subcatNameInput.value = subcat.name || '';
+      if (subcatSlugInput) subcatSlugInput.value = subcat.slug || '';
+    } else {
+      if (subcatModalTitle) subcatModalTitle.textContent = 'Add Subcategory';
+      if (subcatEditId) subcatEditId.value = '';
+      if (subcatCatSelect && parentCatId) subcatCatSelect.value = parentCatId;
+      if (subcatNameInput) subcatNameInput.value = '';
+      if (subcatSlugInput) subcatSlugInput.value = '';
+    }
+    subcatModal.style.display = 'flex';
+    subcatNameInput?.focus();
+  };
+
+  const closeSubcatModal = () => {
+    if (subcatModal) subcatModal.style.display = 'none';
+  };
+
+  addCatBtn?.addEventListener('click', () => openCatModal());
+  catModalClose?.addEventListener('click', closeCatModal);
+  catModalCancel?.addEventListener('click', closeCatModal);
+
+  addSubcatBtn?.addEventListener('click', () => openSubcatModal());
+  subcatModalClose?.addEventListener('click', closeSubcatModal);
+  subcatModalCancel?.addEventListener('click', closeSubcatModal);
+
+  // 0ms Instant Image Preview for Category Cover
+  catImgFileInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (catImgPreview) catImgPreview.src = ev.target.result;
+        if (catImgUrlInput) catImgUrlInput.value = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Slug auto-fill
+  catNameInput?.addEventListener('input', () => {
+    if (!catEditId?.value && catSlugInput) {
+      catSlugInput.value = catNameInput.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+  });
+
+  subcatNameInput?.addEventListener('input', () => {
+    if (!subcatEditId?.value && subcatSlugInput) {
+      subcatSlugInput.value = subcatNameInput.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+  });
+
+  // Category Form Submit
+  catForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const editId = catEditId?.value.trim();
+    const name = catNameInput?.value.trim();
+    const slug = (catSlugInput?.value.trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, '-')).replace(/^cat-/, '');
+    const id = editId || `cat-${slug}`;
+    const icon = catIconInput?.value.trim() || '📦';
+    const description = catDescInput?.value.trim() || '';
+    const image = catImgUrlInput?.value.trim() || 'assets/images/placeholder.webp';
+
+    try {
+      await saveCategory({
+        id,
+        name,
+        slug,
+        icon,
+        description,
+        image,
+        imageUrl: image,
+        badgeClass: slug
+      });
+
+      closeCatModal();
+      showToast(`Category "${name}" saved successfully!`, 'success');
+      renderCategoriesView();
+      updateCategorySelectElements(id);
+      updateKpis();
+    } catch (err) {
+      showToast(err.message || 'Failed to save category', 'error');
+    }
+  });
+
+  // Subcategory Form Submit
+  subcatForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const editId = subcatEditId?.value.trim();
+    const categoryId = subcatCatSelect?.value;
+    const name = subcatNameInput?.value.trim();
+    const slug = subcatSlugInput?.value.trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const id = editId || `subcat-${categoryId.replace('cat-', '')}-${slug}`;
+
+    try {
+      await saveSubcategory({
+        id,
+        categoryId,
+        name,
+        slug
+      });
+
+      closeSubcatModal();
+      showToast(`Subcategory "${name}" added to ${formatCategoryName(categoryId)}!`, 'success');
+      renderCategoriesView();
+      updateCategorySelectElements(categoryId, id);
+    } catch (err) {
+      showToast(err.message || 'Failed to save subcategory', 'error');
+    }
+  });
+
+  // Quick "+ New" subcategory button inside Product Form
+  document.getElementById('btn-quick-add-subcat')?.addEventListener('click', () => {
+    const currentCatId = document.getElementById('prod-category')?.value || 'cat-hardware';
+    openSubcatModal(currentCatId);
+  });
+
+  // Render Category Cards
+  renderCategoriesView();
+}
+
+function renderCategoriesView() {
+  const container = document.getElementById('admin-categories-list-container');
+  if (!container) return;
+
+  const categories = getActiveCategories();
+  const allSubcats = getActiveSubcategories();
+
+  if (categories.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:3rem;background:#FFFFFF;border-radius:12px;border:1px dashed #CBD5E1;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">🏷️</div>
+        <h4 style="font-size:1.1rem;font-weight:700;margin:0 0 0.25rem 0;">No Categories Defined</h4>
+        <p style="color:#64748B;font-size:0.85rem;margin:0;">Click "+ Add New Category" above to configure your departments.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = categories.map(cat => {
+    const catProds = allProducts.filter(p => p.categoryId === cat.id || (cat.id === 'cat-electric' && (p.categoryId === 'cat-electrical' || p.categoryId === 'electrical')));
+    const subcats = allSubcats.filter(s => s.categoryId === cat.id || s.category_id === cat.id || ((cat.id === 'cat-electric' || cat.id === 'cat-electrical') && (s.categoryId === 'cat-electrical' || s.category_id === 'cat-electrical')));
+    const isCore = ['cat-hardware', 'cat-electric', 'cat-electrical', 'cat-plumbing', 'cat-paints', 'cat-lamination'].includes(cat.id);
+
+    const subcatChipsHtml = subcats.map(sub => `
+      <span class="admin-subcat-chip">
+        <span>${escapeHTML(sub.name)}</span>
+        <button type="button" class="admin-subcat-chip-remove" data-subcat-delete-id="${sub.id}" title="Delete subcategory">&times;</button>
+      </span>
+    `).join('');
+
+    return `
+      <div class="admin-category-card" data-cat-id="${cat.id}">
+        <div class="cat-card-header">
+          <div class="cat-card-main-info">
+            <div class="cat-card-icon-box">${cat.icon || '📦'}</div>
+            <div class="cat-card-title-wrap">
+              <h4>
+                <span>${escapeHTML(cat.name)}</span>
+                <span class="cat-card-slug-pill">${escapeHTML(cat.id)}</span>
+              </h4>
+              <div class="cat-card-stats">${catProds.length} Product${catProds.length === 1 ? '' : 's'} &bull; ${subcats.length} Subcategor${subcats.length === 1 ? 'y' : 'ies'}</div>
+            </div>
+          </div>
+          <div class="cat-card-actions">
+            <button type="button" class="btn-cat-action" data-cat-edit-id="${cat.id}" title="Edit Category Details">
+              <span>✏️ Edit</span>
+            </button>
+            ${!isCore ? `
+              <button type="button" class="btn-cat-action btn-cat-delete" data-cat-delete-id="${cat.id}" title="Delete Category">
+                <span>🗑️</span>
+              </button>
+            ` : ''}
+          </div>
+        </div>
+
+        <p class="cat-card-desc">${escapeHTML(cat.description || 'Devshree specialized product department.')}</p>
+
+        <div class="cat-subcats-box">
+          <div class="cat-subcats-header">
+            <span class="cat-subcats-title">Subcategories (${subcats.length})</span>
+          </div>
+
+          <div class="cat-subcats-chips-wrap">
+            ${subcatChipsHtml || `<span style="font-size:0.775rem;color:#94A3B8;font-style:italic;">No subcategories yet. Add one below:</span>`}
+          </div>
+
+          <form class="cat-subcat-inline-add" data-parent-cat-id="${cat.id}">
+            <input type="text" class="cat-subcat-inline-input" placeholder="+ Quick add subcategory (e.g. Mortise Handles)" required />
+            <button type="submit" class="cat-subcat-inline-btn">Add</button>
+          </form>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Attach event handlers
+  container.querySelectorAll('[data-cat-edit-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const catId = btn.dataset.catEditId;
+      const target = getActiveCategories().find(c => c.id === catId);
+      if (target) {
+        const catModal = document.getElementById('admin-category-modal');
+        const catModalTitle = document.getElementById('cat-modal-title');
+        const catEditId = document.getElementById('cat-modal-edit-id');
+        const catNameInput = document.getElementById('cat-modal-name');
+        const catSlugInput = document.getElementById('cat-modal-slug');
+        const catIconInput = document.getElementById('cat-modal-icon');
+        const catDescInput = document.getElementById('cat-modal-desc');
+        const catImgUrlInput = document.getElementById('cat-modal-image-url');
+        const catImgPreview = document.getElementById('cat-modal-image-preview');
+
+        if (catModalTitle) catModalTitle.textContent = `Edit Department: ${target.name}`;
+        if (catEditId) catEditId.value = target.id;
+        if (catNameInput) catNameInput.value = target.name || '';
+        if (catSlugInput) catSlugInput.value = target.slug || target.id.replace(/^cat-/, '');
+        if (catIconInput) catIconInput.value = target.icon || '📦';
+        if (catDescInput) catDescInput.value = target.description || '';
+        if (catImgUrlInput) catImgUrlInput.value = target.image || target.imageUrl || '';
+        if (catImgPreview) catImgPreview.src = target.image || target.imageUrl || 'assets/images/placeholder.webp';
+
+        if (catModal) catModal.style.display = 'flex';
+        catNameInput?.focus();
+      }
+    });
+  });
+
+  container.querySelectorAll('[data-cat-delete-id]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const catId = btn.dataset.catDeleteId;
+      const target = getActiveCategories().find(c => c.id === catId);
+      if (!target) return;
+
+      if (!confirm(`Are you sure you want to delete category "${target.name}"?`)) return;
+
+      try {
+        await deleteCategory(catId, allProducts);
+        showToast(`Category "${target.name}" deleted.`, 'info');
+        renderCategoriesView();
+        updateCategorySelectElements();
+        updateKpis();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  });
+
+  container.querySelectorAll('[data-subcat-delete-id]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const subId = btn.dataset.subcatDeleteId;
+      const target = getActiveSubcategories().find(s => s.id === subId);
+      const name = target ? target.name : subId;
+
+      if (!confirm(`Delete subcategory "${name}"?`)) return;
+
+      try {
+        await deleteSubcategory(subId);
+        showToast(`Subcategory "${name}" deleted.`, 'info');
+        renderCategoriesView();
+        updateCategorySelectElements();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  });
+
+  container.querySelectorAll('.cat-subcat-inline-add').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const parentCatId = form.dataset.parentCatId;
+      const input = form.querySelector('.cat-subcat-inline-input');
+      const name = input?.value.trim();
+      if (!name || !parentCatId) return;
+
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const id = `subcat-${parentCatId.replace('cat-', '')}-${slug}`;
+
+      try {
+        await saveSubcategory({
+          id,
+          categoryId: parentCatId,
+          name,
+          slug
+        });
+
+        input.value = '';
+        showToast(`Subcategory "${name}" added!`, 'success');
+        renderCategoriesView();
+        updateCategorySelectElements(parentCatId, id);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  });
 }
 

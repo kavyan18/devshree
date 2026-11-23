@@ -46,9 +46,11 @@ import {
   fetchCategories, 
   fetchProducts, 
   getProductById, 
+  getAllAvailableProducts,
   seedFirestoreCatalog, 
   isCatalogSeeded 
 } from './products.js';
+export { getAllAvailableProducts };
 import { setupOrderNotificationsListener } from './order-notifications.js';
 import { 
   DEVSHREE_CATALOGS, 
@@ -62,29 +64,14 @@ import {
   DEFAULT_OFFERS, 
   getActiveOffers 
 } from './offers-data.js';
+import { 
+  getActiveCategories, 
+  getSubcategoriesForCategory, 
+  formatCategoryName,
+  formatSubcategoryName 
+} from './categories-data.js';
 
-/**
- * Helper to get all available products combining localStorage cache (from admin / firestore) and mock data
- */
-function getAllAvailableProducts() {
-  const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
-  const combinedMap = new Map();
-  try {
-    const cached = getStorage('devshree_cached_products', null);
-    if (Array.isArray(cached) && cached.length > 0) {
-      cached.forEach(p => {
-        if (!deletedIds.has(String(p.id))) combinedMap.set(String(p.id), p);
-      });
-      return Array.from(combinedMap.values());
-    }
-  } catch (_) {}
-
-  // Only fall back to MOCK_PRODUCTS if cache is completely empty
-  MOCK_PRODUCTS.forEach(p => {
-    if (!deletedIds.has(String(p.id))) combinedMap.set(String(p.id), p);
-  });
-  return Array.from(combinedMap.values());
-}
+// Helper to get all available products imported from products.js
 
 /**
  * Handle mobile catalog synchronization via query string or hash
@@ -116,18 +103,26 @@ function checkCatalogSyncUrl() {
 
 let currentCatalogOptions = {
   categoryId: '',
+  subcategoryId: '',
   sortBy: 'featured',
   inStockOnly: false
 };
 
 async function initDevshreeHome() {
+  // If we are not on the homepage (e.g. on category.html, catalogs.html), do not initialize homepage components
+  if (!document.getElementById('bestsellers-grid') && !document.getElementById('top-categories-scroll')) {
+    return;
+  }
+
   // 1. Initialize all interactive UI controls immediately on 0ms first paint
   try { checkCatalogSyncUrl(); } catch (e) {}
   try { initHeaderAndNavigation(); } catch (e) {}
+  try { initHeaderCategoryNav(); } catch (e) {}
   try { initSearchUI(); } catch (e) {}
   try { initAuthUI(); } catch (e) {}
   try { initTopCategoriesBar(); } catch (e) {}
   try { initCatalogToolbar(); } catch (e) {}
+  try { renderSubcategorySidebar('', ''); } catch (e) {}
   try { initShopByCategoryRail(); } catch (e) {}
   try { initOffersCarousel(); } catch (e) {}
   try { initHomeCatalogsCarousel(); } catch (e) {}
@@ -261,18 +256,19 @@ function initSearchUI() {
   // Popular search items & category quick links for initial empty state
   const popularSearches = [
     { label: 'Godrej Brass Padlock', query: 'Brass Padlock', cat: 'cat-hardware' },
-    { label: 'Havells Modular Switch', query: 'Modular Switch', cat: 'cat-electrical' },
+    { label: 'Havells Modular Switch', query: 'Modular Switch', cat: 'cat-electric' },
     { label: 'Astral CPVC Pipe', query: 'CPVC', cat: 'cat-plumbing' },
     { label: 'Asian Paints Royale', query: 'Royale', cat: 'cat-paints' },
-    { label: 'Anchor 16A Socket', query: 'Socket', cat: 'cat-electrical' },
+    { label: 'Anchor 16A Socket', query: 'Socket', cat: 'cat-electric' },
     { label: 'Brass Ball Valve', query: 'Ball Valve', cat: 'cat-plumbing' }
   ];
 
   const quickCategories = [
     { id: 'cat-hardware', name: 'Hardware', count: '38 items', icon: '🔩' },
-    { id: 'cat-electrical', name: 'Electrical', count: '42 items', icon: '⚡' },
+    { id: 'cat-electric', name: 'Electric', count: '42 items', icon: '⚡' },
     { id: 'cat-plumbing', name: 'Plumbing', count: '29 items', icon: '🚰' },
-    { id: 'cat-paints', name: 'Paints', count: '34 items', icon: '🎨' }
+    { id: 'cat-paints', name: 'Paints', count: '34 items', icon: '🎨' },
+    { id: 'cat-lamination', name: 'Lamination', count: '24 items', icon: '🪵' }
   ];
 
   // Render initial discovery state (Popular tags + Categories)
@@ -734,10 +730,6 @@ function createProductCardHtml(product) {
     badgeHtml += `<span class="badge badge-new">NEW</span>`;
   }
 
-  const stockBadge = product.stock <= 5 
-    ? `<span class="badge badge-stock-low">Only ${product.stock} left</span>`
-    : `<span class="badge badge-stock-in">In Stock</span>`;
-
   return `
     <article class="product-card" data-product-id="${product.id}">
       <div class="product-img-wrap">
@@ -769,7 +761,6 @@ function createProductCardHtml(product) {
       <div class="product-body">
         <div class="product-category-brand">
           <span class="product-brand">${escapeHTML(product.brand)}</span>
-          ${stockBadge}
         </div>
 
         <h3 class="product-title">
@@ -1013,48 +1004,12 @@ function initTopCategoriesBar() {
   items.forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
-      const isAlreadyActive = item.classList.contains('active') && (item.dataset.topCat || item.dataset.catalogCat);
-      items.forEach(i => i.classList.remove('active'));
-
-      if (isAlreadyActive) {
-        // Toggle off - return to All Products
-        setCatalogCategoryFilter('');
-        const allBtn = container.querySelector('[data-top-cat=""], [data-catalog-cat=""]');
-        if (allBtn) allBtn.classList.add('active');
-        const activeChip = document.getElementById('catalog-active-filter-indicator');
-        if (activeChip) activeChip.style.display = 'none';
-        return;
-      }
-
-      item.classList.add('active');
       const catId = item.dataset.topCat || item.dataset.catalogCat || '';
-      const keyword = (item.dataset.keyword || '').trim();
-      const label = item.querySelector('.top-cat-square-label')?.textContent?.trim() || 'Category';
-
-      if (keyword && !catId) {
-        const input = document.getElementById('master-search-input');
-        if (input) input.value = keyword;
-        filterProductsByQuery(keyword, '');
+      if (catId) {
+        window.location.href = `category.html?cat=${encodeURIComponent(catId)}`;
       } else {
-        setCatalogCategoryFilter(catId);
-        if (keyword) {
-          filterProductsByQuery(keyword, catId);
-        }
+        window.location.href = 'category.html?cat=all';
       }
-
-      // Update active filter badge in catalog toolbar
-      const activeChip = document.getElementById('catalog-active-filter-indicator');
-      const activeName = document.getElementById('catalog-active-filter-name');
-      if (activeChip && activeName) {
-        if (catId || keyword) {
-          activeName.textContent = label;
-          activeChip.style.display = 'inline-flex';
-        } else {
-          activeChip.style.display = 'none';
-        }
-      }
-
-      document.getElementById('bestsellers-section')?.scrollIntoView({ behavior: 'smooth' });
     });
   });
 
@@ -1065,6 +1020,15 @@ function initTopCategoriesBar() {
   nextBtn?.addEventListener('click', () => {
     container.scrollBy({ left: 240, behavior: 'smooth' });
   });
+
+  // "See All" header link
+  const viewAllBtn = document.getElementById('top-cat-view-all');
+  if (viewAllBtn) {
+    viewAllBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = 'category.html?cat=all';
+    });
+  }
 }
 
 /**
@@ -1390,10 +1354,21 @@ async function renderDealsRail() {
 }
 
 /**
- * Filter the catalog grid by a category ID
+ * Filter the catalog grid by a category ID and optional subcategory ID
  */
-function setCatalogCategoryFilter(catId) {
+function setCatalogCategoryFilter(catId, subcatId = '', shouldScroll = true) {
   currentCatalogOptions.categoryId = catId;
+  currentCatalogOptions.subcategoryId = subcatId;
+
+  // Sync Header Category Strip active state
+  const headerCatItems = document.querySelectorAll('.header-cat-item');
+  headerCatItems.forEach(item => {
+    const itemCat = item.dataset.cat;
+    const isMatch = itemCat && (itemCat === (catId || '') || ((catId === 'cat-electric' || catId === 'cat-electrical') && (itemCat === 'cat-electric' || itemCat === 'cat-electrical')));
+    item.classList.toggle('active', Boolean(isMatch));
+  });
+
+  // Sync legacy tabs if present
   const tabs = document.querySelectorAll('[data-catalog-cat]');
   tabs.forEach(tab => {
     tab.classList.toggle('active', tab.dataset.catalogCat === (catId || ''));
@@ -1403,8 +1378,15 @@ function setCatalogCategoryFilter(catId) {
   const topItems = document.querySelectorAll('#top-categories-scroll .top-cat-square-item, #top-categories-scroll .top-cat-item');
   topItems.forEach(item => {
     const itemCat = item.dataset.topCat || item.dataset.catalogCat || '';
-    item.classList.toggle('active', itemCat === (catId || ''));
+    const isMatch = itemCat === (catId || '') || ((catId === 'cat-electric' || catId === 'cat-electrical') && (itemCat === 'cat-electric' || itemCat === 'cat-electrical'));
+    item.classList.toggle('active', isMatch);
   });
+
+  // Render / Update the Dedicated Left Subcategory Sidebar Rail & Breadcrumbs
+  renderSubcategorySidebar(catId, subcatId);
+
+  // Render / Update the Subcategory Showcase Rail
+  renderCategorySubcategoryBar(catId, subcatId);
 
   // Sync Active Filter Indicator in catalog toolbar
   const activeChip = document.getElementById('catalog-active-filter-indicator');
@@ -1412,8 +1394,13 @@ function setCatalogCategoryFilter(catId) {
   if (activeChip && activeName) {
     if (catId) {
       const activeItem = document.querySelector(`#top-categories-scroll [data-top-cat="${catId}"], #top-categories-scroll [data-catalog-cat="${catId}"]`);
-      const label = activeItem?.querySelector('.top-cat-square-label')?.textContent?.trim() || catId.replace('cat-', '');
-      activeName.textContent = label;
+      const catLabel = activeItem?.querySelector('.top-cat-square-label')?.textContent?.trim() || formatCategoryName(catId);
+      if (subcatId) {
+        const subName = formatSubcategoryName(subcatId) || subcatId;
+        activeName.textContent = `${catLabel} › ${subName}`;
+      } else {
+        activeName.textContent = catLabel;
+      }
       activeChip.style.display = 'inline-flex';
     } else {
       activeChip.style.display = 'none';
@@ -1427,7 +1414,459 @@ function setCatalogCategoryFilter(catId) {
   });
 
   renderCatalogGrid();
-  document.getElementById('bestsellers-section')?.scrollIntoView({ behavior: 'smooth' });
+  if (shouldScroll) {
+    document.getElementById('bestsellers-section')?.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+/**
+ * High-resolution visual thumbnail mappings for left-side vertical subcategory sidebar
+ */
+export const SUBCATEGORY_SIDEBAR_THUMBNAILS = {
+  // Hardware Subcategories
+  'subcat-hw-handles': 'assets/images/cat_hardware.jpg',
+  'subcat-hw-aldrops': 'assets/images/products/prod-1793888265596.webp',
+  'subcat-hw-hinges': 'assets/images/categories/cat_cabinet_hardware.jpg',
+  'subcat-hw-locks': 'assets/images/catalogs/catalog_godrej_hardware.jpg',
+  'subcat-hw-closers': 'assets/images/cat_hardware.jpg',
+  'subcat-hw-fasteners': 'assets/images/categories/cat_nails_screws.jpg',
+  'subcat-hw-drawer': 'assets/images/products/prod-1793886256682.webp',
+
+  // Electric Subcategories
+  'subcat-el-switches': 'assets/images/collection_elec.jpg',
+  'subcat-el-wires': 'assets/images/cat_electrical.jpg',
+  'subcat-el-lighting': 'assets/images/inspire_elec.jpg',
+  'subcat-el-mcb': 'assets/images/cat_electrical.jpg',
+  'subcat-el-conduit': 'assets/images/collection_elec.jpg',
+  'subcat-el-accessories': 'assets/images/inspire_elec.jpg',
+
+  // Plumbing Subcategories
+  'subcat-pl-pipes': 'assets/images/cat_plumbing.jpg',
+  'subcat-pl-valves': 'assets/images/cat_plumbing.jpg',
+  'subcat-pl-taps': 'assets/images/inspire_plumb.jpg',
+  'subcat-pl-sanitary': 'assets/images/inspire_plumb.jpg',
+  'subcat-pl-cements': 'assets/images/cat_plumbing.jpg',
+  'subcat-pl-drainage': 'assets/images/cat_plumbing.jpg',
+
+  // Paints Subcategories
+  'subcat-pa-interior': 'assets/images/cat_paints.jpg',
+  'subcat-pa-exterior': 'assets/images/inspire_paint.jpg',
+  'subcat-pa-primers': 'assets/images/inspire_paint.jpg',
+  'subcat-pa-enamels': 'assets/images/cat_paints.jpg',
+  'subcat-pa-wood': 'assets/images/cat_paints.jpg',
+  'subcat-pa-tools': 'assets/images/inspire_paint.jpg',
+
+  // Lamination Subcategories
+  'subcat-la-decorative': 'assets/images/categories/cat_laminates_liners.jpg',
+  'subcat-la-acrylic': 'assets/images/catalogs/catalog_acrysoft_genoa.jpg',
+  'subcat-la-edgeband': 'assets/images/banners/laminates_hero_banner.jpg',
+  'subcat-la-pvc': 'assets/images/categories/cat_panels_mouldings.jpg',
+  'subcat-la-adhesives': 'assets/images/categories/cat_adhesive.jpg'
+};
+
+/**
+ * Render the dedicated left-side vertical subcategory sidebar rail & breadcrumbs
+ * matching the user reference video with squircle image thumbnails and terracotta active indicator.
+ */
+function renderSubcategorySidebar(catId, activeSubcatId = '') {
+  const sidebar = document.getElementById('catalog-subcat-sidebar');
+  if (sidebar) {
+    sidebar.style.display = 'none';
+  }
+  const sidebarTrack = document.getElementById('subcat-sidebar-track');
+  const sidebarTitle = document.getElementById('subcat-sidebar-title');
+  const resetBtn = document.getElementById('btn-subcat-reset');
+  const breadcrumbRoot = document.getElementById('catalog-breadcrumb-root');
+  const breadcrumbDeptItem = document.getElementById('catalog-breadcrumb-dept-item');
+  const breadcrumbDeptLink = document.getElementById('catalog-breadcrumb-dept-link');
+  const breadcrumbSubcatItem = document.getElementById('catalog-breadcrumb-subcat-item');
+  const breadcrumbSubcatText = document.getElementById('catalog-breadcrumb-subcat-text');
+  const headerTitle = document.getElementById('catalog-header-title');
+  const headerCount = document.getElementById('catalog-header-count');
+
+  if (!sidebarTrack) return;
+
+  // Root breadcrumb click resets all filters
+  if (breadcrumbRoot) {
+    breadcrumbRoot.onclick = (e) => {
+      e.preventDefault();
+      setCatalogCategoryFilter('');
+    };
+  }
+
+  const allCategories = getActiveCategories();
+  const allProds = getAllAvailableProducts();
+
+  // CASE 1: Specific trade department selected
+  if (catId) {
+    const currentCat = allCategories.find(c => c.id === catId || ((catId === 'cat-electric' || catId === 'cat-electrical') && (c.id === 'cat-electric' || c.id === 'cat-electrical'))) || {
+      id: catId,
+      name: formatCategoryName(catId),
+      icon: '🏷️',
+      image: 'assets/images/cat_hardware.jpg'
+    };
+
+    const subcategories = getSubcategoriesForCategory(catId);
+    const catProds = allProds.filter(p => {
+      const pCat = p.categoryId || p.category_id || '';
+      return pCat === catId || ((catId === 'cat-electric' || catId === 'cat-electrical') && (pCat === 'cat-electric' || pCat === 'cat-electrical'));
+    });
+
+    if (sidebarTitle) sidebarTitle.textContent = currentCat.name;
+    if (resetBtn) {
+      resetBtn.style.display = 'inline-block';
+      resetBtn.onclick = (e) => {
+        e.preventDefault();
+        setCatalogCategoryFilter('');
+      };
+    }
+
+    // Update Breadcrumbs
+    if (breadcrumbDeptItem && breadcrumbDeptLink) {
+      breadcrumbDeptItem.style.display = 'inline-flex';
+      breadcrumbDeptLink.textContent = currentCat.name;
+      breadcrumbDeptLink.onclick = (e) => {
+        e.preventDefault();
+        setCatalogCategoryFilter(catId, '', false);
+      };
+    }
+
+    if (activeSubcatId) {
+      const activeSubObj = subcategories.find(s => s.id === activeSubcatId || s.name.toLowerCase() === activeSubcatId.toLowerCase());
+      const subName = activeSubObj ? activeSubObj.name : formatSubcategoryName(activeSubcatId);
+      const subTarget = activeSubcatId.toLowerCase();
+      const subNameTarget = subName.toLowerCase();
+      const matchCount = catProds.filter(p => {
+        const pSub = String(p.subcategoryId || p.subcategory_id || '').toLowerCase();
+        const pSubName = String(p.subcategoryName || p.subcategory_name || '').toLowerCase();
+        return pSub === subTarget || pSubName === subNameTarget || pSubName.includes(subNameTarget);
+      }).length;
+
+      if (breadcrumbSubcatItem && breadcrumbSubcatText) {
+        breadcrumbSubcatItem.style.display = 'inline-flex';
+        breadcrumbSubcatText.textContent = subName;
+      }
+      if (headerTitle) headerTitle.textContent = `${subName}`;
+      if (headerCount) headerCount.textContent = `Showing ${matchCount} verified ${currentCat.name} item${matchCount === 1 ? '' : 's'}`;
+    } else {
+      if (breadcrumbSubcatItem) breadcrumbSubcatItem.style.display = 'none';
+      if (headerTitle) headerTitle.textContent = `${currentCat.name} Supplies`;
+      if (headerCount) headerCount.textContent = `${catProds.length} Products Available in Department`;
+    }
+
+    // Build vertical rail items:
+    // 1. "All [Category]" item
+    let railHtml = `
+      <button 
+        type="button" 
+        class="subcat-vrail-item ${!activeSubcatId ? 'active' : ''}" 
+        data-vrail-cat="${escapeHTML(currentCat.id)}" 
+        data-vrail-subcat="" 
+        title="View all ${escapeHTML(currentCat.name)} products"
+        role="tab"
+        aria-selected="${!activeSubcatId ? 'true' : 'false'}"
+      >
+        <div class="subcat-vrail-thumb">
+          <img src="${escapeHTML(currentCat.image || currentCat.imageUrl || 'assets/images/cat_hardware.jpg')}" alt="All ${escapeHTML(currentCat.name)}" class="subcat-vrail-img" loading="eager" />
+        </div>
+        <span class="subcat-vrail-label">All ${escapeHTML(currentCat.name)}</span>
+        <span class="subcat-vrail-count">${catProds.length}</span>
+      </button>
+    `;
+
+    // 2. Each subcategory item with squircle thumbnail
+    subcategories.forEach(sub => {
+      const isSubActive = String(activeSubcatId).toLowerCase() === String(sub.id).toLowerCase() || String(activeSubcatId).toLowerCase() === String(sub.name).toLowerCase();
+      const subTarget = String(sub.id).toLowerCase();
+      const subNameTarget = String(sub.name).toLowerCase();
+      const count = catProds.filter(p => {
+        const pSub = String(p.subcategoryId || p.subcategory_id || '').toLowerCase();
+        const pSubName = String(p.subcategoryName || p.subcategory_name || '').toLowerCase();
+        return pSub === subTarget || pSubName === subNameTarget || pSubName.includes(subNameTarget);
+      }).length;
+
+      const thumbImg = SUBCATEGORY_SIDEBAR_THUMBNAILS[sub.id] || currentCat.image || currentCat.imageUrl || 'assets/images/cat_hardware.jpg';
+
+      railHtml += `
+        <button 
+          type="button" 
+          class="subcat-vrail-item ${isSubActive ? 'active' : ''}" 
+          data-vrail-cat="${escapeHTML(currentCat.id)}" 
+          data-vrail-subcat="${escapeHTML(sub.id)}" 
+          title="Filter by ${escapeHTML(sub.name)}"
+          role="tab"
+          aria-selected="${isSubActive ? 'true' : 'false'}"
+        >
+          <div class="subcat-vrail-thumb">
+            <img src="${escapeHTML(thumbImg)}" alt="${escapeHTML(sub.name)}" class="subcat-vrail-img" loading="lazy" />
+          </div>
+          <span class="subcat-vrail-label">${escapeHTML(sub.name)}</span>
+          ${count > 0 ? `<span class="subcat-vrail-count">${count}</span>` : ''}
+        </button>
+      `;
+    });
+
+    sidebarTrack.innerHTML = railHtml;
+
+    // Attach click listeners to vertical rail items
+    sidebarTrack.querySelectorAll('.subcat-vrail-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetSubcat = btn.dataset.vrailSubcat || '';
+        setCatalogCategoryFilter(catId, targetSubcat, false);
+      });
+    });
+
+  } else {
+    // CASE 2: No specific category filtered (Showing all departments)
+    if (sidebarTitle) sidebarTitle.textContent = 'Departments';
+    if (resetBtn) resetBtn.style.display = 'none';
+    if (breadcrumbDeptItem) breadcrumbDeptItem.style.display = 'none';
+    if (breadcrumbSubcatItem) breadcrumbSubcatItem.style.display = 'none';
+    if (headerTitle) headerTitle.textContent = 'Verified Hardware & Full Catalog';
+    if (headerCount) headerCount.textContent = 'Verified ISI Supplies • Fast Pan-India Dispatch';
+
+    let allDeptsHtml = '';
+    allCategories.forEach(cat => {
+      const catCount = allProds.filter(p => {
+        const pCat = p.categoryId || p.category_id || '';
+        return pCat === cat.id || ((cat.id === 'cat-electric' || cat.id === 'cat-electrical') && (pCat === 'cat-electric' || pCat === 'cat-electrical'));
+      }).length;
+
+      allDeptsHtml += `
+        <button 
+          type="button" 
+          class="subcat-vrail-item" 
+          data-vrail-cat="${escapeHTML(cat.id)}" 
+          data-vrail-subcat="" 
+          title="Browse ${escapeHTML(cat.name)}"
+          role="tab"
+        >
+          <div class="subcat-vrail-thumb">
+            <img src="${escapeHTML(cat.image || cat.imageUrl || 'assets/images/cat_hardware.jpg')}" alt="${escapeHTML(cat.name)}" class="subcat-vrail-img" loading="lazy" />
+          </div>
+          <span class="subcat-vrail-label">${escapeHTML(cat.name)}</span>
+          ${catCount > 0 ? `<span class="subcat-vrail-count">${catCount}</span>` : ''}
+        </button>
+      `;
+    });
+
+    sidebarTrack.innerHTML = allDeptsHtml;
+
+    sidebarTrack.querySelectorAll('.subcat-vrail-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetCat = btn.dataset.vrailCat;
+        if (targetCat) {
+          setCatalogCategoryFilter(targetCat, '', false);
+        }
+      });
+    });
+  }
+}
+
+/**
+ * Render the dedicated Subcategory Showcase Rail above the products grid
+ * when a trade department is selected.
+ */
+function renderCategorySubcategoryBar(catId, activeSubcatId = '') {
+  const showcaseCard = document.getElementById('catalog-subcat-showcase-card');
+  const pillsTrack = document.getElementById('catalog-subcat-pills-track');
+  if (!showcaseCard || !pillsTrack) return;
+
+  if (!catId) {
+    showcaseCard.style.display = 'none';
+    pillsTrack.innerHTML = '';
+    return;
+  }
+
+  // Fetch active categories & current department info
+  const allCategories = getActiveCategories();
+  const currentCat = allCategories.find(c => c.id === catId || ((catId === 'cat-electric' || catId === 'cat-electrical') && (c.id === 'cat-electric' || c.id === 'cat-electrical'))) || {
+    id: catId,
+    name: formatCategoryName(catId),
+    icon: '🏷️',
+    description: 'Browse specialized trade subcategories or select all products:'
+  };
+
+  const subcategories = getSubcategoriesForCategory(catId);
+
+  // Update Department Header & Badges
+  const deptBadge = document.getElementById('catalog-subcat-dept-badge');
+  const deptTitle = document.getElementById('catalog-subcat-dept-title');
+  const countPill = document.getElementById('catalog-subcat-count-pill');
+  const deptDesc = document.getElementById('catalog-subcat-dept-desc');
+
+  if (deptBadge) deptBadge.textContent = `${currentCat.icon || '🏷️'} ${currentCat.name}`;
+  if (deptTitle) deptTitle.textContent = `${currentCat.name} Department`;
+  if (deptDesc) deptDesc.textContent = currentCat.description || `Browse specialized ${currentCat.name} supplies or filter by specific subcategory:`;
+
+  // Calculate live product count for this category and each subcategory
+  const allProds = getAllAvailableProducts();
+  const catProds = allProds.filter(p => {
+    const pCat = p.categoryId || p.category_id || '';
+    return pCat === catId || ((catId === 'cat-electric' || catId === 'cat-electrical') && (pCat === 'cat-electric' || pCat === 'cat-electrical'));
+  });
+
+  if (countPill) {
+    if (activeSubcatId) {
+      const activeSubObj = subcategories.find(s => s.id === activeSubcatId || s.name.toLowerCase() === activeSubcatId.toLowerCase());
+      const subName = activeSubObj ? activeSubObj.name : formatSubcategoryName(activeSubcatId);
+      const subTarget = activeSubcatId.toLowerCase();
+      const subNameTarget = subName.toLowerCase();
+      const matchCount = catProds.filter(p => {
+        const pSub = String(p.subcategoryId || p.subcategory_id || '').toLowerCase();
+        const pSubName = String(p.subcategoryName || p.subcategory_name || '').toLowerCase();
+        return pSub === subTarget || pSubName === subNameTarget || pSubName.includes(subNameTarget);
+      }).length;
+      countPill.textContent = `${subName} (${matchCount} item${matchCount === 1 ? '' : 's'})`;
+    } else {
+      countPill.textContent = `${catProds.length} Products Available`;
+    }
+  }
+
+  // Build pill buttons:
+  // 1. "All [Category]" pill
+  let pillsHtml = `
+    <button 
+      type="button" 
+      class="subcat-pill-btn ${!activeSubcatId ? 'active' : ''}" 
+      data-subcat-pill="" 
+      title="View all ${escapeHTML(currentCat.name)} products"
+      role="tab"
+      aria-selected="${!activeSubcatId ? 'true' : 'false'}"
+    >
+      <span>All ${escapeHTML(currentCat.name)}</span>
+      <span class="subcat-pill-count">${catProds.length}</span>
+    </button>
+  `;
+
+  // 2. Each subcategory pill
+  subcategories.forEach(sub => {
+    const isSubActive = String(activeSubcatId).toLowerCase() === String(sub.id).toLowerCase() || String(activeSubcatId).toLowerCase() === String(sub.name).toLowerCase();
+    const subTarget = String(sub.id).toLowerCase();
+    const subNameTarget = String(sub.name).toLowerCase();
+    const count = catProds.filter(p => {
+      const pSub = String(p.subcategoryId || p.subcategory_id || '').toLowerCase();
+      const pSubName = String(p.subcategoryName || p.subcategory_name || '').toLowerCase();
+      return pSub === subTarget || pSubName === subNameTarget || pSubName.includes(subNameTarget);
+    }).length;
+
+    pillsHtml += `
+      <button 
+        type="button" 
+        class="subcat-pill-btn ${isSubActive ? 'active' : ''}" 
+        data-subcat-pill="${escapeHTML(sub.id)}" 
+        title="Filter by ${escapeHTML(sub.name)}"
+        role="tab"
+        aria-selected="${isSubActive ? 'true' : 'false'}"
+      >
+        <span>${escapeHTML(sub.name)}</span>
+        ${count > 0 ? `<span class="subcat-pill-count">${count}</span>` : ''}
+      </button>
+    `;
+  });
+
+  pillsTrack.innerHTML = pillsHtml;
+  showcaseCard.style.display = 'block';
+
+  // Attach event listeners to subcategory pills
+  pillsTrack.querySelectorAll('[data-subcat-pill]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const subId = btn.dataset.subcatPill || '';
+      setCatalogCategoryFilter(catId, subId, false);
+    });
+  });
+
+  // Attach event listener to "Show All Departments" reset button
+  const resetDeptBtn = document.getElementById('btn-reset-dept-filter');
+  if (resetDeptBtn) {
+    resetDeptBtn.onclick = (e) => {
+      e.preventDefault();
+      setCatalogCategoryFilter('');
+    };
+  }
+}
+
+/**
+ * Initialize Header Category Navigation Strip & Hover Dropdowns (Directly Under Search Bar)
+ */
+function initHeaderCategoryNav() {
+  const strip = document.getElementById('header-category-strip');
+  if (!strip) return;
+
+  // Dynamically populate subcategories for any custom departments added by admin
+  try {
+    const grids = strip.querySelectorAll('[data-subcat-grid]');
+    grids.forEach(grid => {
+      const catId = grid.dataset.subcatGrid;
+      if (!catId) return;
+      const subcats = getSubcategoriesForCategory(catId);
+      if (subcats && subcats.length > 0) {
+        grid.innerHTML = subcats.map(sub => `
+          <li><a href="#bestsellers-section" class="dropdown-subcat-link" data-cat-id="${escapeHTML(catId)}" data-subcat-id="${escapeHTML(sub.id)}">${escapeHTML(sub.name)}</a></li>
+        `).join('');
+      }
+    });
+  } catch (err) {
+    console.warn('[Devshree] Header subcat grid population warning:', err);
+  }
+
+  // Category item links in the header strip
+  const catLinks = strip.querySelectorAll('.header-cat-link[data-cat-id]');
+  catLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      const catId = link.dataset.catId;
+      if (catId) {
+        e.preventDefault();
+        window.location.href = `category.html?cat=${encodeURIComponent(catId)}`;
+      }
+    });
+  });
+
+  // Subcategory links inside the hover dropdown card
+  const subcatLinks = strip.querySelectorAll('.dropdown-subcat-link[data-cat-id]');
+  subcatLinks.forEach(subLink => {
+    subLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const catId = subLink.dataset.catId;
+      const subcatId = subLink.dataset.subcatId;
+      if (catId) {
+        const url = subcatId 
+          ? `category.html?cat=${encodeURIComponent(catId)}&subcat=${encodeURIComponent(subcatId)}`
+          : `category.html?cat=${encodeURIComponent(catId)}`;
+        window.location.href = url;
+      }
+    });
+  });
+
+  // "View All Products →" links in dropdown footer
+  const allBtns = strip.querySelectorAll('.dropdown-dept-all-btn[data-cat-id]');
+  allBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const catId = btn.dataset.catId;
+      if (catId) {
+        window.location.href = `category.html?cat=${encodeURIComponent(catId)}`;
+      }
+    });
+  });
+
+  // Mobile Drawer category links
+  const drawerLinks = document.querySelectorAll('.mobile-drawer-link[data-category-filter]');
+  drawerLinks.forEach(mLink => {
+    mLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const catId = mLink.dataset.categoryFilter;
+      document.getElementById('mobile-drawer')?.classList.remove('active');
+      document.getElementById('mobile-drawer-overlay')?.classList.remove('active');
+      document.body.style.overflow = '';
+      if (catId) {
+        window.location.href = `category.html?cat=${encodeURIComponent(catId)}`;
+      }
+    });
+  });
 }
 
 /**
@@ -1634,10 +2073,6 @@ async function openQuickView(productId) {
               ✍️ Review Product
             </button>
           </div>
-          <div class="modal-stock-indicator ${stockLimit <= 5 ? 'low' : 'in'}">
-            <span class="stock-pulse-dot"></span>
-            <span>${stockLimit <= 5 ? `Only ${stockLimit} units left in stock` : `In Stock &bull; Ready to Dispatch`}</span>
-          </div>
         </div>
 
         <div class="modal-pricing-box">
@@ -1669,7 +2104,7 @@ async function openQuickView(productId) {
               <button type="button" class="qty-btn" id="modal-qty-minus" aria-label="Decrease quantity">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
-              <input type="number" id="modal-qty-input" class="qty-input" value="1" min="1" max="${stockLimit}" readonly />
+              <input type="number" id="modal-qty-input" class="qty-input" value="1" min="1" max="999" readonly />
               <button type="button" class="qty-btn" id="modal-qty-plus" aria-label="Increase quantity">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
@@ -1729,8 +2164,7 @@ async function openQuickView(productId) {
 
   plusBtn?.addEventListener('click', () => {
     let current = parseInt(qtyInput.value, 10) || 1;
-    if (current < stockLimit) qtyInput.value = current + 1;
-    else showToast(`Maximum available stock is ${stockLimit}.`, 'info');
+    qtyInput.value = current + 1;
   });
 
   document.getElementById('modal-add-cart-btn')?.addEventListener('click', () => {

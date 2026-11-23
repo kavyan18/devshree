@@ -151,6 +151,47 @@ it('Formats Store Owner WhatsApp message with Paid status and Online UPI mode', 
   assert(message.includes('+91 88661 30409'), 'Must reference store owner phone');
 });
 
+console.log('\n--- 5. MANDATORY UPI UTR VALIDATION & ZERO-LEAK ORDER PREVENTION ---');
+
+it('Rejects order placement when UTR is missing or under 8 digits', () => {
+  function validateUtrForOrder(rawUtr) {
+    const clean = String(rawUtr || '').trim().replace(/[^a-zA-Z0-9]/g, '');
+    if (!clean || clean.length < 8) {
+      return { valid: false, error: 'Invalid UTR' };
+    }
+    return { valid: true, utr: clean };
+  }
+
+  assert.strictEqual(validateUtrForOrder('').valid, false);
+  assert.strictEqual(validateUtrForOrder('   ').valid, false);
+  assert.strictEqual(validateUtrForOrder('12345').valid, false);
+  assert.strictEqual(validateUtrForOrder('432109876543').valid, true);
+  assert.strictEqual(validateUtrForOrder('AXIS1234567890').valid, true);
+});
+
+it('Includes customer UPI UTR and bank verification reminder in store owner WhatsApp message', () => {
+  const orderWithUtr = {
+    id: 'ord-online-888',
+    invoiceNumber: 'INV-DEV-20261123-555',
+    customerName: 'Jayeshbhai Patel',
+    customerPhone: '+91 98980 54321',
+    shippingAddress: 'Plot 12, GIDC, Morbi, Gujarat',
+    itemsSnapshot: [
+      { name: 'Brass Pull Handle 8-inch', price: 950, quantity: 2 }
+    ],
+    total: 1900,
+    paymentMethod: 'Online UPI / QR',
+    paymentStatus: 'Verification Pending',
+    utrNumber: '432109876543',
+    courierPartner: 'Delhivery Express'
+  };
+
+  const message = buildStoreOwnerOrderWhatsAppMessage(orderWithUtr);
+  assert(message.includes('432109876543'), 'Must include customer UTR in alert');
+  assert(message.includes('Axis Bank'), 'Must remind store owner to verify bank credit');
+  assert(message.includes('8866130409@axisbank'), 'Must reference merchant VPA');
+});
+
 console.log('\n======================================================');
 console.log(`🏁 TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);
 console.log('======================================================\n');

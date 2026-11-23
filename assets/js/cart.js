@@ -33,10 +33,12 @@ function saveCart(cart) {
 function notifyCartUpdated(cart) {
   const count = getCartCount();
   const totals = getCartTotals();
-  const event = new CustomEvent('devshree:cart-updated', {
-    detail: { cart, count, totals }
-  });
-  window.dispatchEvent(event);
+  if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') {
+    const event = new CustomEvent('devshree:cart-updated', {
+      detail: { cart, count, totals }
+    });
+    window.dispatchEvent(event);
+  }
 }
 
 /**
@@ -98,27 +100,12 @@ export function addToCart(productId, quantity = 1, snapshot = null) {
     return false;
   }
 
-  const stockLimit = (typeof product.stock === 'number' && !isNaN(product.stock))
-    ? product.stock
-    : (parseInt(product.stock, 10) || 99);
-
-  if (stockLimit <= 0) {
-    showToast(`Sorry, ${product.name} is currently out of stock.`, 'error');
-    return false;
-  }
-
   const cart = getCart();
   const existingIndex = cart.findIndex(item => String(item.productId) === String(productId));
 
   let newQuantity = quantity;
   if (existingIndex > -1) {
     newQuantity = (cart[existingIndex].quantity || 0) + quantity;
-  }
-
-  // Stock check
-  if (newQuantity > stockLimit) {
-    showToast(`Only ${stockLimit} units available in stock.`, 'error');
-    return false;
   }
 
   const cleanSnapshot = {
@@ -128,7 +115,7 @@ export function addToCart(productId, quantity = 1, snapshot = null) {
     compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
     image: product.image || '',
     brand: product.brand || 'Devshree',
-    stock: stockLimit,
+    stock: typeof product.stock === 'number' ? product.stock : 999,
     categoryName: product.categoryName || ''
   };
 
@@ -161,12 +148,6 @@ export function updateQuantity(productId, newQuantity) {
   if (newQuantity <= 0) {
     removeFromCart(productId);
     return;
-  }
-
-  const maxStock = item.productSnapshot?.stock || 999;
-  if (newQuantity > maxStock) {
-    showToast(`Maximum available stock is ${maxStock}.`, 'error');
-    newQuantity = maxStock;
   }
 
   item.quantity = newQuantity;

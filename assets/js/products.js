@@ -100,9 +100,14 @@ export async function fetchProducts(options = {}) {
       const client = await getSupabaseClient();
       if (client) {
         let q = client.from('products').select('*');
-        if (options.categoryId) {
-          q = q.eq('category_id', options.categoryId);
+        if (options.categoryId && options.categoryId !== 'all') {
+          if (options.categoryId === 'cat-electric' || options.categoryId === 'cat-electrical') {
+            q = q.in('category_id', ['cat-electric', 'cat-electrical']);
+          } else {
+            q = q.eq('category_id', options.categoryId);
+          }
         }
+        // Note: Subcategory filtering is applied robustly in-memory with intelligent keyword fallback
         const { data, error } = await q;
         if (!error && Array.isArray(data) && data.length > 0) {
           data.forEach(d => {
@@ -112,6 +117,8 @@ export async function fetchProducts(options = {}) {
               id: d.id,
               name: d.name,
               categoryId: d.category_id,
+              subcategoryId: d.subcategory_id || null,
+              subcategoryName: d.subcategory_name || null,
               brand: d.brand || 'Devshree',
               sku: d.sku || '',
               description: d.description || '',
@@ -204,7 +211,64 @@ export async function fetchProducts(options = {}) {
 
   // Apply in-memory filtering (robust against missing Firestore composite indexes)
   if (options.categoryId && products.length > 0) {
-    products = products.filter(p => p.categoryId === options.categoryId);
+    const targetCat = options.categoryId;
+    products = products.filter(p => {
+      const pCat = p.categoryId || p.category_id || '';
+      if (pCat === targetCat) return true;
+      if ((targetCat === 'cat-electric' || targetCat === 'cat-electrical') && (pCat === 'cat-electric' || pCat === 'cat-electrical')) return true;
+      return false;
+    });
+  }
+
+  if (options.subcategoryId && options.subcategoryId !== 'all' && products.length > 0) {
+    const targetSub = String(options.subcategoryId).toLowerCase();
+
+    // Intelligent subcategory keywords lookup for auto-categorization fallback
+    const subcatKeywords = {
+      'subcat-hw-handles': ['handle', 'knob', 'mortice', 'mortise'],
+      'subcat-hw-aldrops': ['aldrop', 'latch', 'tower bolt', 'bed fitting'],
+      'subcat-hw-hinges': ['hinge', 'butt hinge', 'bearing'],
+      'subcat-hw-locks': ['lock', 'padlock', 'cylindrical', 'lever'],
+      'subcat-hw-closers': ['closer', 'spring', 'floor spring'],
+      'subcat-hw-fasteners': ['nail', 'screw', 'fastener', 'spanner', 'pepar', 'gaindar'],
+      'subcat-hw-drawer': ['tandam', 'drawer', 'channel', 'tandem', 'bracket'],
+      'subcat-el-switches': ['switch', 'socket', 'coral'],
+      'subcat-el-wires': ['wire', 'cable', 'copper', 'coil'],
+      'subcat-el-lighting': ['bulb', 'led', 'lamp', 'panel', 'light'],
+      'subcat-el-mcb': ['mcb', 'distribution', 'breaker', 'rccb'],
+      'subcat-el-conduit': ['conduit', 'pvc pipe'],
+      'subcat-el-accessories': ['holder', 'plug', 'accessory', 'board'],
+      'subcat-pl-pipes': ['pipe', 'elbow', 'upvc', 'cpvc'],
+      'subcat-pl-valves': ['valve', 'nrv', 'ball valve'],
+      'subcat-pl-taps': ['cock', 'tap', 'bib', 'angel cock'],
+      'subcat-pl-sanitary': ['basin', 'sanitary', 'faucet'],
+      'subcat-pl-cements': ['cement', 'solvent', 'teflon', 'white cement'],
+      'subcat-pl-drainage': ['waste', 'trap', 'drain'],
+      'subcat-pa-interior': ['emulsion', 'putty', 'stainer', 'white putty'],
+      'subcat-pa-exterior': ['exterior', 'weatherproof', 'apex'],
+      'subcat-pa-primers': ['primer', 'putty', 'undercoat'],
+      'subcat-pa-enamels': ['enamel', 'metal primer'],
+      'subcat-pa-wood': ['wood', 'melamyne', 'stain'],
+      'subcat-pa-tools': ['brush', 'roller', 'painting tool'],
+      'subcat-la-decorative': ['laminate', 'mica', 'prelam', 'sheet'],
+      'subcat-la-acrylic': ['acrylic', 'high gloss', 'mirror'],
+      'subcat-la-edgeband': ['edgeband', 'tape', 'trim', 'biding'],
+      'subcat-la-pvc': ['pvc', 'charcoal', 'panel'],
+      'subcat-la-adhesives': ['fevicol', 'adhesive', 'glue', 'sr glue']
+    };
+
+    const keywords = subcatKeywords[targetSub] || [];
+
+    products = products.filter(p => {
+      const pSubId = String(p.subcategoryId || p.subcategory_id || '').toLowerCase();
+      const pSubName = String(p.subcategoryName || p.subcategory_name || '').toLowerCase();
+      if (pSubId === targetSub || pSubName === targetSub || pSubName.includes(targetSub)) {
+        return true;
+      }
+      // Fallback matching against product name & description
+      const pText = (p.name + ' ' + (p.description || '')).toLowerCase();
+      return keywords.some(k => pText.includes(k));
+    });
   }
 
   if (options.brand) {
@@ -271,6 +335,31 @@ export async function fetchProducts(options = {}) {
   }
 
   return products;
+}
+
+/**
+ * Synchronously retrieves all available products from local cache or default seeds.
+ * Excludes any product IDs marked as deleted by the admin.
+ * @returns {Array<Object>}
+ */
+export function getAllAvailableProducts() {
+  const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
+  const combinedMap = new Map();
+  try {
+    const cached = getStorage('devshree_cached_products', null);
+    if (Array.isArray(cached) && cached.length > 0) {
+      cached.forEach(p => {
+        if (!deletedIds.has(String(p.id))) combinedMap.set(String(p.id), p);
+      });
+      return Array.from(combinedMap.values());
+    }
+  } catch (_) {}
+
+  // Only fall back to MOCK_PRODUCTS if cache is completely empty
+  MOCK_PRODUCTS.forEach(p => {
+    if (!deletedIds.has(String(p.id))) combinedMap.set(String(p.id), p);
+  });
+  return Array.from(combinedMap.values());
 }
 
 /**
@@ -365,6 +454,8 @@ export async function saveProductToSupabase(productData) {
     id: targetId,
     name: productData.name,
     category_id: productData.categoryId || productData.category_id || 'cat-hardware',
+    subcategory_id: productData.subcategoryId || productData.subcategory_id || null,
+    subcategory_name: productData.subcategoryName || productData.subcategory_name || null,
     brand: productData.brand || 'Devshree',
     sku: productData.sku || '',
     description: productData.description || '',

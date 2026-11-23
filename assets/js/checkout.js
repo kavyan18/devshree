@@ -723,7 +723,7 @@ export function openRazorpaySimulationModal() {
   document.querySelectorAll('.rzp-inline-amount').forEach(el => el.textContent = formatINR(total));
 
   const payBtnText = document.getElementById('rzp-pay-btn-text');
-  if (payBtnText) payBtnText.textContent = `Confirm Payment Now`;
+  if (payBtnText) payBtnText.textContent = `Submit UTR & Confirm Order`;
 
   // 1. Generate Unique UPI Reference & Dynamic QR Code
   const merchantVpa = getStorage('devshree_upi_vpa', RAZORPAY_CONFIG.merchantVpa);
@@ -802,14 +802,21 @@ export function openRazorpaySimulationModal() {
     if (descEl) descEl.textContent = desc;
   }
 
-  // Initialize Detection UI
+  // Initialize Detection UI: Prompt customer to scan and then enter UTR
   updateDetectionStatus(
     'waiting',
-    'Waiting for UPI Payment Scan...',
-    `Scan QR with any UPI app. When payment is received, your order will be placed automatically.`
+    'Scan QR Code & Enter Payment UTR',
+    `Scan QR with any UPI app to pay ₹${total}. Then enter your 12-digit UTR below to confirm.`
   );
 
-  // 2. Automated Payment Received & Order Placement Engine
+  // Reset UTR input on open
+  const utrInput = document.getElementById('rzp-utr-input');
+  if (utrInput) {
+    utrInput.value = '';
+    utrInput.classList.remove('error');
+  }
+
+  // 2. Verified Payment Order Placement Engine
   const procOverlay = document.getElementById('rzp-processing-overlay');
   const procTitle = document.getElementById('rzp-proc-title');
   const procSubtitle = document.getElementById('rzp-proc-subtitle');
@@ -818,52 +825,51 @@ export function openRazorpaySimulationModal() {
   const procSuccessIcon = document.getElementById('rzp-proc-success-icon');
   const currentPayBtn = document.getElementById('rzp-pay-action-btn');
 
-  const handlePaymentSuccess = async (source = 'auto_detected') => {
+  const handlePaymentSuccess = async (source = 'user_verified_utr', utrNumber = '') => {
     if (isRzpPaymentProcessing || isRzpPaymentCompleted) return;
     isRzpPaymentProcessing = true;
     isRzpPaymentCompleted = true;
 
-    // Clean up timers & background listeners
+    // Clean up timers
     cleanupPaymentSession();
 
     // Visual Status in Modal
     updateDetectionStatus(
       'success',
-      `✅ Payment of ${formatINR(total)} Received via UPI!`,
-      `Ref: ${txnRef} • Bank confirmation received. Placing your order now...`
+      `✅ Payment Details Submitted (UTR: ${utrNumber || 'Submitted'})`,
+      `UTR: ${utrNumber} • Order recorded. Devshree store owner (+91 88661 30409) will verify before dispatch.`
     );
 
     if (currentPayBtn) {
       currentPayBtn.disabled = true;
       const btnText = document.getElementById('rzp-pay-btn-text');
-      if (btnText) btnText.textContent = '✓ Payment Confirmed';
+      if (btnText) btnText.textContent = '✓ Submitting Order...';
     }
 
-    // Show celebratory processing overlay
+    // Show processing overlay
     if (procOverlay) procOverlay.style.display = 'flex';
     if (procSpinner) procSpinner.style.display = 'none';
     if (procSuccessIcon) procSuccessIcon.style.display = 'flex';
-    if (procTitle) procTitle.textContent = 'Payment Received! Placing Order...';
+    if (procTitle) procTitle.textContent = 'Order Submitted for Verification!';
     if (procSubtitle) {
-      procSubtitle.textContent = `Payment of ${formatINR(total)} confirmed. Generating GST Tax Invoice & notifying store owner...`;
+      procSubtitle.textContent = `UPI UTR ${utrNumber} recorded. Generating GST Tax Invoice & notifying store owner (+91 88661 30409)...`;
     }
     if (procBar) procBar.style.width = '100%';
 
     // Smooth transition into Step 3 Order Confirmation
     setTimeout(async () => {
       closePaymentModal();
-      const paymentLabel = `Online UPI QR Payment (${txnRef})`;
-      await executeOrderPlacement(paymentLabel, 'Paid');
-      showToast(`🎉 Payment of ${formatINR(total)} received! Order confirmed.`, 'success');
+      const paymentLabel = `Online UPI / QR (UTR: ${utrNumber})`;
+      const paymentStatus = 'Verification Pending';
+      await executeOrderPlacement(paymentLabel, paymentStatus, utrNumber);
+      showToast(`🎉 Order placed! Store owner will verify UTR ${utrNumber} before dispatch.`, 'success');
     }, 1200);
   };
 
-  // 3. Automated Scanning & Payment Timing Sequence
-  clearTimeout(rzpAutoDetectionTimer);
-  clearTimeout(rzpScanInterval);
-
   // Start 10-minute session countdown timer
   clearInterval(rzpCountdownInterval);
+  clearTimeout(rzpAutoDetectionTimer);
+  clearTimeout(rzpScanInterval);
   let secondsRemaining = 600; // 10 minutes
   const timerEl = document.getElementById('rzp-countdown-timer');
   const updateTimer = () => {
@@ -880,49 +886,7 @@ export function openRazorpaySimulationModal() {
   updateTimer();
   rzpCountdownInterval = setInterval(updateTimer, 1000);
 
-  // Phase 1 -> Phase 2: After 3.2 seconds of display, detect QR scan
-  rzpScanInterval = setTimeout(() => {
-    if (!isRzpPaymentCompleted && modal.classList.contains('active')) {
-      updateDetectionStatus(
-        'scanning',
-        '📲 QR Scanned! Awaiting bank confirmation...',
-        `Processing payment authorization on NPCI network for Devshree Hardware (${formatINR(total)})...`
-      );
-    }
-  }, 3200);
-
-  // Phase 2 -> Phase 3: At ~6.8 seconds, confirm payment received & auto-place order
-  rzpAutoDetectionTimer = setTimeout(() => {
-    if (!isRzpPaymentCompleted && modal.classList.contains('active')) {
-      handlePaymentSuccess('automatic_timer');
-    }
-  }, 6800);
-
-  // 4. Mobile App Return Detection (Customer opens GPay/PhonePe and returns to browser)
-  if (rzpVisibilityHandler) {
-    document.removeEventListener('visibilitychange', rzpVisibilityHandler);
-    window.removeEventListener('focus', rzpVisibilityHandler);
-  }
-
-  rzpVisibilityHandler = () => {
-    if (document.visibilityState === 'visible' && !isRzpPaymentCompleted && modal.classList.contains('active')) {
-      updateDetectionStatus(
-        'scanning',
-        '🔄 Verifying returned UPI transaction...',
-        'Confirming transaction receipt with bank network...'
-      );
-      setTimeout(() => {
-        if (!isRzpPaymentCompleted && modal.classList.contains('active')) {
-          handlePaymentSuccess('mobile_app_return');
-        }
-      }, 1300);
-    }
-  };
-
-  document.addEventListener('visibilitychange', rzpVisibilityHandler);
-  window.addEventListener('focus', rzpVisibilityHandler);
-
-  // 5. Cleanup Helper
+  // Cleanup Helper
   function cleanupPaymentSession() {
     clearInterval(rzpCountdownInterval);
     clearTimeout(rzpScanInterval);
@@ -944,28 +908,51 @@ export function openRazorpaySimulationModal() {
     document.body.style.overflow = '';
   }
 
-  // Cancel & Close Handlers
+  // Cancel & Close Handlers (Never places an order on cancel/close)
   const cancelBtn = document.getElementById('rzp-cancel-btn');
   if (cancelBtn) {
     cancelBtn.onclick = () => {
       closePaymentModal();
-      showToast('Payment cancelled. You can select Cash on Delivery instead.', 'info');
+      showToast('Payment cancelled. No order was placed.', 'info');
     };
   }
 
   const closeIcon = document.getElementById('rzp-modal-close-icon');
-  if (closeIcon) closeIcon.onclick = closePaymentModal;
+  if (closeIcon) {
+    closeIcon.onclick = () => {
+      closePaymentModal();
+      showToast('Payment cancelled. No order was placed.', 'info');
+    };
+  }
 
   modal.onclick = (e) => {
-    if (e.target === modal) closePaymentModal();
+    if (e.target === modal) {
+      closePaymentModal();
+      showToast('Payment cancelled. No order was placed.', 'info');
+    }
   };
 
-  // Immediate manual confirmation override
+  // Manual UTR Verification & Order Placement trigger
   const actionPayBtn = document.getElementById('rzp-pay-action-btn');
   if (actionPayBtn) {
     actionPayBtn.disabled = false;
     actionPayBtn.onclick = () => {
-      handlePaymentSuccess('user_button_click');
+      const inputEl = document.getElementById('rzp-utr-input');
+      const rawUtr = (inputEl?.value || '').trim();
+      const cleanUtr = rawUtr.replace(/[^a-zA-Z0-9]/g, '');
+
+      if (!cleanUtr || cleanUtr.length < 8) {
+        showToast('⚠️ Please enter the 12-digit UPI UTR / Transaction ID from your payment receipt.', 'error');
+        if (inputEl) {
+          inputEl.classList.add('error');
+          inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          inputEl.focus();
+        }
+        return;
+      }
+
+      if (inputEl) inputEl.classList.remove('error');
+      handlePaymentSuccess('user_verified_utr', cleanUtr);
     };
   }
 
@@ -976,7 +963,7 @@ export function openRazorpaySimulationModal() {
 /**
  * Execute actual order creation in Firestore and transition to Confirmation step
  */
-async function executeOrderPlacement(paymentMethod, paymentStatus) {
+async function executeOrderPlacement(paymentMethod, paymentStatus, utrNumber = '') {
   const user = getCurrentUser();
   const address = window.__devshree_checkout_address || {};
   const totals = currentCheckoutTotals || getCartTotals() || { total: 0, subtotal: 0, shipping: 0 };
@@ -1047,6 +1034,7 @@ async function executeOrderPlacement(paymentMethod, paymentStatus) {
     total: totals.total || 0,
     paymentMethod: paymentMethod,
     paymentStatus: paymentStatus || 'Pending',
+    utrNumber: utrNumber || '',
     orderStatus: 'Confirmed',
     courierPartner: 'Delhivery Express',
     trackingNumber: `DLV-DEV-${Math.floor(10000000 + Math.random() * 90000000)}`,

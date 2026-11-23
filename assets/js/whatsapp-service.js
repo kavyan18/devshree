@@ -133,6 +133,7 @@ ${itemsPreview}
 • *Total Payable:* *${totalStr}*
 • *Payment Mode:* ${order.paymentMethod || 'Cash on Delivery (COD)'}
 • *Payment Status:* ${order.paymentStatus || 'Pending'}
+${order.utrNumber ? `• *Customer UPI UTR:* *${order.utrNumber}*\n• *⚠️ Verification Action:* Verify ₹${totalStr} in Axis Bank (8866130409@axisbank) under UTR ${order.utrNumber} before dispatch!` : ''}
 • *Logistics Courier:* ${order.courierPartner || 'Delhivery Express'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━

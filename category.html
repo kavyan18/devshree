@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Browse verified architectural hardware, electric supplies, plumbing fittings, wall paints, and laminates by category and subcategory from Devshree." />
+  <meta name="keywords" content="Devshree hardware, category, subcategories, mortise handles, locks, switches, plumbing valves, Asian Paints, laminates" />
+  <meta property="og:title" content="Shop by Category &amp; Subcategory | DEVSHREE" />
+  <meta property="og:description" content="Explore trade departments and specialized subcategories with verified trade pricing." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#C2623B" />
+  <link rel="manifest" href="manifest.json" />
+
+  <title>Shop by Category &amp; Subcategories | DEVSHREE</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png" />
+
+  <!-- Google Fonts: Manrope, Inter & Noto Sans Gujarati -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=Noto+Sans+Gujarati:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Core & Responsive Styles -->
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/responsive.css" />
+
+  <!-- Razorpay Official Checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+</head>
+<body class="category-page-body">
+
+  <!-- =========================================================================
+       1. Top Announcement Bar
+       ========================================================================= -->
+  <aside class="announcement-bar" aria-label="Store Announcement">
+    <div class="container">
+      <div class="announcement-left">
+        <span>Free express dispatch across India on orders above ₹1,999</span>
+        <span style="opacity:0.4;">|</span>
+        <span>100% Genuine Factory Direct Supplies</span>
+      </div>
+
+      <div class="announcement-right">
+        <span>GST Invoices Available for Contractors</span>
+        <span style="opacity:0.4;">|</span>
+        <a href="tel:+918866130409" class="announcement-link">Helpline: +91 88661 30409</a>
+        <a href="javascript:void(0)" class="announcement-link" id="header-track-order-link">Track Order</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       2. Site Header & Search Bar
+       ========================================================================= -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-main">
+        <!-- Mobile Menu Hamburger Trigger -->
+        <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open Navigation Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <!-- Brand Identity Logo -->
+        <a href="index.html" class="brand-logo" aria-label="Devshree - The Hardware Gallery">
+          <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" class="brand-logo-img" />
+        </a>
+
+        <!-- Header Integrated Search Bar -->
+        <div class="header-search-wrapper" id="header-search-wrapper">
+          <form class="search-master-form header-search-bar-form" id="category-search-form" role="search" autocomplete="off">
+            <span class="search-lens-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+
+            <input 
+              type="search" 
+              id="category-search-input" 
+              name="q" 
+              class="search-master-input" 
+              placeholder="Search in this department (handles, hinges, locks)..." 
+              aria-label="Search products in category"
+              spellcheck="false"
+            />
+
+            <button type="submit" class="search-master-submit-btn" id="category-search-submit-btn" aria-label="Execute search">
+              <span>Search</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Desktop Navigation Bar -->
+        <nav class="header-nav header-nav-compact" aria-label="Primary Navigation">
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="catalogs.html" class="nav-link">PDF Lookbooks</a>
+          <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+
+        <!-- Action Items (Wishlist, Cart) -->
+        <div class="header-actions">
+          <a href="index.html" class="header-action-btn" title="Back to Home Store" aria-label="Back to Home Store">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span class="action-label">Home</span>
+          </a>
+
+          <button type="button" class="header-action-btn cart-btn" id="header-cart-btn" aria-label="Shopping Cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span class="cart-badge" id="cart-badge-count">0</span>
+            <span class="action-label">Cart</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Header Category Navigation Strip (Directly Under Search Bar) -->
+      <nav class="header-category-strip" id="header-category-strip" aria-label="Trade Departments Navigation">
+        <div class="header-category-container">
+          <ul class="header-cat-list" id="header-cat-list">
+            <!-- 1. Hardware -->
+            <li class="header-cat-item has-dropdown" data-cat="cat-hardware">
+              <a href="category.html?cat=cat-hardware" class="header-cat-link" data-cat-id="cat-hardware">
+                <span class="header-cat-icon">🔩</span>
+                <span class="header-cat-name">Hardware</span>
+                <svg class="header-cat-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </a>
+              <div class="header-cat-dropdown" id="dropdown-cat-hardware">
+                <div class="header-cat-dropdown-card">
+                  <div class="dropdown-dept-head">
+                    <span class="dropdown-dept-icon">🔩</span>
+                    <div class="dropdown-dept-info">
+                      <div class="dropdown-dept-name">Hardware Department</div>
+                      <div class="dropdown-dept-desc">Mortise handles, concealed hinges, tower bolts &amp; high-security locks</div>
+                    </div>
+                  </div>
+                  <ul class="dropdown-subcat-grid" data-subcat-grid="cat-hardware">
+                    <li><a href="category.html?cat=cat-hardware&subcat=subcat-hw-handles" class="dropdown-subcat-link" data-cat-id="cat-hardware" data-subcat-id="subcat-hw-handles">Mortise Handles &amp; Knobs</a></li>
+                    <li><a href="category.html?cat=cat-hardware&subcat=subcat-hw-aldrops" class="dropdown-subcat-link" data-cat-id="cat-hardware" data-subcat-id="subcat-hw-aldrops">Aldrops, Latches &amp; Tower Bolts</a></li>
+                    <li><a href="category.html?cat=cat-hardware&subcat=subcat-hw-hinges" class="dropdown-subcat-link" data-cat-id="cat-hardware" data-subcat-id="subcat-hw-hinges">Concealed &amp; Bearing Hinges</a></li>
+                    <li><a href="category.html?cat=cat-hardware&subcat=subcat-hw-locks" class="dropdown-subcat-link" data-cat-id="cat-hardware" data-subcat-id="subcat-hw-locks">Padlocks &amp; Mortise Locks</a></li>
+                    <li><a href="category.html?cat=cat-hardware&subcat=subcat-hw-closers" class="dropdown-subcat-link" data-cat-id="cat-hardware" data-subcat-id="subcat-hw-closers">Door Closers &amp; Floor Springs</a></li>
+                    <li><a href="category.html?cat=cat-hardware&subcat=subcat-hw-fasteners" class="dropdown-subcat-link" data-cat-id="cat-hardware" data-subcat-id="subcat-hw-fasteners">Fasteners, Nails &amp; Screws</a></li>
+                    <li><a href="category.html?cat=cat-hardware&subcat=subcat-hw-drawer" class="dropdown-subcat-link" data-cat-id="cat-hardware" data-subcat-id="subcat-hw-drawer">Drawer Channels &amp; Tandem Boxes</a></li>
+                  </ul>
+                  <div class="dropdown-dept-foot">
+                    <a href="category.html?cat=cat-hardware" class="dropdown-dept-all-btn" data-cat-id="cat-hardware">
+                      <span>View All Hardware Products &rarr;</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <!-- 2. Electric -->
+            <li class="header-cat-item has-dropdown" data-cat="cat-electric">
+              <a href="category.html?cat=cat-electric" class="header-cat-link" data-cat-id="cat-electric">
+                <span class="header-cat-icon">⚡</span>
+                <span class="header-cat-name">Electric</span>
+                <svg class="header-cat-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </a>
+              <div class="header-cat-dropdown" id="dropdown-cat-electric">
+                <div class="header-cat-dropdown-card">
+                  <div class="dropdown-dept-head">
+                    <span class="dropdown-dept-icon">⚡</span>
+                    <div class="dropdown-dept-info">
+                      <div class="dropdown-dept-name">Electric Supplies</div>
+                      <div class="dropdown-dept-desc">Modular switches, sockets, wires, cables &amp; LED lighting</div>
+                    </div>
+                  </div>
+                  <ul class="dropdown-subcat-grid" data-subcat-grid="cat-electric">
+                    <li><a href="category.html?cat=cat-electric&subcat=subcat-el-switches" class="dropdown-subcat-link" data-cat-id="cat-electric" data-subcat-id="subcat-el-switches">Modular Switches &amp; Sockets</a></li>
+                    <li><a href="category.html?cat=cat-electric&subcat=subcat-el-wires" class="dropdown-subcat-link" data-cat-id="cat-electric" data-subcat-id="subcat-el-wires">Copper Wires &amp; Cables</a></li>
+                    <li><a href="category.html?cat=cat-electric&subcat=subcat-el-lighting" class="dropdown-subcat-link" data-cat-id="cat-electric" data-subcat-id="subcat-el-lighting">LED Bulbs &amp; Panel Lights</a></li>
+                    <li><a href="category.html?cat=cat-electric&subcat=subcat-el-mcb" class="dropdown-subcat-link" data-cat-id="cat-electric" data-subcat-id="subcat-el-mcb">MCBs &amp; Distribution Boards</a></li>
+                    <li><a href="category.html?cat=cat-electric&subcat=subcat-el-conduit" class="dropdown-subcat-link" data-cat-id="cat-electric" data-subcat-id="subcat-el-conduit">PVC Conduit Pipes &amp; Fittings</a></li>
+                  </ul>
+                  <div class="dropdown-dept-foot">
+                    <a href="category.html?cat=cat-electric" class="dropdown-dept-all-btn" data-cat-id="cat-electric">
+                      <span>View All Electric Products &rarr;</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <!-- 3. Plumbing -->
+            <li class="header-cat-item has-dropdown" data-cat="cat-plumbing">
+              <a href="category.html?cat=cat-plumbing" class="header-cat-link" data-cat-id="cat-plumbing">
+                <span class="header-cat-icon">🚰</span>
+                <span class="header-cat-name">Plumbing</span>
+                <svg class="header-cat-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </a>
+              <div class="header-cat-dropdown" id="dropdown-cat-plumbing">
+                <div class="header-cat-dropdown-card">
+                  <div class="dropdown-dept-head">
+                    <span class="dropdown-dept-icon">🚰</span>
+                    <div class="dropdown-dept-info">
+                      <div class="dropdown-dept-name">Plumbing Supplies</div>
+                      <div class="dropdown-dept-desc">CPVC/UPVC pipes, brass ball valves, bib cocks &amp; sanitary fittings</div>
+                    </div>
+                  </div>
+                  <ul class="dropdown-subcat-grid" data-subcat-grid="cat-plumbing">
+                    <li><a href="category.html?cat=cat-plumbing&subcat=subcat-pl-pipes" class="dropdown-subcat-link" data-cat-id="cat-plumbing" data-subcat-id="subcat-pl-pipes">CPVC &amp; UPVC Pipes &amp; Fittings</a></li>
+                    <li><a href="category.html?cat=cat-plumbing&subcat=subcat-pl-valves" class="dropdown-subcat-link" data-cat-id="cat-plumbing" data-subcat-id="subcat-pl-valves">Brass Ball Valves &amp; NRVs</a></li>
+                    <li><a href="category.html?cat=cat-plumbing&subcat=subcat-pl-taps" class="dropdown-subcat-link" data-cat-id="cat-plumbing" data-subcat-id="subcat-pl-taps">Chrome Bib Taps &amp; Angle Cocks</a></li>
+                    <li><a href="category.html?cat=cat-plumbing&subcat=subcat-pl-sanitary" class="dropdown-subcat-link" data-cat-id="cat-plumbing" data-subcat-id="subcat-pl-sanitary">Sanitaryware &amp; Basin Fittings</a></li>
+                  </ul>
+                  <div class="dropdown-dept-foot">
+                    <a href="category.html?cat=cat-plumbing" class="dropdown-dept-all-btn" data-cat-id="cat-plumbing">
+                      <span>View All Plumbing Products &rarr;</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <!-- 4. Paints -->
+            <li class="header-cat-item has-dropdown" data-cat="cat-paints">
+              <a href="category.html?cat=cat-paints" class="header-cat-link" data-cat-id="cat-paints">
+                <span class="header-cat-icon">🎨</span>
+                <span class="header-cat-name">Paints</span>
+                <svg class="header-cat-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </a>
+              <div class="header-cat-dropdown" id="dropdown-cat-paints">
+                <div class="header-cat-dropdown-card">
+                  <div class="dropdown-dept-head">
+                    <span class="dropdown-dept-icon">🎨</span>
+                    <div class="dropdown-dept-info">
+                      <div class="dropdown-dept-name">Paints &amp; Wall Putty</div>
+                      <div class="dropdown-dept-desc">Interior emulsions, weather-shield exterior paints &amp; wood stains</div>
+                    </div>
+                  </div>
+                  <ul class="dropdown-subcat-grid" data-subcat-grid="cat-paints">
+                    <li><a href="category.html?cat=cat-paints&subcat=subcat-pa-interior" class="dropdown-subcat-link" data-cat-id="cat-paints" data-subcat-id="subcat-pa-interior">Interior Luxury Emulsions</a></li>
+                    <li><a href="category.html?cat=cat-paints&subcat=subcat-pa-exterior" class="dropdown-subcat-link" data-cat-id="cat-paints" data-subcat-id="subcat-pa-exterior">Weatherproof Exterior Paints</a></li>
+                    <li><a href="category.html?cat=cat-paints&subcat=subcat-pa-primers" class="dropdown-subcat-link" data-cat-id="cat-paints" data-subcat-id="subcat-pa-primers">Wall Primers &amp; Acrylic Putty</a></li>
+                  </ul>
+                  <div class="dropdown-dept-foot">
+                    <a href="category.html?cat=cat-paints" class="dropdown-dept-all-btn" data-cat-id="cat-paints">
+                      <span>View All Paint Products &rarr;</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <!-- 5. Lamination -->
+            <li class="header-cat-item has-dropdown" data-cat="cat-lamination">
+              <a href="category.html?cat=cat-lamination" class="header-cat-link" data-cat-id="cat-lamination">
+                <span class="header-cat-icon">🪵</span>
+                <span class="header-cat-name">Lamination</span>
+                <svg class="header-cat-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </a>
+              <div class="header-cat-dropdown" id="dropdown-cat-lamination">
+                <div class="header-cat-dropdown-card">
+                  <div class="dropdown-dept-head">
+                    <span class="dropdown-dept-icon">🪵</span>
+                    <div class="dropdown-dept-info">
+                      <div class="dropdown-dept-name">Laminates &amp; Panels</div>
+                      <div class="dropdown-dept-desc">Decorative mica sheets, high-gloss acrylics &amp; edge bandings</div>
+                    </div>
+                  </div>
+                  <ul class="dropdown-subcat-grid" data-subcat-grid="cat-lamination">
+                    <li><a href="category.html?cat=cat-lamination&subcat=subcat-la-decorative" class="dropdown-subcat-link" data-cat-id="cat-lamination" data-subcat-id="subcat-la-decorative">Decorative Laminates &amp; Mica</a></li>
+                    <li><a href="category.html?cat=cat-lamination&subcat=subcat-la-acrylic" class="dropdown-subcat-link" data-cat-id="cat-lamination" data-subcat-id="subcat-la-acrylic">Acrylic &amp; High Gloss Sheets</a></li>
+                    <li><a href="category.html?cat=cat-lamination&subcat=subcat-la-edgeband" class="dropdown-subcat-link" data-cat-id="cat-lamination" data-subcat-id="subcat-la-edgeband">Edge Banding Tapes &amp; Trims</a></li>
+                  </ul>
+                  <div class="dropdown-dept-foot">
+                    <a href="category.html?cat=cat-lamination" class="dropdown-dept-all-btn" data-cat-id="cat-lamination">
+                      <span>View All Lamination Products &rarr;</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <!-- Lookbooks Link -->
+            <li class="header-cat-item">
+              <a href="catalogs.html" class="header-cat-link">
+                <span class="header-cat-icon">📖</span>
+                <span class="header-cat-name">Lookbooks</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Drawer -->
+  <div class="mobile-drawer-overlay" id="mobile-drawer-overlay"></div>
+  <aside class="mobile-drawer" id="mobile-drawer" aria-label="Mobile Navigation Drawer">
+    <div class="mobile-drawer-header">
+      <a href="index.html" class="brand-logo" aria-label="Devshree - The Hardware Gallery">
+        <img src="assets/images/logo.png" alt="Devshree - The Hardware Gallery" class="brand-logo-img" style="height:44px;" />
+      </a>
+      <button type="button" class="mobile-drawer-close" id="mobile-drawer-close" aria-label="Close Navigation Menu">&times;</button>
+    </div>
+
+    <nav class="mobile-drawer-nav">
+      <a href="index.html" class="mobile-drawer-link">Home</a>
+      <a href="category.html?cat=cat-hardware" class="mobile-drawer-link">🔩 Hardware Products</a>
+      <a href="category.html?cat=cat-electric" class="mobile-drawer-link">⚡ Electric Supplies</a>
+      <a href="category.html?cat=cat-plumbing" class="mobile-drawer-link">🚰 Plumbing Products</a>
+      <a href="category.html?cat=cat-paints" class="mobile-drawer-link">🎨 Paints &amp; Putty</a>
+      <a href="category.html?cat=cat-lamination" class="mobile-drawer-link">🪵 Lamination &amp; Mica</a>
+      <a href="catalogs.html" class="mobile-drawer-link">📖 PDF Lookbooks</a>
+      <a href="contact.html" class="mobile-drawer-link">Contact &amp; Support</a>
+    </nav>
+  </aside>
+
+  <!-- =========================================================================
+       3. Main Category & Subcategory Page Layout (Matching Reference Video)
+       ========================================================================= -->
+  <main class="category-page-container" style="padding: 1.5rem 0 3.5rem; min-height: 80vh;">
+    <div class="container catalog-section-container">
+
+      <!-- Breadcrumbs Bar (Home › Department › Subcategory) -->
+      <nav class="catalog-breadcrumb-bar" id="category-breadcrumb-bar" aria-label="Category Breadcrumbs">
+        <ol class="catalog-breadcrumb-list">
+          <li class="catalog-breadcrumb-item">
+            <a href="index.html" class="catalog-breadcrumb-link" id="cat-page-crumb-home">Home</a>
+          </li>
+          <li class="catalog-breadcrumb-item" id="cat-page-crumb-dept-item">
+            <span class="catalog-breadcrumb-sep">›</span>
+            <a href="javascript:void(0)" class="catalog-breadcrumb-link" id="cat-page-crumb-dept-link">Hardware</a>
+          </li>
+          <li class="catalog-breadcrumb-item active" id="cat-page-crumb-subcat-item" style="display:none;">
+            <span class="catalog-breadcrumb-sep">›</span>
+            <span class="catalog-breadcrumb-current" id="cat-page-crumb-subcat-text">Mortise Handles</span>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- 2-Column Layout: Left Dedicated Circular Rail + Right Products Grid -->
+      <div class="catalog-layout-wrapper" id="category-layout-wrapper">
+
+        <!-- =====================================================================
+             LEFT COLUMN: Dedicated Circular Subcategories Rail (Matching Video)
+             ===================================================================== -->
+        <aside class="catalog-subcat-sidebar" id="category-subcat-sidebar" aria-label="Subcategories Navigation">
+          <div class="subcat-sidebar-sticky">
+            <div class="subcat-vrail-track" id="category-subcat-rail-track" role="tablist" aria-label="Subcategory Rail">
+              <!-- Dynamically populated with 52px circular thumbnails by category.js -->
+            </div>
+          </div>
+        </aside>
+
+        <!-- =====================================================================
+             RIGHT COLUMN: Department Header, Toolbar & Products Grid
+             ===================================================================== -->
+        <section class="catalog-main-content" id="category-main-content">
+          <!-- Department Title Banner -->
+          <div class="catalog-header-banner" id="category-header-banner">
+            <div class="catalog-header-info">
+              <h1 class="catalog-header-title" id="category-page-title">Hardware Supplies</h1>
+              <span class="catalog-header-count" id="category-page-count">Verified Trade Products</span>
+            </div>
+          </div>
+
+          <!-- Interactive Controls & Sorting -->
+          <div class="catalog-toolbar" id="category-toolbar">
+            <div class="catalog-toolbar-left">
+              <div class="catalog-active-filter-chip" id="category-filter-chip" style="display:none;">
+                <span id="category-filter-chip-text">All Products</span>
+                <button type="button" id="category-filter-chip-clear" class="btn-clear-active-filter" title="Clear subcategory filter">✕</button>
+              </div>
+            </div>
+
+            <div class="catalog-toolbar-right">
+              <label for="category-sort-select" class="sort-label">Sort by:</label>
+              <select id="category-sort-select" class="sort-select" aria-label="Sort products">
+                <option value="featured">Featured / Recommended</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="name-asc">Name: A to Z</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Product Grid -->
+          <div class="product-grid category-product-grid" id="category-products-grid">
+            <!-- Dynamically populated by category.js with instant 0ms painting -->
+          </div>
+
+          <!-- Empty State Container -->
+          <div class="catalog-empty-state" id="category-empty-state" style="display:none; text-align:center; padding: 4rem 1rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+            <h3 style="font-size: 1.35rem; color: var(--color-text-primary); margin-bottom: 0.5rem;">No products found in this subcategory</h3>
+            <p style="color: var(--color-text-secondary); max-width: 420px; margin: 0 auto 1.5rem;">Browse other trade subcategories in the left rail or explore the complete department catalog.</p>
+            <button type="button" class="btn btn-primary" id="btn-category-view-all">View All Department Products</button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       4. Quick View Modal & Backdrops
+       ========================================================================= -->
+  <div class="modal-backdrop" id="quick-view-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content quick-view-modal-box">
+      <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close details">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div class="quick-view-body" id="modal-dynamic-body"></div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer Component -->
+  <div class="cart-drawer-backdrop" id="cart-drawer-backdrop"></div>
+  <aside class="cart-drawer" id="cart-drawer" aria-label="Shopping Cart">
+    <div class="cart-drawer-header">
+      <div class="cart-drawer-title-row">
+        <h3>Your Cart</h3>
+        <span class="cart-drawer-count" id="cart-drawer-count">(0)</span>
+      </div>
+      <button type="button" class="cart-drawer-close" id="cart-drawer-close" aria-label="Close Cart">&times;</button>
+    </div>
+    <div class="cart-drawer-items" id="cart-drawer-items"></div>
+    <div class="cart-drawer-footer" id="cart-drawer-footer">
+      <div class="cart-total-row">
+        <span>Subtotal</span>
+        <span class="cart-subtotal-val" id="cart-subtotal-val">₹0</span>
+      </div>
+      <div class="cart-gst-notice">✓ Inclusive of GST &amp; Express Courier Delivery</div>
+      <a href="index.html#checkout" class="btn btn-primary btn-block" id="cart-checkout-btn">Proceed to Checkout &rarr;</a>
+    </div>
+  </aside>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- Floating WhatsApp Quick Support Launcher -->
+  <a href="https://wa.me/918866130409?text=Hello%20Devshree,%20I%20have%20an%20inquiry%20regarding%20products" target="_blank" rel="noopener noreferrer" class="devshree-floating-wa" id="devshree-floating-wa" title="Chat with Devshree on WhatsApp (+91 88661 30409)" aria-label="Chat with Devshree on WhatsApp">
+    <svg viewBox="0 0 24 24" width="34" height="34" fill="#FFFFFF">
+      <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.53c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.38-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.45 1.03 2.62.13.17 1.77 2.71 4.29 3.8.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1 1.02-.15 1.47-.83 1.68-1.16.21-.34.21-.63.15-.76-.07-.13-.25-.2-.5-.33z"/>
+    </svg>
+    <span class="floating-wa-tooltip">Chat on WhatsApp</span>
+  </a>
+
+  <!-- JavaScript ES Modules Entrypoint -->
+  <script type="module" src="assets/js/category.js?v=2.7.0"></script>
+</body>
+</html>

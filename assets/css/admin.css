@@ -2590,6 +2590,322 @@ body.admin-body {
   }
 }
 
+/* =========================================================================
+   Category & Subcategory Management System Styles
+   ========================================================================= */
+
+.admin-row-subcat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background-color: #F8FAFC;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+  font-size: 0.685rem;
+  font-weight: 500;
+  margin-top: 3px;
+  line-height: 1.2;
+}
+
+.input-with-action-wrap {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.input-with-action-wrap .admin-select {
+  flex: 1;
+}
+
+.btn-quick-field-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  background: #F3EFE8;
+  color: var(--admin-terracotta);
+  border: 1px solid #E2D9CC;
+  border-radius: var(--admin-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.btn-quick-field-action:hover {
+  background: var(--admin-terracotta);
+  color: #FFFFFF;
+  border-color: var(--admin-terracotta);
+}
+
+.categories-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.categories-toolbar-left h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--admin-text-main);
+  margin: 0 0 4px 0;
+}
+
+.categories-toolbar-left p {
+  font-size: 0.85rem;
+  color: var(--admin-text-secondary);
+  margin: 0;
+}
+
+.categories-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 992px) {
+  .admin-categories-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-category-card {
+  background-color: var(--admin-card-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--admin-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.admin-category-card:hover {
+  border-color: #DBCFBE;
+  box-shadow: var(--admin-shadow-md);
+  transform: translateY(-2px);
+}
+
+.cat-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.cat-card-main-info {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.cat-card-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #F3EFE8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  border: 1px solid #E6DDD0;
+}
+
+.cat-card-title-wrap h4 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--admin-text-main);
+  margin: 0 0 3px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cat-card-slug-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: #E2E8F0;
+  color: #475569;
+}
+
+.cat-card-stats {
+  font-size: 0.775rem;
+  color: var(--admin-terracotta);
+  font-weight: 700;
+}
+
+.cat-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-cat-action {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-cat-action:hover {
+  background: #FFFFFF;
+  border-color: var(--admin-terracotta);
+  color: var(--admin-terracotta);
+}
+
+.btn-cat-action.btn-cat-delete:hover {
+  border-color: #EF4444;
+  color: #EF4444;
+  background: #FEF2F2;
+}
+
+.cat-card-desc {
+  font-size: 0.825rem;
+  color: var(--admin-text-secondary);
+  line-height: 1.4;
+  margin-bottom: 1rem;
+}
+
+.cat-subcats-box {
+  background: #FAF7F2;
+  border: 1px solid #EFE8DE;
+  border-radius: 10px;
+  padding: 0.85rem;
+  margin-top: auto;
+}
+
+.cat-subcats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.cat-subcats-title {
+  font-size: 0.725rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #786C5E;
+}
+
+.cat-subcats-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 0.75rem;
+  min-height: 28px;
+}
+
+.admin-subcat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #FFFFFF;
+  border: 1px solid #E2D9CC;
+  border-radius: 14px;
+  padding: 3px 9px 3px 11px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--admin-text-main);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  transition: all 0.15s ease;
+}
+
+.admin-subcat-chip:hover {
+  border-color: var(--admin-terracotta);
+  background: #FFF9F5;
+}
+
+.admin-subcat-chip-remove {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 0;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  line-height: 1;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+}
+
+.admin-subcat-chip-remove:hover {
+  color: #EF4444;
+  background: #FEE2E2;
+}
+
+.cat-subcat-inline-add {
+  display: flex;
+  gap: 6px;
+}
+
+.cat-subcat-inline-input {
+  flex: 1;
+  background: #FFFFFF;
+  border: 1px solid #D8CFC3;
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 0.8rem;
+  color: var(--admin-text-main);
+  outline: none;
+}
+
+.cat-subcat-inline-input:focus {
+  border-color: var(--admin-terracotta);
+  box-shadow: 0 0 0 2px rgba(194, 98, 59, 0.12);
+}
+
+.cat-subcat-inline-btn {
+  background: var(--admin-terracotta);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.775rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.cat-subcat-inline-btn:hover {
+  background: #A8502E;
+}
+
+
 
 
 

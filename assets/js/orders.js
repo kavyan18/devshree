@@ -45,6 +45,7 @@ export async function createOrderAndInvoice(orderData) {
     total: orderData.total,
     paymentMethod: orderData.paymentMethod || 'Cash on Delivery (COD)',
     paymentStatus: orderData.paymentStatus || 'Pending',
+    utrNumber: orderData.utrNumber || '',
     orderStatus: 'Confirmed',
     createdAtIso: new Date().toISOString()
   };
