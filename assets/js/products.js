@@ -31,15 +31,51 @@ const CACHE_CATEGORIES_KEY = 'devshree_cached_categories';
 /**
  * Fetch the 4 main product categories
  * Reads from Supabase PostgreSQL first, then Cloud Firestore, then local storage / mock data
+ * Optimized with 0ms local cache return & 1.5s network timeout to prevent egress throttling stalls
  * @returns {Promise<Array>}
  */
 export async function fetchCategories() {
-  // 1. Supabase PostgreSQL
+  // 0. Instant Cache Return (0ms speed!)
+  const cached = getStorage(CACHE_CATEGORIES_KEY, null);
+  if (Array.isArray(cached) && cached.length >= 5) {
+    // If we have cached categories, return immediately so navigation paints in 0ms
+    // Revalidate in background asynchronously without blocking page render
+    setTimeout(async () => {
+      if (isSupabaseConfigured) {
+        try {
+          const client = await getSupabaseClient();
+          if (client) {
+            const queryPromise = client.from('categories').select('*').order('name');
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1500));
+            const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
+            if (!error && Array.isArray(data) && data.length > 0) {
+              const formatted = data.map(c => ({
+                id: c.id,
+                name: c.name,
+                slug: c.slug,
+                description: c.description,
+                imageUrl: c.image_url,
+                badgeClass: c.id.replace('cat-', '')
+              }));
+              setStorage(CACHE_CATEGORIES_KEY, formatted);
+            }
+          }
+        } catch (_) { }
+      }
+    }, 100);
+    return cached;
+  }
+
+  // 1. Primary: Supabase PostgreSQL (with 1.5s timeout)
   if (isSupabaseConfigured) {
     try {
       const client = await getSupabaseClient();
       if (client) {
-        const { data, error } = await client.from('categories').select('*').order('name');
+        const queryPromise = client.from('categories').select('*').order('name');
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Supabase fetchCategories timeout (egress throttled)')), 1500)
+        );
+        const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
         if (!error && Array.isArray(data) && data.length > 0) {
           const formatted = data.map(c => ({
             id: c.id,
@@ -54,7 +90,7 @@ export async function fetchCategories() {
         }
       }
     } catch (sbErr) {
-      console.warn('[Devshree] Supabase fetchCategories fallback:', sbErr);
+      console.warn('[Devshree] Supabase fetchCategories fallback:', sbErr.message || sbErr);
     }
   }
 
@@ -81,20 +117,24 @@ export async function fetchCategories() {
 /**
  * Fetch products with dynamic filtering and sorting
  * Reads from Supabase PostgreSQL first, falls back to Cloud Firestore and localStorage
+ * Optimized with 1.8s timeout & pagination limit safeguard (zero-leak egress protection)
  * @param {Object} options
  * @param {string} [options.categoryId]
+ * @param {string} [options.subcategoryId]
  * @param {string} [options.brand]
  * @param {string} [options.searchQuery]
  * @param {string} [options.sortBy] - 'featured'|'price-low'|'price-high'|'rating'|'bestseller'|'newest'
  * @param {boolean} [options.inStockOnly]
  * @param {number} [options.maxPrice]
+ * @param {number} [options.limit] - Max items to fetch (defaults to 100 to prevent unbounded egress)
+ * @param {number} [options.offset] - Pagination offset (0-based)
  * @returns {Promise<Array>}
  */
 export async function fetchProducts(options = {}) {
   let fetchedProducts = [];
   const deletedIds = new Set((getStorage('devshree_deleted_product_ids', []) || []).map(String));
 
-  // 1. Primary: Supabase PostgreSQL (fast query + Cloudflare CDN images)
+  // 1. Primary: Supabase PostgreSQL (fast query + Cloudflare CDN images with 1.8s timeout)
   if (isSupabaseConfigured) {
     try {
       const client = await getSupabaseClient();
@@ -107,8 +147,22 @@ export async function fetchProducts(options = {}) {
             q = q.eq('category_id', options.categoryId);
           }
         }
-        // Note: Subcategory filtering is applied robustly in-memory with intelligent keyword fallback
-        const { data, error } = await q;
+
+        // Pagination & limit safeguard (prevents downloading massive unbound datasets)
+        if (options.limit && Number.isInteger(options.limit) && options.limit > 0) {
+          const from = options.offset || 0;
+          q = q.range(from, from + options.limit - 1);
+        } else {
+          // Default safeguard: max 100 products per initial query
+          q = q.limit(100);
+        }
+
+        // Race timeout: if Supabase egress is currently throttled, do NOT hang the browser!
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Supabase products query timed out (1.8s) - falling back to cache')), 1800)
+        );
+        const { data, error } = await Promise.race([q, timeoutPromise]);
+
         if (!error && Array.isArray(data) && data.length > 0) {
           data.forEach(d => {
             if (deletedIds.has(String(d.id))) return;
@@ -374,12 +428,16 @@ export async function getProductById(productId) {
     return null;
   }
 
-  // 1. Supabase PostgreSQL
+  // 1. Supabase PostgreSQL (with 1.5s timeout to prevent throttled hangs)
   if (isSupabaseConfigured) {
     try {
       const client = await getSupabaseClient();
       if (client) {
-        const { data, error } = await client.from('products').select('*').eq('id', productId).maybeSingle();
+        const queryPromise = client.from('products').select('*').eq('id', productId).maybeSingle();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Supabase getProductById timeout (1.5s)')), 1500)
+        );
+        const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
         if (!error && data) {
           const img = data.image_url || data.image || 'assets/images/placeholder.webp';
           return {
